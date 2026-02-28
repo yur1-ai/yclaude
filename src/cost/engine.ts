@@ -1,5 +1,6 @@
 import type { NormalizedEvent } from '../parser/types.js';
 import { MODEL_PRICING } from './pricing.js';
+import type { ModelPricing } from './pricing.js';
 import { toEstimatedCost } from './types.js';
 import type { CostEvent } from './types.js';
 import { debugLog } from '../shared/debug.js';
@@ -8,6 +9,9 @@ const PER_MILLION = 1_000_000;
 
 /**
  * Maps an array of NormalizedEvents to CostEvents, adding per-event USD cost estimates.
+ *
+ * @param events - Array of NormalizedEvents from the parser (after privacy filtering)
+ * @returns Array of CostEvents with costUsd field added
  *
  * Rules:
  * - Events without tokens or without a model ID get costUsd=0 (no unknownModel flag)
@@ -25,7 +29,7 @@ function computeEventCost(event: NormalizedEvent): CostEvent {
     return { ...event, costUsd: toEstimatedCost(0) };
   }
 
-  const pricing = MODEL_PRICING[event.model];
+  const pricing = (MODEL_PRICING as Record<string, ModelPricing | undefined>)[event.model];
 
   if (!pricing) {
     debugLog(`[cost-engine] Unknown model: ${event.model} — costing as $0`);
@@ -34,8 +38,9 @@ function computeEventCost(event: NormalizedEvent): CostEvent {
 
   const { tokens } = event;
 
-  // tokens.cacheCreation is the sum of cacheCreation5m + cacheCreation1h.
-  // We subtract the total cache (writes + reads) from input to get the non-cached base input.
+  // cacheCreation = cacheCreation5m + cacheCreation1h (the parser splits these for us).
+  // Subtract total cache (writes + reads) from input so we don't double-count:
+  // base input tokens are billed at the standard input rate, while cache tiers are billed separately.
   // The max(0, ...) guard handles edge cases where input may already be net-of-cache.
   const baseInput = Math.max(0, tokens.input - tokens.cacheCreation - tokens.cacheRead);
 

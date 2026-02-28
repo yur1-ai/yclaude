@@ -15,7 +15,7 @@ export interface ModelPricing {
 }
 
 /** Indexed by exact API model ID strings. Lookup is case-sensitive — preserve event.model exactly. */
-export const MODEL_PRICING: Record<string, ModelPricing> = {
+export const MODEL_PRICING = {
   // --- Latest models (current as of 2026-02-28) ---
 
   'claude-opus-4-6': {
@@ -109,4 +109,7 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
     inputPerMTok: 3.00, outputPerMTok: 15.00,
     cacheWrite5mPerMTok: 3.75, cacheWrite1hPerMTok: 6.00, cacheReadPerMTok: 0.30,
   },
-};
+} satisfies Record<string, ModelPricing>;
+
+/** Union of all model IDs in the pricing table. */
+export type KnownModel = keyof typeof MODEL_PRICING;

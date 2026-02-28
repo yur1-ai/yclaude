@@ -62,7 +62,7 @@ describe('MODEL_PRICING constants', () => {
     ];
 
     for (const model of requiredModels) {
-      expect(MODEL_PRICING[model], `Missing model: ${model}`).toBeDefined();
+      expect((MODEL_PRICING as Record<string, unknown>)[model], `Missing model: ${model}`).toBeDefined();
     }
   });
 });
