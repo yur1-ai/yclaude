@@ -1,3 +1,16 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: unknown
+last_updated: "2026-02-28T07:27:19.177Z"
+progress:
+  total_phases: 1
+  completed_phases: 1
+  total_plans: 3
+  completed_plans: 3
+---
+
 # Project State
 
 ## Project Reference
@@ -53,6 +66,7 @@ Recent decisions affecting current work:
 - [01-02]: cwd field is ground truth for project path; slug decoding intentionally omitted (broken for dirs with dashes)
 - [01-02]: discoverJSONLFiles() three-level hierarchy: overrideDir > CLAUDE_CONFIG_DIR > defaults
 - [01-02]: DedupAccumulator Map-based first-seen-wins with insertion-order preservation
+- [Phase 01-jsonl-parser-data-pipeline]: Test files colocated with source (src/parser/normalizer.test.ts) rather than __tests__/ — both picked up by vitest default glob
 
 ### Pending Todos
 

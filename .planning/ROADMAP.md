@@ -12,7 +12,7 @@ yclaude delivers a local-first analytics dashboard for Claude Code usage, distri
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: JSONL Parser & Data Pipeline** - Resilient parser that reads Claude Code JSONL data with per-line error handling, deduplication, and multi-path detection
+- [x] **Phase 1: JSONL Parser & Data Pipeline** - Resilient parser that reads Claude Code JSONL data with per-line error handling, deduplication, and multi-path detection (completed 2026-02-28)
 - [ ] **Phase 2: Cost Engine & Privacy** - Accurate cost estimation with full cache tier pricing, estimate labeling, and localhost-only security hardening
 - [ ] **Phase 3: Server, CLI & App Shell** - Hono server serving a React SPA shell, launched via `npx yclaude` with CLI flags and auto-open browser
 - [ ] **Phase 4: Cost Analytics Dashboard** - Core dashboard views showing total cost, token breakdown, cost-over-time chart, and global date range filtering
@@ -148,7 +148,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. JSONL Parser & Data Pipeline | 2/3 | In Progress|  |
+| 1. JSONL Parser & Data Pipeline | 3/3 | Complete   | 2026-02-28 |
 | 2. Cost Engine & Privacy | 0/0 | Not started | - |
 | 3. Server, CLI & App Shell | 0/0 | Not started | - |
 | 4. Cost Analytics Dashboard | 0/0 | Not started | - |
