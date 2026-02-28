@@ -16,12 +16,12 @@ Requirements for the local MVP. Each maps to roadmap phases.
 
 ### Analytics
 
-- [ ] **ANLT-01**: User can see total estimated cost with all-time and selected-period totals at a glance
-- [ ] **ANLT-02**: User can see token usage broken down by type (input / output / cache_creation / cache_read)
-- [ ] **ANLT-03**: User can view cost over time as a chart with daily / weekly / monthly toggle
+- [x] **ANLT-01**: User can see total estimated cost with all-time and selected-period totals at a glance
+- [x] **ANLT-02**: User can see token usage broken down by type (input / output / cache_creation / cache_read)
+- [x] **ANLT-03**: User can view cost over time as a chart with daily / weekly / monthly toggle
 - [ ] **ANLT-04**: User can see per-model cost breakdown as a donut chart and sortable table
 - [ ] **ANLT-05**: User can see per-project cost breakdown with human-readable decoded directory names
-- [ ] **ANLT-06**: User can filter all views by date range with a global date range picker
+- [x] **ANLT-06**: User can filter all views by date range with a global date range picker
 - [ ] **ANLT-07**: User can see their cache efficiency score — percentage hit rate with trend indicator (unique differentiator; no competitor surfaces this)
 - [ ] **ANLT-08**: User can see a GitHub-style activity heatmap of daily usage with personality-copy annotations for notable days
 
@@ -107,10 +107,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CORE-04 | Phase 2 (privacy filter) + Phase 3 (server/CSP) | Complete (02-02 privacy filter + 03-01 server/CSP + 03-03 human-verified) |
 | CLI-01 | Phase 3: Server, CLI & App Shell | Complete (03-01 + 03-03) |
 | CLI-02 | Phase 3: Server, CLI & App Shell | Complete (03-01 + 03-03) |
-| ANLT-01 | Phase 4: Cost Analytics Dashboard | Pending |
-| ANLT-02 | Phase 4: Cost Analytics Dashboard | Pending |
-| ANLT-03 | Phase 4: Cost Analytics Dashboard | Pending |
-| ANLT-06 | Phase 4: Cost Analytics Dashboard | Pending |
+| ANLT-01 | Phase 4: Cost Analytics Dashboard | Complete |
+| ANLT-02 | Phase 4: Cost Analytics Dashboard | Complete |
+| ANLT-03 | Phase 4: Cost Analytics Dashboard | Complete |
+| ANLT-06 | Phase 4: Cost Analytics Dashboard | Complete |
 | ANLT-04 | Phase 5: Model & Project Breakdowns | Pending |
 | ANLT-05 | Phase 5: Model & Project Breakdowns | Pending |
 | SESS-01 | Phase 6: Session Explorer | Pending |

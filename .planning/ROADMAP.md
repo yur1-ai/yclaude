@@ -107,11 +107,12 @@ Plans:
   3. A cost-over-time area chart renders with daily, weekly, and monthly toggle options and correct x-axis bucketing
   4. A global date range picker filters all views on the page simultaneously — changing the picker triggers a coordinated re-fetch via TanStack Query
   5. All chart colors use CSS variable references (`var(--color-*)`) so dark mode toggled in Phase 8 requires no chart rewrites
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
+- [ ] 04-01-PLAN.md — TDD: /api/v1/summary date filter (?from/?to) + new /api/v1/cost-over-time endpoint (bucketing + zero-cost gap fill)
+- [ ] 04-02-PLAN.md — Frontend foundation: install deps (TanStack Query, Zustand, Recharts, react-day-picker), CSS vars + @custom-variant dark, QueryClientProvider, Zustand store, 3 query hooks
+- [ ] 04-03-PLAN.md — Overview page: StatCard, TrendIndicator, TokenBreakdown, CostBarChart, DateRangePicker — assemble + human verify
 
 ### Phase 5: Model & Project Breakdowns
 **Goal**: User can see exactly which models and projects are driving their spend
@@ -180,7 +181,7 @@ Phases execute in this order: 1 -> 2 -> 3 -> 4 -> (5 parallel with 6) -> 7 -> 8
 | 1. JSONL Parser & Data Pipeline | 3/3 | Complete | 2026-02-28 |
 | 2. Cost Engine & Privacy | 2/2 | Complete | 2026-02-28 |
 | 3. Server, CLI & App Shell | 3/3 | Complete | 2026-02-28 |
-| 4. Cost Analytics Dashboard | 0/0 | Not started | - |
+| 4. Cost Analytics Dashboard | 1/3 | In Progress|  |
 | 5. Model & Project Breakdowns | 0/0 | Not started | - |
 | 6. Session Explorer | 0/0 | Not started | - |
 | 7. Differentiator Features | 0/0 | Not started | - |
