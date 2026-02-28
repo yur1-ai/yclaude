@@ -1,8 +1,17 @@
 import { Hono } from 'hono';
 import { secureHeaders } from 'hono/secure-headers';
+import { serveStatic } from '@hono/node-server/serve-static';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 import { apiRoutes } from './routes/api.js';
 import type { NormalizedEvent } from '../parser/types.js';
 import type { CostEvent } from '../cost/types.js';
+
+// Compute absolute path to web-dist/ relative to this file's location.
+// src/server/server.ts compiles to dist/server/server.js.
+// Two levels up from dist/server/ reaches project root, then web-dist/.
+// Using import.meta.url (not process.cwd()) ensures correctness regardless of cwd (npx use case).
+const webDistPath = fileURLToPath(new URL('../../web-dist', import.meta.url));
 
 /**
  * Application state passed to the server factory.
@@ -50,9 +59,12 @@ export function createApp(state: AppState): Hono {
   // Static catch-all ('*') would block API routes if registered first.
   app.route('/api/v1', apiRoutes(state));
 
-  // TODO(03-03): Register serveStatic for the Vite SPA build output here.
-  // Use fileURLToPath(new URL('../../../web-dist', import.meta.url)) for absolute path
-  // since serveStatic uses process.cwd() by default, not import.meta.url.
+  // Static assets (JS, CSS, images) — AFTER API routes, BEFORE SPA fallback.
+  app.use('/*', serveStatic({ root: webDistPath }));
+
+  // SPA fallback: all non-API, non-asset routes serve index.html.
+  // Hash router handles client-side routing from there.
+  app.get('*', serveStatic({ path: path.join(webDistPath, 'index.html') }));
 
   return app;
 }

@@ -11,11 +11,13 @@
     "yclaude": "./dist/server/cli.js"
   },
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "tsup",
+    "build:frontend": "cd web && npm run build",
+    "dev": "concurrently \"tsup --watch\" \"cd web && vite\"",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && cd web && tsc --noEmit"
   },
   "engines": {
     "node": ">=22.0.0"
@@ -29,6 +31,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "concurrently": "^9.2.1",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
