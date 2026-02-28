@@ -21,7 +21,8 @@ const port = parseInt(opts.port, 10);
 const url = `http://127.0.0.1:${port}`;
 
 // Load and process data pipeline
-const events = await parseAll({ dir: opts.dir });
+// exactOptionalPropertyTypes: pass dir only when defined (undefined !== omitted under strict TS)
+const events = await parseAll(opts.dir !== undefined ? { dir: opts.dir } : {});
 const filtered = applyPrivacyFilter(events);
 const costs = computeCosts(filtered);
 

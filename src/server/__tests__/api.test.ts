@@ -5,6 +5,12 @@ import type { CostEvent } from '../../cost/types.js';
 import type { NormalizedEvent } from '../../parser/types.js';
 import { toEstimatedCost } from '../../cost/types.js';
 
+type SummaryBody = {
+  totalCost: number;
+  totalTokens: { input: number; output: number; cacheCreation: number; cacheRead: number };
+  eventCount: number;
+};
+
 function makeEvent(overrides: Partial<NormalizedEvent> = {}): NormalizedEvent {
   return {
     uuid: 'test-uuid-' + Math.random(),
@@ -50,7 +56,7 @@ describe('/api/v1/summary', () => {
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/summary');
-    const body = await res.json();
+    const body = (await res.json()) as SummaryBody;
     expect(body.totalCost).toBeCloseTo(0.003, 6);
   });
 
@@ -59,7 +65,7 @@ describe('/api/v1/summary', () => {
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/summary');
-    const body = await res.json();
+    const body = (await res.json()) as SummaryBody;
     expect(body.eventCount).toBe(3);
   });
 
@@ -71,7 +77,7 @@ describe('/api/v1/summary', () => {
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/summary');
-    const body = await res.json();
+    const body = (await res.json()) as SummaryBody;
     expect(body.totalTokens).toEqual({
       input: 300,
       output: 125,
