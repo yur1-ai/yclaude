@@ -36,7 +36,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Project scaffold (package.json, tsconfig, tsup, vitest) + NormalizedEvent type contracts and Zod schemas
+- [x] 01-01-PLAN.md — Project scaffold (package.json, tsconfig, tsup, vitest) + NormalizedEvent type contracts and Zod schemas
 - [ ] 01-02-PLAN.md — Parser core modules: debug, file discovery, JSONL streaming, normalizer, deduplication, and public parseAll() API
 - [ ] 01-03-PLAN.md — Integration test suite covering all CORE-01 success criteria + human verification against real JSONL data
 
@@ -148,7 +148,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. JSONL Parser & Data Pipeline | 0/3 | Not started | - |
+| 1. JSONL Parser & Data Pipeline | 1/3 | In progress | - |
 | 2. Cost Engine & Privacy | 0/0 | Not started | - |
 | 3. Server, CLI & App Shell | 0/0 | Not started | - |
 | 4. Cost Analytics Dashboard | 0/0 | Not started | - |
