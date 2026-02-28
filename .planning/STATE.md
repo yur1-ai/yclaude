@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: phase_complete
-last_updated: "2026-02-28T09:46:13.242Z"
+status: in_progress
+last_updated: "2026-02-28T15:31:00Z"
 progress:
-  total_phases: 2
+  total_phases: 8
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 6
+  completed_plans: 6
 ---
 
 # Project State
@@ -18,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Give developers full visibility into their AI coding spend -- locally first, with no friction.
-**Current focus:** Phase 3: Server, CLI & App Shell (not yet planned)
+**Current focus:** Phase 3: Server, CLI & App Shell — Plan 02 complete (SPA shell)
 
 ## Current Position
 
-Phase: 2 of 8 (Cost Engine & Privacy) - COMPLETE
-Plan: 2/2 completed
-Status: Phase 2 complete — cost engine, privacy filter, public API exports, human-verified pipeline
-Last activity: 2026-02-28 -- Phase 2 verified and closed; ROADMAP corrected (server/CSP SCs moved to Phase 3)
+Phase: 3 of 8 (Server, CLI & App Shell) - In Progress
+Plan: 2/3 completed (03-01 Hono server pending, 03-02 SPA shell done, 03-03 CLI pending)
+Status: 03-02 complete — Vite + React + Tailwind v4 + React Router v7 SPA shell with left sidebar and 4 placeholder pages
+Last activity: 2026-02-28 -- 03-02 complete; web-dist/ produced; typecheck and build both pass
 
-Progress: [##░░░░░░░░] 25%
+Progress: [###░░░░░░░] 30%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: ~15min (including checkpoint waits)
-- Total execution time: ~73min total
+- Total plans completed: 6
+- Average duration: ~13min (including checkpoint waits)
+- Total execution time: ~75min total
 
 **By Phase:**
 
@@ -42,10 +42,11 @@ Progress: [##░░░░░░░░] 25%
 |-------|-------|-------|----------|
 | 01-jsonl-parser-data-pipeline | 3 | ~50min | ~16min |
 | 02-cost-engine-privacy | 2 | ~23min | ~11min |
+| 03-server-cli-app-shell | 1 (of 3) | ~2min | ~2min |
 
 **Recent Trend:**
-- Last 5 plans: 01-02 (3min), 01-03 (~45min incl. checkpoint), 02-01 (3min), 02-02 (~20min incl. checkpoint)
-- Trend: Phase 2 plan 2 complete (privacy filter + public API + human verified)
+- Last 5 plans: 01-03 (~45min incl. checkpoint), 02-01 (3min), 02-02 (~20min incl. checkpoint), 03-02 (~2min)
+- Trend: Phase 3 plan 2 complete (SPA scaffold — very fast, no external blockers)
 
 *Updated after each plan completion*
 
@@ -77,6 +78,10 @@ Recent decisions affecting current work:
 - [Phase 02-cost-engine-privacy]: Privacy filter placed in library (not UI layer) — Phase 3 cannot accidentally bypass CORE-04 guarantee
 - [Phase 02-cost-engine-privacy]: Return type of applyPrivacyFilter stays NormalizedEvent[] — no new type for filtered events avoids parallel type hierarchy
 - [Phase 02-cost-engine-privacy]: KnownModel union type exported from pricing.ts; MODEL_PRICING uses satisfies Record<string, ModelPricing> for compile-time safety
+- [03-02]: Frontend deps fully isolated in web/package.json — root package.json unchanged (keeps npm library surface clean)
+- [03-02]: createHashRouter used (not createBrowserRouter) — hash routing works with static file serving, no server catch-all needed
+- [03-02]: Tailwind v4 @import "tailwindcss" single-line pattern — no tailwind.config.js file; @tailwindcss/vite plugin auto-scans from web/
+- [03-02]: outDir ../web-dist (relative to web/) so build output lands at project root as web-dist/ for Hono server to serve
 
 ### Pending Todos
 
@@ -90,5 +95,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 02-02-PLAN.md (applyPrivacyFilter + public index exports + human-verified pipeline)
+Stopped at: Completed 03-02-PLAN.md (Vite + React + Tailwind v4 + React Router v7 SPA shell — web/ scaffold + 4 placeholder pages)
 Resume file: None
