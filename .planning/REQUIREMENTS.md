@@ -90,32 +90,32 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CORE-01 | Phase 1 | Pending |
-| CORE-02 | Phase 1 | Pending |
-| CORE-03 | Phase 1 | Pending |
-| CORE-04 | Phase 1 | Pending |
-| ANLT-01 | Phase 1 | Pending |
-| ANLT-02 | Phase 1 | Pending |
-| ANLT-03 | Phase 1 | Pending |
-| ANLT-04 | Phase 1 | Pending |
-| ANLT-05 | Phase 1 | Pending |
-| ANLT-06 | Phase 1 | Pending |
-| ANLT-07 | Phase 1 | Pending |
-| ANLT-08 | Phase 1 | Pending |
-| SESS-01 | Phase 1 | Pending |
-| SESS-02 | Phase 1 | Pending |
-| SESS-03 | Phase 1 | Pending |
-| SESS-04 | Phase 1 | Pending |
-| CLI-01 | Phase 1 | Pending |
-| CLI-02 | Phase 1 | Pending |
-| CLI-03 | Phase 1 | Pending |
-| PRSL-01 | Phase 1 | Pending |
+| CORE-01 | Phase 1: JSONL Parser & Data Pipeline | Pending |
+| CORE-02 | Phase 2: Cost Engine & Privacy | Pending |
+| CORE-03 | Phase 2: Cost Engine & Privacy | Pending |
+| CORE-04 | Phase 2: Cost Engine & Privacy | Pending |
+| ANLT-01 | Phase 4: Cost Analytics Dashboard | Pending |
+| ANLT-02 | Phase 4: Cost Analytics Dashboard | Pending |
+| ANLT-03 | Phase 4: Cost Analytics Dashboard | Pending |
+| ANLT-04 | Phase 5: Model & Project Breakdowns | Pending |
+| ANLT-05 | Phase 5: Model & Project Breakdowns | Pending |
+| ANLT-06 | Phase 4: Cost Analytics Dashboard | Pending |
+| ANLT-07 | Phase 7: Differentiator Features | Pending |
+| ANLT-08 | Phase 7: Differentiator Features | Pending |
+| SESS-01 | Phase 6: Session Explorer | Pending |
+| SESS-02 | Phase 6: Session Explorer | Pending |
+| SESS-03 | Phase 7: Differentiator Features | Pending |
+| SESS-04 | Phase 7: Differentiator Features | Pending |
+| CLI-01 | Phase 3: Server, CLI & App Shell | Pending |
+| CLI-02 | Phase 3: Server, CLI & App Shell | Pending |
+| CLI-03 | Phase 8: Dark Mode & Personality | Pending |
+| PRSL-01 | Phase 8: Dark Mode & Personality | Pending |
 
 **Coverage:**
 - v1 requirements: 20 total
 - Mapped to phases: 20
-- Unmapped: 0 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-28*
-*Last updated: 2026-02-28 after initial definition*
+*Last updated: 2026-02-28 after roadmap creation*
