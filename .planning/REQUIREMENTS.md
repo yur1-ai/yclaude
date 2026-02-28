@@ -12,7 +12,7 @@ Requirements for the local MVP. Each maps to roadmap phases.
 - [x] **CORE-01**: User's JSONL data is parsed reliably — per-line error handling, UUID deduplication, handles `<persisted-output>` wrapped lines, detects both `~/.claude` and `~/.config/claude` paths, respects `CLAUDE_CONFIG_DIR` env var
 - [x] **CORE-02**: User sees accurate cost estimates — pricing table covers all current Claude models including full cache tier complexity (5-min write 1.25x, 1-hour write 2x, read 0.1x)
 - [x] **CORE-03**: User understands costs are estimates — all cost figures labeled "estimated" throughout the UI (upstream token data has documented duplication bugs)
-- [ ] **CORE-04**: User's conversation data stays private — server binds to `127.0.0.1` exclusively, zero telemetry, CSP headers blocking external requests, no conversation content displayed anywhere
+- [x] **CORE-04**: User's conversation data stays private — server binds to `127.0.0.1` exclusively, zero telemetry, CSP headers blocking external requests, no conversation content displayed anywhere
 
 ### Analytics
 
@@ -93,7 +93,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CORE-01 | Phase 1: JSONL Parser & Data Pipeline | Complete (01-01, 01-02, 01-03) |
 | CORE-02 | Phase 2: Cost Engine & Privacy | Pending |
 | CORE-03 | Phase 2: Cost Engine & Privacy | Pending |
-| CORE-04 | Phase 2: Cost Engine & Privacy | Pending |
+| CORE-04 | Phase 2: Cost Engine & Privacy | Complete |
 | ANLT-01 | Phase 4: Cost Analytics Dashboard | Pending |
 | ANLT-02 | Phase 4: Cost Analytics Dashboard | Pending |
 | ANLT-03 | Phase 4: Cost Analytics Dashboard | Pending |
