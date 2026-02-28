@@ -47,24 +47,24 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Cost estimates are calculated for all current Claude models using correct per-token pricing including cache tier complexity (5-min write 1.25x, 1-hour write 2x, cache read 0.1x)
   2. Every cost figure displayed anywhere in the application includes the word "estimated" or an equivalent indicator
-  3. Server binds exclusively to 127.0.0.1 — it is not accessible from other machines on the network
-  4. No conversation content (user messages, assistant responses) is ever displayed in the UI — only metadata and token counts
-  5. CSP headers block all external network requests from the served pages
+  3. No conversation content (user messages, assistant responses) is ever displayed in the UI — only metadata and token counts
 **Plans**: 2 plans
 
 Plans:
 - [x] 02-01-PLAN.md — EstimatedCost branded type + MODEL_PRICING constants + computeCosts() engine with tests
-- [ ] 02-02-PLAN.md — applyPrivacyFilter() module + src/index.ts public exports + human verification against real JSONL data
+- [x] 02-02-PLAN.md — applyPrivacyFilter() module + src/index.ts public exports + human verification against real JSONL data
 
 ### Phase 3: Server, CLI & App Shell
 **Goal**: User can run a single command and have a working web application open in their browser
 **Depends on**: Phase 2
-**Requirements**: CLI-01, CLI-02
+**Requirements**: CLI-01, CLI-02, CORE-04
 **Success Criteria** (what must be TRUE):
   1. Running `npx yclaude` starts the server and automatically opens a browser tab to the dashboard
   2. The `--dir <path>` flag overrides the default data directory, `--port <n>` sets a custom port, and `--no-open` prevents browser auto-open
   3. The browser shows a functioning SPA shell (navigation, layout, loading states) served by the Hono server
   4. API endpoints under `/api/v1/*` return parsed and aggregated data from the data pipeline
+  5. Server binds exclusively to 127.0.0.1 — it is not accessible from other machines on the network
+  6. CSP headers block all external network requests from the served pages
 **Plans**: TBD
 
 Plans:

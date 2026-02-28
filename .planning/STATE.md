@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: unknown
-last_updated: "2026-02-28T09:40:48.285Z"
+status: phase_complete
+last_updated: "2026-02-28T09:46:13.242Z"
 progress:
   total_phases: 2
   completed_phases: 2
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Give developers full visibility into their AI coding spend -- locally first, with no friction.
-**Current focus:** Phase 2: Cost Engine (plan 2 of 3 complete)
+**Current focus:** Phase 3: Server, CLI & App Shell (not yet planned)
 
 ## Current Position
 
-Phase: 2 of 8 (Cost Engine & Privacy) - IN PROGRESS
-Plan: 2 of 3 completed in current phase
-Status: Phase 2 plan 2 complete — privacy filter, public API exports, human-verified pipeline
-Last activity: 2026-02-28 -- Completed 02-02: applyPrivacyFilter(), index.ts public API, CORE-04 verified
+Phase: 2 of 8 (Cost Engine & Privacy) - COMPLETE
+Plan: 2/2 completed
+Status: Phase 2 complete — cost engine, privacy filter, public API exports, human-verified pipeline
+Last activity: 2026-02-28 -- Phase 2 verified and closed; ROADMAP corrected (server/CSP SCs moved to Phase 3)
 
-Progress: [####░░░░░░] 40%
+Progress: [##░░░░░░░░] 25%
 
 ## Performance Metrics
 

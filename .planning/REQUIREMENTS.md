@@ -91,9 +91,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | CORE-01 | Phase 1: JSONL Parser & Data Pipeline | Complete (01-01, 01-02, 01-03) |
-| CORE-02 | Phase 2: Cost Engine & Privacy | Pending |
-| CORE-03 | Phase 2: Cost Engine & Privacy | Pending |
-| CORE-04 | Phase 2: Cost Engine & Privacy | Complete |
+| CORE-02 | Phase 2: Cost Engine & Privacy | Complete |
+| CORE-03 | Phase 2: Cost Engine & Privacy | Complete |
+| CORE-04 | Phase 2 (privacy filter) + Phase 3 (server/CSP) | Partial — privacy filter complete; server/CSP pending Phase 3 |
 | ANLT-01 | Phase 4: Cost Analytics Dashboard | Pending |
 | ANLT-02 | Phase 4: Cost Analytics Dashboard | Pending |
 | ANLT-03 | Phase 4: Cost Analytics Dashboard | Pending |
@@ -118,4 +118,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-28*
-*Last updated: 2026-02-28 after 01-01 execution (scaffold + data contracts)*
+*Last updated: 2026-02-28 after 02-02 execution (cost engine + privacy filter complete)*
