@@ -38,14 +38,15 @@ describe('applyPrivacyFilter', () => {
 
     const result = applyPrivacyFilter([eventWithMessage]);
     expect(result).toHaveLength(1);
-    expect('message' in result[0]).toBe(false);
+    const filtered = result[0]!;
+    expect('message' in filtered).toBe(false);
     // All safe fields still present
-    expect(result[0].uuid).toBe(safeEvent.uuid);
-    expect(result[0].type).toBe(safeEvent.type);
-    expect(result[0].timestamp).toBe(safeEvent.timestamp);
-    expect(result[0].sessionId).toBe(safeEvent.sessionId);
-    expect(result[0].model).toBe(safeEvent.model);
-    expect(result[0].tokens).toEqual(safeEvent.tokens);
+    expect(filtered.uuid).toBe(safeEvent.uuid);
+    expect(filtered.type).toBe(safeEvent.type);
+    expect(filtered.timestamp).toBe(safeEvent.timestamp);
+    expect(filtered.sessionId).toBe(safeEvent.sessionId);
+    expect(filtered.model).toBe(safeEvent.model);
+    expect(filtered.tokens).toEqual(safeEvent.tokens);
   });
 
   it('strips content field and preserves all other fields', () => {
@@ -56,9 +57,10 @@ describe('applyPrivacyFilter', () => {
 
     const result = applyPrivacyFilter([eventWithContent]);
     expect(result).toHaveLength(1);
-    expect('content' in result[0]).toBe(false);
-    expect(result[0].uuid).toBe(safeEvent.uuid);
-    expect(result[0].model).toBe(safeEvent.model);
+    const filtered = result[0]!;
+    expect('content' in filtered).toBe(false);
+    expect(filtered.uuid).toBe(safeEvent.uuid);
+    expect(filtered.model).toBe(safeEvent.model);
   });
 
   it('strips text field and preserves all other fields', () => {
@@ -69,9 +71,10 @@ describe('applyPrivacyFilter', () => {
 
     const result = applyPrivacyFilter([eventWithText]);
     expect(result).toHaveLength(1);
-    expect('text' in result[0]).toBe(false);
-    expect(result[0].uuid).toBe(safeEvent.uuid);
-    expect(result[0].model).toBe(safeEvent.model);
+    const filtered = result[0]!;
+    expect('text' in filtered).toBe(false);
+    expect(filtered.uuid).toBe(safeEvent.uuid);
+    expect(filtered.model).toBe(safeEvent.model);
   });
 
   it('strips both message and content fields while preserving safe fields', () => {
@@ -83,17 +86,19 @@ describe('applyPrivacyFilter', () => {
 
     const result = applyPrivacyFilter([eventWithBoth]);
     expect(result).toHaveLength(1);
-    expect('message' in result[0]).toBe(false);
-    expect('content' in result[0]).toBe(false);
-    expect(result[0].uuid).toBe(safeEvent.uuid);
-    expect(result[0].tokens).toEqual(safeEvent.tokens);
+    const filtered = result[0]!;
+    expect('message' in filtered).toBe(false);
+    expect('content' in filtered).toBe(false);
+    expect(filtered.uuid).toBe(safeEvent.uuid);
+    expect(filtered.tokens).toEqual(safeEvent.tokens);
   });
 
   it('does NOT strip the tokens object (contains counts, not conversation text)', () => {
     const result = applyPrivacyFilter([safeEvent]);
-    expect(result[0].tokens).toEqual(safeEvent.tokens);
-    expect(result[0].tokens?.input).toBe(100);
-    expect(result[0].tokens?.output).toBe(50);
+    const filtered = result[0]!;
+    expect(filtered.tokens).toEqual(safeEvent.tokens);
+    expect(filtered.tokens?.input).toBe(100);
+    expect(filtered.tokens?.output).toBe(50);
   });
 
   it('does not mutate the original event objects', () => {
@@ -124,10 +129,11 @@ describe('applyPrivacyFilter', () => {
 
     const result = applyPrivacyFilter([event1, event2, event3]);
     expect(result).toHaveLength(3);
-    expect('message' in result[0]).toBe(false);
-    expect(result[0].uuid).toBe('uuid-1');
-    expect('content' in result[1]).toBe(false);
-    expect(result[1].uuid).toBe('uuid-2');
-    expect(result[2].uuid).toBe('uuid-3');
+    const [r1, r2, r3] = result as [NormalizedEvent, NormalizedEvent, NormalizedEvent];
+    expect('message' in r1).toBe(false);
+    expect(r1.uuid).toBe('uuid-1');
+    expect('content' in r2).toBe(false);
+    expect(r2.uuid).toBe('uuid-2');
+    expect(r3.uuid).toBe('uuid-3');
   });
 });

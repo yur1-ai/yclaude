@@ -7,6 +7,13 @@ import type { ParseOptions, NormalizedEvent } from './parser/types.js';
 // Re-export types for consumers (Phase 2 imports NormalizedEvent from here)
 export type { NormalizedEvent, ParseOptions } from './parser/types.js';
 
+// Phase 2: cost engine public API
+export { applyPrivacyFilter } from './cost/privacy.js';
+export { computeCosts } from './cost/engine.js';
+export type { CostEvent, EstimatedCost } from './cost/types.js';
+// Note: toEstimatedCost is intentionally NOT re-exported — it is an internal
+// constructor used only by the cost engine.
+
 // Main entry point: discover all JSONL files, parse and normalize every event,
 // deduplicate by UUID, return the canonical event collection.
 export async function parseAll(options: ParseOptions = {}): Promise<NormalizedEvent[]> {
