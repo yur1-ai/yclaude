@@ -8,7 +8,7 @@ import type { NormalizedEvent } from '../parser/types.js';
 import type { CostEvent } from '../cost/types.js';
 
 // Compute absolute path to web-dist/ relative to this file's location.
-// src/server/server.ts compiles to dist/server/server.js.
+// src/server/server.ts compiles to dist/server/server.js via tsup.
 // Two levels up from dist/server/ reaches project root, then web-dist/.
 // Using import.meta.url (not process.cwd()) ensures correctness regardless of cwd (npx use case).
 const webDistPath = fileURLToPath(new URL('../../web-dist', import.meta.url));
