@@ -64,4 +64,29 @@ describe('parseAll()', () => {
     await parseAll({ dir: tmpDir, debug: true });
     expect(isDebugEnabled()).toBe(true);
   });
+
+  it('skips malformed lines and continues parsing', async () => {
+    await writeFile(join(tmpDir, 'mixed.jsonl'), [
+      'this is not json',
+      '{"uuid":"event-1","type":"assistant","timestamp":"2024-01-01T00:00:00Z","sessionId":"s1"}',
+      '{broken',
+    ].join('\n'));
+
+    const events = await parseAll({ dir: tmpDir });
+    expect(events.find((e) => e.uuid === 'event-1')).toBeDefined();
+  });
+
+  it('parses subagent files in nested directories', async () => {
+    const subagentDir = join(tmpDir, 'session-123', 'subagents');
+    await mkdir(subagentDir, { recursive: true });
+    await writeFile(join(subagentDir, 'agent-abc.jsonl'), [
+      '{"uuid":"sub-uuid-1","type":"assistant","timestamp":"2024-01-01T00:00:00Z","sessionId":"s1","isSidechain":true,"agentId":"agent-abc"}',
+    ].join('\n'));
+
+    const events = await parseAll({ dir: tmpDir });
+    const found = events.find((e) => e.uuid === 'sub-uuid-1');
+    expect(found).toBeDefined();
+    expect(found?.isSidechain).toBe(true);
+    expect(found?.agentId).toBe('agent-abc');
+  });
 });

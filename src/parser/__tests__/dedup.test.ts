@@ -61,4 +61,13 @@ describe('DedupAccumulator', () => {
     expect(dedup.size).toBe(0);
     expect(dedup.duplicates).toBe(0);
   });
+
+  it('retains first-seen event data when duplicate UUID is added', () => {
+    const dedup = new DedupAccumulator();
+    const first = { ...makeEvent('uuid-1'), model: 'claude-sonnet-4-6' };
+    const second = { ...makeEvent('uuid-1'), model: 'claude-opus-4-6' };
+    dedup.add(first);
+    dedup.add(second);
+    expect(dedup.results()[0]?.model).toBe('claude-sonnet-4-6');
+  });
 });

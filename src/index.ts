@@ -2,14 +2,14 @@ import { enableDebug } from './shared/debug.js';
 import { discoverJSONLFiles, streamJSONLFile } from './parser/reader.js';
 import { normalizeEvent } from './parser/normalizer.js';
 import { DedupAccumulator } from './parser/dedup.js';
-import type { ParseOptions } from './parser/types.js';
+import type { ParseOptions, NormalizedEvent } from './parser/types.js';
 
 // Re-export types for consumers (Phase 2 imports NormalizedEvent from here)
 export type { NormalizedEvent, ParseOptions } from './parser/types.js';
 
 // Main entry point: discover all JSONL files, parse and normalize every event,
 // deduplicate by UUID, return the canonical event collection.
-export async function parseAll(options: ParseOptions = {}): Promise<import('./parser/types.js').NormalizedEvent[]> {
+export async function parseAll(options: ParseOptions = {}): Promise<NormalizedEvent[]> {
   if (options.debug) {
     enableDebug();
   }

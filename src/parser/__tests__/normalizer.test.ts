@@ -141,4 +141,31 @@ describe('normalizeEvent()', () => {
     expect(result?.isSidechain).toBe(true);
     expect(result?.agentId).toBe('agent-42');
   });
+
+  it('passes through gitBranch field', () => {
+    const result = normalizeEvent({
+      uuid: 'abc-1',
+      type: 'assistant',
+      timestamp: '2024-01-01T00:00:00Z',
+      sessionId: 'session-123',
+      gitBranch: 'main',
+    });
+
+    expect(result?.gitBranch).toBe('main');
+  });
+
+  it('handles persisted-output tags inside string values without special processing', () => {
+    const result = normalizeEvent({
+      uuid: 'abc-1',
+      type: 'user',
+      sessionId: 'session-123',
+      timestamp: '2024-01-01T00:00:00Z',
+      message: {
+        content: [{ type: 'tool_result', content: '<persisted-output>\nsome content\n</persisted-output>' }],
+      },
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.uuid).toBe('abc-1');
+  });
 });
