@@ -25,7 +25,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 </details>
 
-- [ ] **Phase 4: Cost Analytics Dashboard** - Core dashboard views showing total cost, token breakdown, cost-over-time chart, and global date range filtering
+- [x] **Phase 4: Cost Analytics Dashboard** - Core dashboard views showing total cost, token breakdown, cost-over-time chart, and global date range filtering (completed 2026-02-28)
 - [ ] **Phase 5: Model & Project Breakdowns** - Per-model donut chart and table, per-project cost breakdown with decoded directory names
 - [ ] **Phase 6: Session Explorer** - Browsable session list with drill-down detail view showing per-turn token breakdown
 - [ ] **Phase 7: Differentiator Features** - Cache efficiency score, activity heatmap, sidechain/subagent analysis, and git branch filtering
@@ -181,7 +181,7 @@ Phases execute in this order: 1 -> 2 -> 3 -> 4 -> (5 parallel with 6) -> 7 -> 8
 | 1. JSONL Parser & Data Pipeline | 3/3 | Complete | 2026-02-28 |
 | 2. Cost Engine & Privacy | 2/2 | Complete | 2026-02-28 |
 | 3. Server, CLI & App Shell | 3/3 | Complete | 2026-02-28 |
-| 4. Cost Analytics Dashboard | 2/3 | In Progress|  |
+| 4. Cost Analytics Dashboard | 3/3 | Complete   | 2026-02-28 |
 | 5. Model & Project Breakdowns | 0/0 | Not started | - |
 | 6. Session Explorer | 0/0 | Not started | - |
 | 7. Differentiator Features | 0/0 | Not started | - |
