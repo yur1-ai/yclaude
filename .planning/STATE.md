@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-02-28T15:34:00Z"
+last_updated: "2026-02-28T15:58:38Z"
 progress:
   total_phases: 8
-  completed_phases: 2
-  total_plans: 7
-  completed_plans: 7
+  completed_phases: 3
+  total_plans: 10
+  completed_plans: 10
 ---
 
 # Project State
@@ -18,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Give developers full visibility into their AI coding spend -- locally first, with no friction.
-**Current focus:** Phase 3: Server, CLI & App Shell — Plans 01 and 02 complete, 03-03 remaining
+**Current focus:** Phase 4: Dashboard & Data Rendering — Phase 3 complete, ready to begin
 
 ## Current Position
 
-Phase: 3 of 8 (Server, CLI & App Shell) - In Progress
-Plan: 2/3 completed (03-01 Hono server + CLI done, 03-02 SPA shell done, 03-03 integration pending)
-Status: 03-01 complete — Hono server factory with CSP headers, /api/v1/summary, CLI binary with flag parsing and 127.0.0.1 binding
-Last activity: 2026-02-28 -- 03-01 complete; 102 tests passing, typecheck clean
+Phase: 3 of 8 (Server, CLI & App Shell) - Complete
+Plan: 3/3 completed (03-01 Hono server + CLI, 03-02 SPA shell, 03-03 integration + human-verify)
+Status: Phase 3 complete — full-stack application running; server serves React SPA at 127.0.0.1:3000, API endpoint returns JSON, CSP headers enforced, browser-verified
+Last activity: 2026-02-28 -- 03-03 complete; human verified sidebar, nav routing, no console errors
 
-Progress: [###░░░░░░░] 30%
+Progress: [####░░░░░░] 37%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
+- Total plans completed: 10
 - Average duration: ~13min (including checkpoint waits)
-- Total execution time: ~75min total
+- Total execution time: ~100min total
 
 **By Phase:**
 
@@ -42,11 +42,11 @@ Progress: [###░░░░░░░] 30%
 |-------|-------|-------|----------|
 | 01-jsonl-parser-data-pipeline | 3 | ~50min | ~16min |
 | 02-cost-engine-privacy | 2 | ~23min | ~11min |
-| 03-server-cli-app-shell | 2 (of 3) | ~7min | ~3.5min |
+| 03-server-cli-app-shell | 3 | ~32min | ~11min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (3min), 02-02 (~20min incl. checkpoint), 03-02 (~2min), 03-01 (~5min)
-- Trend: Phase 3 plans 01+02 complete — backend and SPA shell both done, integration (03-03) remaining
+- Last 5 plans: 02-02 (~20min incl. checkpoint), 03-02 (~2min), 03-01 (~5min), 03-03 (~25min incl. checkpoint)
+- Trend: Phase 3 complete — all 3 plans done; full-stack application browser-verified
 
 *Updated after each plan completion*
 
@@ -87,6 +87,9 @@ Recent decisions affecting current work:
 - [03-01]: dts: { entry: ['src/index.ts'] } — scopes .d.ts output to library only, avoids shebang-in-dts error
 - [03-01]: exactOptionalPropertyTypes: pass opts.dir conditionally (opts.dir !== undefined ? {dir} : {})
 - [03-01]: cli.test.ts uses standalone Commander instance, not importing cli.ts (side effects via parse())
+- [03-03]: webDistPath computed via fileURLToPath(new URL('../../web-dist', import.meta.url)) — resolves correctly from dist/server/server.js for npx correctness
+- [03-03]: Route order enforced: API routes first, then serveStatic('/*'), then SPA fallback app.get('*') — static catch-all would shadow API routes if registered first
+- [03-03]: Sequential build (tsup then vite) chosen over parallel — avoids potential type issues if Vite runs against stale tsup types
 
 ### Pending Todos
 
@@ -100,5 +103,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 03-01-PLAN.md (Hono server factory + CLI binary + /api/v1/summary endpoint — full TDD cycle, 102 tests passing)
+Stopped at: Completed 03-03-PLAN.md (full-stack integration — serveStatic wired, build scripts added, human-verified in browser; Phase 3 complete)
 Resume file: None

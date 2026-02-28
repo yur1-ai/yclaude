@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: JSONL Parser & Data Pipeline** - Resilient parser that reads Claude Code JSONL data with per-line error handling, deduplication, and multi-path detection (completed 2026-02-28)
 - [x] **Phase 2: Cost Engine & Privacy** - Accurate cost estimation with full cache tier pricing, estimate labeling, and localhost-only security hardening (completed 2026-02-28)
-- [ ] **Phase 3: Server, CLI & App Shell** - Hono server serving a React SPA shell, launched via `npx yclaude` with CLI flags and auto-open browser
+- [x] **Phase 3: Server, CLI & App Shell** - Hono server serving a React SPA shell, launched via `npx yclaude` with CLI flags and auto-open browser (completed 2026-02-28)
 - [ ] **Phase 4: Cost Analytics Dashboard** - Core dashboard views showing total cost, token breakdown, cost-over-time chart, and global date range filtering
 - [ ] **Phase 5: Model & Project Breakdowns** - Per-model donut chart and table, per-project cost breakdown with decoded directory names
 - [ ] **Phase 6: Session Explorer** - Browsable session list with drill-down detail view showing per-turn token breakdown
@@ -70,7 +70,7 @@ Plans:
 Plans:
 - [x] 03-01-PLAN.md — Hono server factory (createApp), /api/v1/summary endpoint, CLI binary with --dir/--port/--no-open flags, 127.0.0.1 binding, CSP headers
 - [x] 03-02-PLAN.md — Vite + React + Tailwind v4 + React Router v7 SPA shell: left sidebar layout, 4 placeholder pages, builds to web-dist/
-- [ ] 03-03-PLAN.md — CLI entrypoint: npx yclaude with --dir, --port, --no-open flags and auto-open browser
+- [x] 03-03-PLAN.md — Full-stack integration: serveStatic wired to web-dist/, build scripts updated, human-verified in browser
 
 ### Phase 4: Cost Analytics Dashboard
 **Goal**: User can see their total AI coding spend and how it changes over time, filtered to any date range
@@ -151,7 +151,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 |-------|----------------|--------|-----------|
 | 1. JSONL Parser & Data Pipeline | 3/3 | Complete   | 2026-02-28 |
 | 2. Cost Engine & Privacy | 2/2 | Complete   | 2026-02-28 |
-| 3. Server, CLI & App Shell | 2/3 | In progress | - |
+| 3. Server, CLI & App Shell | 3/3 | Complete    | 2026-02-28 |
 | 4. Cost Analytics Dashboard | 0/0 | Not started | - |
 | 5. Model & Project Breakdowns | 0/0 | Not started | - |
 | 6. Session Explorer | 0/0 | Not started | - |

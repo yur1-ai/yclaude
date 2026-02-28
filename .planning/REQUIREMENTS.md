@@ -34,8 +34,8 @@ Requirements for the local MVP. Each maps to roadmap phases.
 
 ### CLI & UX
 
-- [ ] **CLI-01**: User can run `npx yclaude` with zero installation and have a browser tab open automatically
-- [ ] **CLI-02**: User can customize behavior via `--dir <path>` (custom data dir), `--port <n>`, and `--no-open` flags
+- [x] **CLI-01**: User can run `npx yclaude` with zero installation and have a browser tab open automatically
+- [x] **CLI-02**: User can customize behavior via `--dir <path>` (custom data dir), `--port <n>`, and `--no-open` flags
 - [ ] **CLI-03**: User can toggle dark mode manually; dark mode respects system preference by default
 
 ### Personality
@@ -93,7 +93,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CORE-01 | Phase 1: JSONL Parser & Data Pipeline | Complete (01-01, 01-02, 01-03) |
 | CORE-02 | Phase 2: Cost Engine & Privacy | Complete |
 | CORE-03 | Phase 2: Cost Engine & Privacy | Complete |
-| CORE-04 | Phase 2 (privacy filter) + Phase 3 (server/CSP) | Partial — privacy filter complete; server/CSP pending Phase 3 |
+| CORE-04 | Phase 2 (privacy filter) + Phase 3 (server/CSP) | Complete (02-02 privacy filter + 03-01 server/CSP + 03-03 human-verified) |
 | ANLT-01 | Phase 4: Cost Analytics Dashboard | Pending |
 | ANLT-02 | Phase 4: Cost Analytics Dashboard | Pending |
 | ANLT-03 | Phase 4: Cost Analytics Dashboard | Pending |
@@ -106,8 +106,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SESS-02 | Phase 6: Session Explorer | Pending |
 | SESS-03 | Phase 7: Differentiator Features | Pending |
 | SESS-04 | Phase 7: Differentiator Features | Pending |
-| CLI-01 | Phase 3: Server, CLI & App Shell | Pending |
-| CLI-02 | Phase 3: Server, CLI & App Shell | Pending |
+| CLI-01 | Phase 3: Server, CLI & App Shell | Complete (03-01 + 03-03) |
+| CLI-02 | Phase 3: Server, CLI & App Shell | Complete (03-01 + 03-03) |
 | CLI-03 | Phase 8: Dark Mode & Personality | Pending |
 | PRSL-01 | Phase 8: Dark Mode & Personality | Pending |
 
@@ -118,4 +118,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-28*
-*Last updated: 2026-02-28 after 02-02 execution (cost engine + privacy filter complete)*
+*Last updated: 2026-02-28 after 03-03 execution (Phase 3 complete — CLI-01, CLI-02, CORE-04 fully satisfied)*
