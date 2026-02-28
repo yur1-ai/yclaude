@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-28T22:47:26.350Z"
+last_updated: "2026-02-28T22:49:00.939Z"
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 11
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # Project State
@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 ## Current Position
 
 Phase: 4/8 in progress — Phase 4: Cost Analytics Dashboard
-Plan: 04-01 complete, 04-02 next (Wave 1), 04-03 (Wave 2)
-Status: 04-01 complete — server endpoints done, ready for frontend infra
-Last activity: 2026-02-28 — 04-01 complete: /api/v1/summary date filtering + /api/v1/cost-over-time endpoint (TDD, 15 tests passing)
+Plan: 04-01 complete, 04-02 complete, 04-03 next (Wave 2)
+Status: 04-02 complete — frontend data layer done; TanStack Query + Zustand + 3 hooks + CSS vars
+Last activity: 2026-02-28 — 04-02 complete: useSummary, useAllTimeSummary, useCostOverTime hooks, date range store, QueryClientProvider, @custom-variant dark + CSS vars
 
 Progress: [#####░░░░░] 43%
 
@@ -48,6 +48,7 @@ Progress: [#####░░░░░] 43%
 - Last 5 plans: 02-02 (~20min), 03-01 (~5min), 03-02 (~2min), 03-03 (~25min)
 - Trend: Stable — Phase 3 complete; full-stack application browser-verified
 | Phase 04-cost-analytics-dashboard P04-01 | 15 | 3 tasks | 2 files |
+| Phase 04-cost-analytics-dashboard P02 | 4 | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,8 @@ Recent decisions affecting current work:
 - [Phase 04-cost-analytics-dashboard]: Use UTC Date methods throughout bucketing (getUTCDay, setUTCDate) — local methods cause timezone drift with ISO timestamps
 - [Phase 04-cost-analytics-dashboard]: parseDate() returns null|Date|'invalid' (three-state) to distinguish absent from malformed dates without boolean flags
 - [Phase 04-cost-analytics-dashboard]: Gap-fill only for day bucket with explicit from+to bounds — week/month gap-fill deferred per plan spec
+- [Phase 04-cost-analytics-dashboard]: npm used for web/ deps (package-lock.json already present — npm was configured package manager)
+- [Phase 04-cost-analytics-dashboard]: queryKey uses from?.toISOString() from Zustand store (not new Date()) to prevent infinite refetch loops
 
 ### Pending Todos
 
@@ -80,5 +83,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 04-01-PLAN.md — summary date filtering + cost-over-time endpoint (TDD, 15 tests, 2 task commits)
+Stopped at: Completed 04-02-PLAN.md — frontend data layer (TanStack Query + Zustand store + 3 hooks + CSS vars)
 Resume file: None
