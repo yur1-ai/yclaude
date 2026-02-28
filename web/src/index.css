@@ -1,1 +1,15 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Token type semantic colors — consumed by TokenBreakdown in 04-03 */
+  --color-token-input: oklch(0.60 0.18 250);
+  --color-token-output: oklch(0.60 0.18 160);
+  --color-token-cache-write: oklch(0.65 0.18 70);
+  --color-token-cache-read: oklch(0.55 0.04 240);
+
+  /* Chart colors — consumed by CostBarChart in 04-03 */
+  --color-bar: oklch(0.60 0.18 250);
+  --color-grid: oklch(0.92 0 0);
+}
