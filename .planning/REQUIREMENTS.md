@@ -46,6 +46,17 @@ Requirements for the local MVP. Each maps to roadmap phases.
 
 Deferred to future release. Tracked but not in current roadmap.
 
+### Message Viewer (v1.1)
+
+Bare-bones opt-in chat message viewer, enabled via a startup flag for privacy control.
+
+- **MSGS-01**: User can start the app with `--show-messages` flag to enable message content display (default: messages hidden)
+- **MSGS-02**: User can browse session messages in a dedicated view — full conversation thread per session (only when flag enabled)
+- **MSGS-03**: Message view is clearly scoped to local-only — never synced to cloud even when cloud features ship
+- **MSGS-04**: User can toggle message visibility per-session from the session detail view (respects startup flag as a gate)
+
+*Design note: `applyPrivacyFilter()` becomes conditional on the flag at CLI startup. Cloud sync in v1.1+ must explicitly exclude message content unless a separate explicit consent step is added.*
+
 ### Differentiators (v1.x polish)
 
 - **DIFF-01**: User can see a rolling cost projection line on the cost-over-time chart
@@ -77,7 +88,7 @@ Deferred to future release. Tracked but not in current roadmap.
 | Feature | Reason |
 |---------|--------|
 | Real-time token streaming monitor | Different product category; competes with Claude Code Usage Monitor on their turf, not yclaude's |
-| Conversation content display | Privacy liability; kills any future cloud/team feature roadmap |
+| Conversation content display (v1.0) | Default behavior stays privacy-first; deferred to v1.1 as opt-in `--show-messages` flag (MSGS-01–04). Cloud sync must never include message content without explicit consent. |
 | OpenTelemetry/Prometheus/Grafana export | Wrong audience for v1; enterprise-only use case |
 | AI-powered natural language queries | Breaks local-first privacy promise; adds LLM dependency |
 | Native IDE extensions (v1) | Web dashboard first; extensions add complexity without validating core value |

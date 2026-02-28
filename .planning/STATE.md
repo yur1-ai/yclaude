@@ -93,7 +93,8 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+- **[v1.1 scope]** Chat message viewer: opt-in via `--show-messages` flag at startup; bare-bones first (MSGS-01–04 in REQUIREMENTS.md). `applyPrivacyFilter()` becomes conditional on flag. Cloud must never sync messages without explicit consent.
+- **[infra]** Lock Node.js version at project level using nvm (`.nvmrc` file), pin to current LTS (not latest). Improves stability and reproducibility across machines.
 
 ### Blockers/Concerns
 
