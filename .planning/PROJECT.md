@@ -1,5 +1,16 @@
 # yclaude
 
+## Current Milestone: v1.0 Local MVP
+
+**Goal:** Complete the full local dashboard experience — cost analytics, breakdowns, session explorer, differentiator features, and personality polish
+
+**Target features:**
+- Cost analytics dashboard with time-series chart and global date range filtering
+- Per-model donut chart and per-project cost breakdowns
+- Session explorer with sortable list and drill-down detail view
+- Differentiator features: cache efficiency score, activity heatmap, subagent analysis, git branch filtering
+- Dark mode (system-aware) and humorous personality copy woven throughout
+
 ## What This Is
 
 yclaude ("Why, Claude?!") is an open-source analytics dashboard for AI coding tool usage, starting with Claude Code. It reads local data from `~/.claude` and presents beautiful, personality-driven dashboards showing exactly where your tokens went — and why you spent so much on that one Tuesday afternoon. Personal use is free forever; cloud sync and team features are paid.
@@ -100,4 +111,4 @@ Each JSONL file contains event records. Relevant types:
 | Research-first on tech stack | No strong constraint; let best tool for the job win | — Pending |
 
 ---
-*Last updated: 2026-02-28 after initialization*
+*Last updated: 2026-02-28 after Milestone v1.0 started*
