@@ -9,7 +9,7 @@ Requirements for the local MVP. Each maps to roadmap phases.
 
 ### Foundation
 
-- [ ] **CORE-01**: User's JSONL data is parsed reliably — per-line error handling, UUID deduplication, handles `<persisted-output>` wrapped lines, detects both `~/.claude` and `~/.config/claude` paths, respects `CLAUDE_CONFIG_DIR` env var
+- [x] **CORE-01**: User's JSONL data is parsed reliably — per-line error handling, UUID deduplication, handles `<persisted-output>` wrapped lines, detects both `~/.claude` and `~/.config/claude` paths, respects `CLAUDE_CONFIG_DIR` env var
 - [ ] **CORE-02**: User sees accurate cost estimates — pricing table covers all current Claude models including full cache tier complexity (5-min write 1.25x, 1-hour write 2x, read 0.1x)
 - [ ] **CORE-03**: User understands costs are estimates — all cost figures labeled "estimated" throughout the UI (upstream token data has documented duplication bugs)
 - [ ] **CORE-04**: User's conversation data stays private — server binds to `127.0.0.1` exclusively, zero telemetry, CSP headers blocking external requests, no conversation content displayed anywhere

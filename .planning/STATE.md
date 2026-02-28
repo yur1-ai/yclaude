@@ -10,27 +10,27 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 ## Current Position
 
 Phase: 1 of 8 (JSONL Parser & Data Pipeline)
-Plan: 1 of 1 completed in current phase
+Plan: 2 of 3 completed in current phase
 Status: In progress
-Last activity: 2026-02-28 -- Completed 01-01: Project scaffold and data contracts
+Last activity: 2026-02-28 -- Completed 01-02: Parser modules (debug, reader, normalizer, dedup, parseAll)
 
-Progress: [#░░░░░░░░░] 10%
+Progress: [##░░░░░░░░] 20%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 2min
-- Total execution time: 0.03 hours
+- Total plans completed: 2
+- Average duration: 2.5min
+- Total execution time: 0.08 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-jsonl-parser-data-pipeline | 1 | 2min | 2min |
+| 01-jsonl-parser-data-pipeline | 2 | 5min | 2.5min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (2min)
+- Last 5 plans: 01-01 (2min), 01-02 (3min)
 - Trend: -
 
 *Updated after each plan completion*
@@ -49,6 +49,10 @@ Recent decisions affecting current work:
 - [01-01]: passthrough() on NormalizedEventSchema preserves unknown fields from future Claude Code versions
 - [01-01]: NormalizedEvent six token sub-fields (input, output, cacheCreation, cacheRead, cacheCreation5m, cacheCreation1h) under optional tokens object
 - [01-01]: RawEventSchema permissive by design -- only type is required, all else optional
+- [01-02]: CLAUDE_CONFIG_DIR is exclusive override (not appended to defaults) -- mirrors Claude Code's own behavior
+- [01-02]: cwd field is ground truth for project path; slug decoding intentionally omitted (broken for dirs with dashes)
+- [01-02]: discoverJSONLFiles() three-level hierarchy: overrideDir > CLAUDE_CONFIG_DIR > defaults
+- [01-02]: DedupAccumulator Map-based first-seen-wins with insertion-order preservation
 
 ### Pending Todos
 
@@ -62,5 +66,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 01-01-PLAN.md (project scaffold + data contracts)
+Stopped at: Completed 01-02-PLAN.md (parser modules: debug, reader, normalizer, dedup, parseAll)
 Resume file: None
