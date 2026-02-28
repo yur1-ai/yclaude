@@ -53,7 +53,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — EstimatedCost branded type + MODEL_PRICING constants + computeCosts() engine with tests
+- [x] 02-01-PLAN.md — EstimatedCost branded type + MODEL_PRICING constants + computeCosts() engine with tests
 - [ ] 02-02-PLAN.md — applyPrivacyFilter() module + src/index.ts public exports + human verification against real JSONL data
 
 ### Phase 3: Server, CLI & App Shell
@@ -149,7 +149,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. JSONL Parser & Data Pipeline | 3/3 | Complete   | 2026-02-28 |
-| 2. Cost Engine & Privacy | 0/2 | Not started | - |
+| 2. Cost Engine & Privacy | 1/2 | In progress | - |
 | 3. Server, CLI & App Shell | 0/0 | Not started | - |
 | 4. Cost Analytics Dashboard | 0/0 | Not started | - |
 | 5. Model & Project Breakdowns | 0/0 | Not started | - |
