@@ -27,8 +27,8 @@ describe('parseAll()', () => {
 
     const events = await parseAll({ dir: tmpDir });
     expect(events.length).toBe(2);
-    expect(events[0].uuid).toBe('event-1');
-    expect(events[1].uuid).toBe('event-2');
+    expect(events[0]?.uuid).toBe('event-1');
+    expect(events[1]?.uuid).toBe('event-2');
   });
 
   it('skips events without uuid', async () => {
@@ -39,7 +39,7 @@ describe('parseAll()', () => {
 
     const events = await parseAll({ dir: tmpDir });
     expect(events.length).toBe(1);
-    expect(events[0].uuid).toBe('event-1');
+    expect(events[0]?.uuid).toBe('event-1');
   });
 
   it('deduplicates events with same uuid across files', async () => {

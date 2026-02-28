@@ -32,9 +32,9 @@ describe('DedupAccumulator', () => {
 
     const results = dedup.results();
     expect(results.length).toBe(3);
-    expect(results[0].uuid).toBe('uuid-1');
-    expect(results[1].uuid).toBe('uuid-2');
-    expect(results[2].uuid).toBe('uuid-3');
+    expect(results[0]?.uuid).toBe('uuid-1');
+    expect(results[1]?.uuid).toBe('uuid-2');
+    expect(results[2]?.uuid).toBe('uuid-3');
   });
 
   it('size getter returns number of unique events', () => {
