@@ -50,44 +50,48 @@ completed: 2026-02-28
 
 # Phase 1 Plan 3: Test Suite Summary
 
-**82 Vitest tests across 11 files verifying all five CORE-01 criteria: token extraction, malformed-line resilience, UUID deduplication, CLAUDE_CONFIG_DIR path override, and persisted-output tag handling**
+**56 Vitest tests across 6 files (after consolidation) verifying all five CORE-01 criteria: token extraction, malformed-line resilience, UUID deduplication, CLAUDE_CONFIG_DIR path override, and persisted-output tag handling — human-verified against real Claude Code JSONL data with no functional issues**
 
 ## Performance
 
-- **Duration:** 2 min
+- **Duration:** ~45 min (including human checkpoint wait time)
 - **Started:** 2026-02-28T07:24:46Z
-- **Completed:** 2026-02-28T07:26:30Z
-- **Tasks:** 1 of 2 (paused at checkpoint:human-verify)
-- **Files created:** 5 test files
+- **Completed:** 2026-02-28T08:10:00Z
+- **Tasks:** 2 of 2 (complete — checkpoint approved)
+- **Files modified:** 6 test files
 
 ## Accomplishments
 
-- 82 tests pass across 11 test files (51 pre-existing + 31 new)
-- normalizer.test.ts: 12 tests including all six token fields, cwd-not-slug verification, gitBranch, isSidechain, persisted-output tag, unknown field passthrough
-- dedup.test.ts: 5 tests for first-seen-wins, insertion order, size/duplicates counters
-- reader.test.ts: 5 tests for malformed-line skipping, blank-line skipping, all-bad-file resilience
-- debug.test.ts: 4 tests for enable/disable/isEnabled/stderr write behavior
-- index.test.ts: 5 integration tests including subagent nested directory parsing and cross-file deduplication
-- `npm run build` exits 0; `tsc --noEmit` exits 0; `dist/index.js` ready for checkpoint verification
+- 56 tests passing across 6 test files (post-consolidation); `npm test` exits 0
+- normalizer.test.ts: 13 tests including all six token fields, cwd-not-slug verification, gitBranch, isSidechain, persisted-output tag, unknown field passthrough
+- dedup.test.ts: 7 tests for first-seen-wins, insertion order, size/duplicates counters
+- reader.test.ts: 10 tests for malformed-line skipping, blank-line skipping, all-bad-file resilience, discoverJSONLFiles() with overrideDir
+- debug.test.ts: 6 tests for enable/disable/isEnabled/stderr write behavior
+- index.test.ts: 7 integration tests including subagent nested directory parsing and cross-file deduplication
+- types.test.ts: 13 tests for Zod schema validation
+- Human checkpoint approved: parser ran against real local JSONL data, returned correct token counts and real cwd-based project paths (no slug artifacts)
+- Post-checkpoint code review: test consolidation, import cleanup, .gitignore additions committed in b95b162
 
 ## Task Commits
 
 1. **Task 1: Write unit and integration test suite** - `c85f749` (test)
+2. **Post-checkpoint code review cleanup** - `b95b162` (refactor)
 
-*(Task 2 is a checkpoint:human-verify — awaiting human confirmation against real Claude Code data)*
+*(Task 2 was checkpoint:human-verify — approved by human)*
 
-## Files Created
+## Files Modified
 
-- `/Users/ishevtsov/ai-projects/yclaude/src/shared/debug.test.ts` - 4 debug module tests
-- `/Users/ishevtsov/ai-projects/yclaude/src/parser/dedup.test.ts` - 5 DedupAccumulator tests
-- `/Users/ishevtsov/ai-projects/yclaude/src/parser/normalizer.test.ts` - 12 normalizeEvent() tests
-- `/Users/ishevtsov/ai-projects/yclaude/src/parser/reader.test.ts` - 5 JSONL streaming tests
-- `/Users/ishevtsov/ai-projects/yclaude/src/index.test.ts` - 5 parseAll() integration tests
+- `/Users/ishevtsov/ai-projects/yclaude/src/parser/__tests__/normalizer.test.ts` - 13 normalizeEvent() tests
+- `/Users/ishevtsov/ai-projects/yclaude/src/parser/__tests__/dedup.test.ts` - 7 DedupAccumulator tests
+- `/Users/ishevtsov/ai-projects/yclaude/src/parser/__tests__/reader.test.ts` - 10 streaming + discovery tests
+- `/Users/ishevtsov/ai-projects/yclaude/src/parser/__tests__/debug.test.ts` - 6 debug module tests
+- `/Users/ishevtsov/ai-projects/yclaude/src/parser/__tests__/index.test.ts` - 7 parseAll() integration tests
 
 ## Decisions Made
 
-- New test files placed at `src/parser/normalizer.test.ts` etc. (colocated with source) rather than `src/parser/__tests__/` — both patterns are picked up by vitest's default glob
+- New test files placed at `src/parser/normalizer.test.ts` etc. (colocated with source) rather than `src/parser/__tests__/` — both patterns are picked up by vitest's default glob; consolidated to `__tests__/` after code review (b95b162)
 - Fixed import path in `src/index.test.ts` from `'../src/index.js'` to `'./index.js'` (plan assumed root-level file, file is at src/ level)
+- Human checkpoint verdict: "approved — parser ran successfully against real data. Minor code review issues were found and addressed separately (test consolidation, import cleanup, .gitignore). No functional issues."
 
 ## Deviations from Plan
 
@@ -98,7 +102,7 @@ completed: 2026-02-28
 - **Issue:** Plan specified `import { parseAll } from '../src/index.js'` but the file is at `src/index.test.ts`, so the correct relative path is `'./index.js'`
 - **Fix:** Changed to `import { parseAll } from './index.js'`
 - **Files modified:** src/index.test.ts
-- **Verification:** All 82 tests pass including the 5 integration tests in this file
+- **Verification:** All tests pass including the integration tests in this file
 - **Committed in:** c85f749 (Task 1 commit)
 
 ---
@@ -107,7 +111,7 @@ completed: 2026-02-28
 
 ## Issues Encountered
 
-None beyond the import path fix noted above.
+None beyond the import path fix noted above. Human checkpoint confirmed no functional issues in real data.
 
 ## User Setup Required
 
@@ -115,18 +119,23 @@ None - all tests use fixture data and temp directories.
 
 ## Next Phase Readiness
 
-- All five CORE-01 success criteria verified by automated tests
-- Human checkpoint needed: confirm parser returns correct results against real Claude Code JSONL data
-- After checkpoint approval: Phase 2 (Cost Engine) can start consuming `parseAll()` from `dist/index.js`
+- Phase 1 (JSONL Parser & Data Pipeline) is fully complete. All five CORE-01 success criteria verified by automated tests AND human checkpoint.
+- Phase 2 (Cost Engine) can import `parseAll` from `dist/index.js` and `NormalizedEvent` from `dist/parser/types.js` with full confidence.
+- Token field extraction (input, output, cacheCreation, cacheRead, cacheCreation5m, cacheCreation1h) verified correct against real data.
+- cwd field confirmed as project path ground truth — slug decoding intentionally omitted.
+- No outstanding blockers for Phase 2.
 
 ## Self-Check: PASSED
 
-- FOUND: src/shared/debug.test.ts
-- FOUND: src/parser/dedup.test.ts
-- FOUND: src/parser/normalizer.test.ts
-- FOUND: src/parser/reader.test.ts
-- FOUND: src/index.test.ts
-- FOUND commit: c85f749
+- FOUND: src/parser/__tests__/normalizer.test.ts
+- FOUND: src/parser/__tests__/dedup.test.ts
+- FOUND: src/parser/__tests__/reader.test.ts
+- FOUND: src/parser/__tests__/debug.test.ts
+- FOUND: src/parser/__tests__/index.test.ts
+- FOUND commit: c85f749 (test(01-03): write full CORE-01 test suite)
+- FOUND commit: b95b162 (refactor(01): consolidate duplicate test files)
+- All 56 tests passing: npm test exits 0
+- Human checkpoint: APPROVED
 
 ---
 *Phase: 01-jsonl-parser-data-pipeline*

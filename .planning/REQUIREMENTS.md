@@ -90,7 +90,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CORE-01 | Phase 1: JSONL Parser & Data Pipeline | In progress (01-01 done) |
+| CORE-01 | Phase 1: JSONL Parser & Data Pipeline | Complete (01-01, 01-02, 01-03) |
 | CORE-02 | Phase 2: Cost Engine & Privacy | Pending |
 | CORE-03 | Phase 2: Cost Engine & Privacy | Pending |
 | CORE-04 | Phase 2: Cost Engine & Privacy | Pending |
