@@ -1,612 +1,829 @@
-# Architecture Research
+# Architecture Patterns: Dashboard Features Integration
 
-**Domain:** npm-distributed local-first analytics dashboard (CLI + web)
+**Domain:** npm-distributed local-first analytics dashboard (CLI + embedded SPA)
 **Researched:** 2026-02-28
-**Confidence:** HIGH
+**Scope:** Phases 4-8 — data aggregation, charting, session views, global state, dark mode
+**Overall Confidence:** HIGH (existing code read directly; patterns verified against official docs)
 
-## System Overview
+---
 
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│                         CLI Layer (bin/yclaude)                       │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐    │
-│  │ Arg Parser   │  │ Config       │  │ Browser Launcher         │    │
-│  │ (commander)  │  │ Resolver     │  │ (open)                   │    │
-│  └──────┬───────┘  └──────┬───────┘  └──────────────────────────┘    │
-│         │                 │                                          │
-├─────────┴─────────────────┴──────────────────────────────────────────┤
-│                         Server Layer (Hono + @hono/node-server)       │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐    │
-│  │ API Routes   │  │ Static Asset │  │ SPA Fallback             │    │
-│  │ /api/*       │  │ Serving      │  │ (index.html)             │    │
-│  └──────┬───────┘  └──────────────┘  └──────────────────────────┘    │
-│         │                                                            │
-├─────────┴────────────────────────────────────────────────────────────┤
-│                         Data Layer (Provider Abstraction)             │
-│  ┌──────────────────────────────────────────────────────────────┐    │
-│  │                  DataProvider Interface                        │    │
-│  │  getSessions() getProjects() getUsage() getTimeline()         │    │
-│  └──────────┬───────────────────────────────┬────────────────────┘    │
-│  ┌──────────┴──────────┐       ┌────────────┴──────────────────┐     │
-│  │ LocalFSProvider     │       │ CloudAPIProvider (Phase 2+)   │     │
-│  │ reads ~/.claude     │       │ fetches from REST API         │     │
-│  └──────────┬──────────┘       └───────────────────────────────┘     │
-│             │                                                        │
-├─────────────┴────────────────────────────────────────────────────────┤
-│                         Parser Layer (JSONL Processing)               │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐    │
-│  │ JSONL Reader │  │ Event        │  │ Aggregation Engine       │    │
-│  │ (streaming)  │  │ Normalizer   │  │ (cost, tokens, time)     │    │
-│  └──────────────┘  └──────────────┘  └──────────────────────────┘    │
-│  ┌──────────────────────────────────────────────────────────────┐    │
-│  │                  FormatAdapter Interface                       │    │
-│  │  ┌─────────────────┐  ┌─────────────────┐                    │    │
-│  │  │ ClaudeCode      │  │ Future: Cursor,  │                    │    │
-│  │  │ Adapter         │  │ Copilot, etc.    │                    │    │
-│  │  └─────────────────┘  └─────────────────┘                    │    │
-│  └──────────────────────────────────────────────────────────────┘    │
-│                                                                      │
-├──────────────────────────────────────────────────────────────────────┤
-│                         Frontend (Pre-built React SPA)                │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐    │
-│  │ Dashboard    │  │ Charts       │  │ Session Explorer         │    │
-│  │ Views        │  │ (Recharts)   │  │ (drill-down)             │    │
-│  └──────────────┘  └──────────────┘  └──────────────────────────┘    │
-│  ┌──────────────┐  ┌──────────────┐                                  │
-│  │ Filter       │  │ Data Fetcher │                                  │
-│  │ Controls     │  │ (API client) │                                  │
-│  └──────────────┘  └──────────────┘                                  │
-└──────────────────────────────────────────────────────────────────────┘
-```
+## Current Architecture Baseline (Phases 1-3, Verified)
 
-## Component Responsibilities
-
-| Component | Responsibility | Typical Implementation |
-|-----------|----------------|------------------------|
-| **CLI Entry** | Parse args (`--port`, `--dir`, `--no-open`), resolve config, bootstrap server | `commander` or `citty`; `bin` field in package.json |
-| **HTTP Server** | Serve API routes + pre-built static frontend assets | Hono + `@hono/node-server` with `serveStatic` |
-| **API Routes** | Expose parsed/aggregated data as JSON endpoints | Hono route handlers under `/api/v1/*` |
-| **Static Asset Server** | Serve the pre-built React SPA from embedded dist | `serveStatic` with `import.meta.dirname` for absolute path resolution |
-| **SPA Fallback** | Return `index.html` for any non-API, non-asset route | Catch-all middleware after API routes |
-| **DataProvider** | Abstract interface over data sources (local FS vs cloud API) | TypeScript interface with `LocalFSProvider` and future `CloudAPIProvider` |
-| **FormatAdapter** | Normalize tool-specific JSONL into canonical event schema | Adapter pattern; `ClaudeCodeAdapter` first, others later |
-| **JSONL Reader** | Stream-read `.jsonl` files, parse line-by-line | Node.js `readline` + `createReadStream`, or `ndjson` |
-| **Event Normalizer** | Transform raw events into typed canonical records | Maps Claude Code fields to `NormalizedEvent` type |
-| **Aggregation Engine** | Compute costs, token sums, session durations, project totals | Pure functions over normalized events; pricing table lookup |
-| **Frontend SPA** | Interactive dashboard with charts, filters, drill-downs | React + Vite (built at publish time, not runtime) |
-| **Browser Launcher** | Auto-open `localhost:PORT` after server starts | `open` npm package |
-
-## Recommended Project Structure
+The Phase 1-3 implementation establishes these facts:
 
 ```
-yclaude/
-├── src/
-│   ├── cli/
-│   │   ├── index.ts           # CLI entrypoint (bin target)
-│   │   ├── args.ts            # Argument parsing and validation
-│   │   └── config.ts          # Config resolution (defaults, env, flags)
-│   ├── server/
-│   │   ├── index.ts           # Hono app factory
-│   │   ├── routes/
-│   │   │   ├── api.ts         # /api/v1/* route definitions
-│   │   │   ├── projects.ts    # GET /api/v1/projects
-│   │   │   ├── sessions.ts    # GET /api/v1/sessions
-│   │   │   ├── usage.ts       # GET /api/v1/usage (aggregated)
-│   │   │   └── timeline.ts    # GET /api/v1/timeline
-│   │   └── static.ts          # Static asset + SPA fallback middleware
-│   ├── data/
-│   │   ├── provider.ts        # DataProvider interface
-│   │   ├── local-provider.ts  # LocalFSProvider implementation
-│   │   └── types.ts           # Canonical data types
-│   ├── parser/
-│   │   ├── reader.ts          # JSONL file discovery and streaming
-│   │   ├── normalizer.ts      # Raw event → NormalizedEvent
-│   │   └── adapters/
-│   │       ├── adapter.ts     # FormatAdapter interface
-│   │       └── claude-code.ts # Claude Code JSONL adapter
-│   ├── aggregation/
-│   │   ├── cost.ts            # Token → cost calculation
-│   │   ├── pricing.ts         # Model pricing table (static data)
-│   │   ├── timeline.ts        # Time-bucketed aggregations
-│   │   └── summary.ts         # Project/session summaries
-│   └── shared/
-│       ├── types.ts           # Shared TypeScript types
-│       └── utils.ts           # Date formatting, slug decoding, etc.
-├── web/                       # Frontend SPA (separate Vite project)
-│   ├── src/
-│   │   ├── App.tsx
-│   │   ├── pages/
-│   │   │   ├── Dashboard.tsx
-│   │   │   ├── Projects.tsx
-│   │   │   ├── Sessions.tsx
-│   │   │   └── SessionDetail.tsx
-│   │   ├── components/
-│   │   │   ├── charts/
-│   │   │   ├── filters/
-│   │   │   └── layout/
-│   │   ├── hooks/
-│   │   │   └── useApi.ts      # Fetch wrapper for /api/v1/*
-│   │   └── lib/
-│   │       ├── api.ts         # API client
-│   │       └── format.ts      # Display formatting, humorous copy
-│   ├── index.html
-│   ├── vite.config.ts
-│   └── package.json           # Web-only devDependencies
-├── dist/                      # Built backend (tsup output)
-├── web-dist/                  # Built frontend (vite build output, committed or built at prepublish)
-├── package.json
-├── tsconfig.json
-└── tsup.config.ts
+src/
+  parser/
+    types.ts          — NormalizedEvent type (uuid, type, timestamp, sessionId,
+                        tokens{input,output,cacheCreation,cacheRead,cacheCreation5m,
+                        cacheCreation1h}, model, isSidechain, agentId, gitBranch, cwd)
+    reader.ts         — discoverJSONLFiles(), streamJSONLFile()
+    normalizer.ts     — normalizeEvent()
+    dedup.ts          — DedupAccumulator (first-seen-wins by UUID)
+  cost/
+    types.ts          — EstimatedCost branded type, CostEvent = NormalizedEvent + costUsd
+    engine.ts         — computeCosts(NormalizedEvent[]) -> CostEvent[]
+    pricing.ts        — MODEL_PRICING static lookup table
+    privacy.ts        — applyPrivacyFilter() strips conversation content
+  server/
+    server.ts         — createApp(AppState) factory; AppState = {events, costs}
+    routes/api.ts     — /api/v1/summary (implemented), /events and /sessions (stubs)
+    cli.ts            — Commander CLI; loads data pipeline, calls createApp(), serve()
+  index.ts            — parseAll() public API, re-exports
+
+web/src/
+  App.tsx             — createHashRouter with 4 routes: /, /models, /projects, /sessions
+  components/
+    Layout.tsx        — left sidebar + <Outlet /> pattern
+  pages/
+    Overview.tsx      — placeholder "Coming soon"
+    Models.tsx        — placeholder
+    Projects.tsx      — placeholder
+    Sessions.tsx      — placeholder
+  index.css           — @import "tailwindcss" (Tailwind v4 single-line, no config file)
+  main.tsx            — StrictMode + createRoot
 ```
 
-### Structure Rationale
+**Key facts from code review:**
 
-- **`src/cli/`:** Isolates CLI concerns (arg parsing, config) from server logic. The CLI is a thin shell that configures and starts the server -- it should have near-zero business logic.
-- **`src/server/`:** Hono app factory pattern. The server can be created by the CLI (Phase 1) or imported by a cloud deployment (Phase 2) without modification. Routes are split by resource.
-- **`src/data/`:** The DataProvider interface is the critical abstraction boundary. Phase 1 implements `LocalFSProvider`. Phase 2 adds `CloudAPIProvider`. The server routes never know which provider they are using.
-- **`src/parser/`:** Separated from data providers because parsing is reusable. The `adapters/` subfolder uses the Adapter pattern for multi-tool support. Adding Cursor support means adding `cursor.ts` -- no changes to existing code.
-- **`src/aggregation/`:** Pure functions with no I/O. Takes normalized events, returns aggregated results. Easy to test, easy to reuse across providers.
-- **`web/`:** A separate Vite project. During development, run Vite dev server with proxy to the Hono backend. At publish time, `vite build` outputs to `web-dist/` which the Hono static middleware serves.
-- **Single package, not monorepo:** For Phase 1, a single npm package is simpler. The `web/` directory is a build-time concern only -- it produces static assets that ship with the package. Avoid monorepo complexity until Phase 3+ when a shared SDK or separate cloud service may justify it.
+- `AppState` is loaded once at CLI startup (parse → filter → cost → createApp). No per-request parsing.
+- `/api/v1/summary` already computes totalCost, totalTokens, eventCount from `state.costs`.
+- `createHashRouter` is in use (not createBrowserRouter). Hash routing is correct for static file serving.
+- Tailwind v4 is configured with just `@import "tailwindcss"` — no `tailwind.config.js`.
+- web/package.json has React 19, React Router v7, Tailwind v4, Vite 7. No charting or state management libraries yet.
+- root package.json has Hono, Commander, Zod, @hono/node-server. No @hono/zod-validator yet.
 
-## Architectural Patterns
+---
 
-### Pattern 1: Embedded SPA Serving (The Core Distribution Pattern)
+## Dashboard Integration: The Core Design Question
 
-**What:** Pre-build the React frontend at publish time (`npm run build`). Include the built assets in the npm package. The Hono server serves them as static files. Users run `npx yclaude` and get a full web dashboard without any frontend build step.
+The fundamental question for Phases 4-8 is where aggregation lives: in the server (pre-compute in `AppState`) or per-request (compute in route handlers from raw `state.costs`).
 
-**When to use:** Always -- this is the fundamental architecture for an npm-distributed dashboard.
+**Decision: Aggregation layer in `src/aggregation/`, computed at startup, stored in `AppState`.**
 
-**Trade-offs:**
-- (+) Zero setup for users. `npx yclaude` just works.
-- (+) No runtime dependency on Vite, Webpack, or any build tool.
-- (-) Package size is larger (includes pre-built JS/CSS/assets).
-- (-) Contributors need to build frontend during development.
+Rationale:
+- All data is in-memory already (CostEvent[] is loaded at startup).
+- Date-range filtering can be done per-request by slicing pre-indexed structures.
+- Route handlers stay thin — they filter, sort, and serialize, not aggregate.
+- This is consistent with the existing pattern: `computeCosts()` is a pure function over events.
 
-**Example:**
+**What `AppState` grows into (across phases 4-8):**
+
 ```typescript
-// src/server/static.ts
-import { serveStatic } from '@hono/node-server/serve-static';
-import { join } from 'node:path';
+// src/server/server.ts
+export interface AppState {
+  events: NormalizedEvent[];
+  costs: CostEvent[];
+  // Added in Phase 4:
+  timeline: TimelineIndex;    // pre-bucketed daily/weekly/monthly cost maps
+  // Added in Phase 5:
+  byModel: ModelIndex;        // Map<modelId, CostEvent[]>
+  byProject: ProjectIndex;    // Map<projectPath, CostEvent[]>
+  // Added in Phase 6:
+  sessions: SessionIndex;     // Map<sessionId, SessionSummary>
+  // Added in Phase 7:
+  heatmap: HeatmapDay[];      // daily activity for the full time range
+}
+```
 
-export function setupStaticServing(app: Hono) {
-  // Serve pre-built frontend assets using absolute path
-  // import.meta.dirname resolves to the directory of THIS file,
-  // so we navigate to the web-dist folder relative to the package root
-  const webDistPath = join(import.meta.dirname, '../../web-dist');
+These are computed once in `src/cli/index.ts` before calling `createApp()`.
 
-  app.use('/*', serveStatic({ root: webDistPath }));
+---
 
-  // SPA fallback: return index.html for non-API routes
-  app.get('*', async (c) => {
-    const html = await readFile(join(webDistPath, 'index.html'), 'utf-8');
-    return c.html(html);
+## New API Endpoints (Phases 4-8)
+
+All endpoints live under `/api/v1/` in `src/server/routes/api.ts`.
+
+### Phase 4: Cost Analytics Dashboard
+
+| Endpoint | Query Params | Response Shape | Source in AppState |
+|----------|--------------|----------------|-------------------|
+| `GET /api/v1/summary` | `from?, to?` (ISO dates) | `{totalCost, totalTokens, eventCount, period}` | `state.costs` filtered |
+| `GET /api/v1/timeline` | `from?, to?, bucket=day\|week\|month` | `{buckets: [{date, cost, tokens}]}` | `state.timeline` |
+
+The existing `/api/v1/summary` can be extended with `from`/`to` query params rather than replaced.
+
+### Phase 5: Model & Project Breakdowns
+
+| Endpoint | Query Params | Response Shape | Source in AppState |
+|----------|--------------|----------------|-------------------|
+| `GET /api/v1/models` | `from?, to?` | `{models: [{modelId, label, cost, tokens, eventCount}]}` | `state.byModel` |
+| `GET /api/v1/projects` | `from?, to?` | `{projects: [{path, name, cost, tokens, sessionCount}]}` | `state.byProject` |
+
+### Phase 6: Session Explorer
+
+| Endpoint | Query Params | Response Shape | Source in AppState |
+|----------|--------------|----------------|-------------------|
+| `GET /api/v1/sessions` | `from?, to?, project?, sort=cost\|date, order=asc\|desc` | `{sessions: [{sessionId, project, model, cost, startTime, durationMs, turnCount}]}` | `state.sessions` |
+| `GET /api/v1/sessions/:id` | — | `{sessionId, project, model, totalCost, turns: [{timestamp, model, tokens, cost}]}` | `state.sessions` |
+
+### Phase 7: Differentiator Features
+
+| Endpoint | Query Params | Response Shape | Source in AppState |
+|----------|--------------|----------------|-------------------|
+| `GET /api/v1/cache-efficiency` | `from?, to?` | `{hitRate, totalWrites, totalReads, trend}` | computed from `state.costs` |
+| `GET /api/v1/heatmap` | `year?` | `{days: [{date, cost, tokens}]}` | `state.heatmap` |
+
+### Query Parameter Validation Pattern (Hono + Zod)
+
+Use `@hono/zod-validator` for all query parameter validation. This package is not yet in root `package.json`.
+
+```typescript
+// src/server/routes/api.ts
+import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
+
+const dateRangeSchema = z.object({
+  from: z.string().datetime({ offset: true }).optional(),
+  to:   z.string().datetime({ offset: true }).optional(),
+});
+
+app.get('/timeline',
+  zValidator('query', dateRangeSchema),
+  (c) => {
+    const { from, to } = c.req.valid('query');
+    const start = from ? new Date(from) : undefined;
+    const end   = to   ? new Date(to)   : undefined;
+    // filter state.timeline, return buckets
+  }
+);
+```
+
+Validation failure returns HTTP 400 automatically. Install: `npm install @hono/zod-validator` in root.
+
+---
+
+## Aggregation Layer: New `src/aggregation/` Module
+
+This module is the critical new server-side addition. It produces pre-computed indexes from `CostEvent[]`.
+
+### File Structure
+
+```
+src/aggregation/
+  timeline.ts      — bucket CostEvent[] into day/week/month maps
+  by-model.ts      — group CostEvent[] by model ID, compute per-model totals
+  by-project.ts    — group CostEvent[] by cwd, decode project names
+  sessions.ts      — build SessionSummary map from CostEvent[]
+  heatmap.ts       — compute daily activity for heatmap rendering
+  types.ts         — all aggregation result types
+  index.ts         — re-exports
+```
+
+### Aggregation Types
+
+```typescript
+// src/aggregation/types.ts
+
+export interface TimelineBucket {
+  date: string;          // ISO date string, start of bucket period
+  cost: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreationTokens: number;
+  cacheReadTokens: number;
+}
+
+export interface TimelineIndex {
+  daily: Map<string, TimelineBucket>;    // keyed by 'YYYY-MM-DD'
+  weekly: Map<string, TimelineBucket>;   // keyed by ISO week start
+  monthly: Map<string, TimelineBucket>;  // keyed by 'YYYY-MM'
+}
+
+export interface ModelSummary {
+  modelId: string;
+  label: string;         // human-readable name from pricing table
+  cost: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreationTokens: number;
+  cacheReadTokens: number;
+  eventCount: number;
+}
+
+export type ModelIndex = Map<string, ModelSummary>;
+
+export interface ProjectSummary {
+  path: string;          // cwd value from NormalizedEvent
+  name: string;          // last 2 path segments for display (e.g., "work/myapp")
+  cost: number;
+  inputTokens: number;
+  outputTokens: number;
+  sessionCount: number;
+  eventCount: number;
+}
+
+export type ProjectIndex = Map<string, ProjectSummary>;
+
+export interface TurnSummary {
+  timestamp: string;
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreationTokens: number;
+  cacheReadTokens: number;
+  cost: number;
+}
+
+export interface SessionSummary {
+  sessionId: string;
+  project: string;       // cwd from first event
+  projectName: string;   // display name
+  model: string;         // model from last event (can change within session)
+  cost: number;
+  startTime: string;     // timestamp of first event
+  endTime: string;       // timestamp of last event
+  durationMs: number;
+  turnCount: number;
+  turns: TurnSummary[];  // full detail, used by session detail endpoint
+  isSidechain: boolean;  // true if any event is sidechain
+}
+
+export type SessionIndex = Map<string, SessionSummary>;
+
+export interface HeatmapDay {
+  date: string;          // 'YYYY/MM/DD' (format required by @uiw/react-heat-map)
+  count: number;         // number of events (for intensity)
+  cost: number;          // for tooltip display
+}
+```
+
+### Integration in CLI Startup
+
+```typescript
+// src/server/cli.ts (updated for Phase 4)
+import { buildTimelineIndex } from '../aggregation/timeline.js';
+import { buildModelIndex }    from '../aggregation/by-model.js';
+import { buildProjectIndex }  from '../aggregation/by-project.js';
+import { buildSessionIndex }  from '../aggregation/sessions.js';
+import { buildHeatmapData }   from '../aggregation/heatmap.js';
+
+const events  = await parseAll(opts.dir !== undefined ? { dir: opts.dir } : {});
+const filtered = applyPrivacyFilter(events);
+const costs   = computeCosts(filtered);
+
+// Aggregation (pure functions, no I/O)
+const timeline = buildTimelineIndex(costs);     // Phase 4
+const byModel  = buildModelIndex(costs);        // Phase 5
+const byProject = buildProjectIndex(costs);     // Phase 5
+const sessions = buildSessionIndex(costs);      // Phase 6
+const heatmap  = buildHeatmapData(costs);       // Phase 7
+
+const app = createApp({ events: filtered, costs, timeline, byModel, byProject, sessions, heatmap });
+```
+
+Add indexes to `AppState` incrementally per phase. Existing `AppState` is additive — no breaking changes.
+
+---
+
+## Frontend Architecture: Component Map
+
+### What Gets Added vs Modified
+
+| Component | Status | Phase | Notes |
+|-----------|--------|-------|-------|
+| `web/src/index.css` | MODIFIED | 8 | Add `@custom-variant dark` for class-based dark mode |
+| `web/src/main.tsx` | MODIFIED | 8 | Add theme-init inline script to `index.html` |
+| `web/src/App.tsx` | MODIFIED | 4 | Wrap with `QueryClientProvider` and `ThemeProvider` |
+| `web/src/components/Layout.tsx` | MODIFIED | 4, 8 | Add date range picker in header; add dark mode toggle |
+| `web/src/pages/Overview.tsx` | REPLACED | 4 | Full cost analytics dashboard implementation |
+| `web/src/pages/Models.tsx` | REPLACED | 5 | Model donut chart + table |
+| `web/src/pages/Projects.tsx` | REPLACED | 5 | Project cost breakdown table |
+| `web/src/pages/Sessions.tsx` | REPLACED | 6 | Session list with sortable table |
+| `web/src/pages/SessionDetail.tsx` | NEW | 6 | Session detail with turn breakdown |
+| `web/src/components/charts/AreaChart.tsx` | NEW | 4 | Cost over time — Recharts AreaChart |
+| `web/src/components/charts/DonutChart.tsx` | NEW | 5 | Per-model breakdown — Recharts PieChart |
+| `web/src/components/charts/Heatmap.tsx` | NEW | 7 | Activity heatmap — @uiw/react-heat-map |
+| `web/src/components/ui/StatCard.tsx` | NEW | 4 | Summary stat with label + value |
+| `web/src/components/ui/DateRangePicker.tsx` | NEW | 4 | shadcn/ui Calendar + Popover composition |
+| `web/src/components/ui/TokenBadge.tsx` | NEW | 4 | Token type breakdown badge |
+| `web/src/lib/api.ts` | NEW | 4 | Typed API client functions (fetch wrappers) |
+| `web/src/lib/format.ts` | NEW | 4 | Currency, token count, date formatting |
+| `web/src/hooks/useApi.ts` | NEW | 4 | TanStack Query hooks wrapping api.ts |
+| `web/src/store/filters.ts` | NEW | 4 | Zustand store for global date range + dark mode |
+| `web/src/store/theme.ts` | NEW | 8 | Zustand persist store for dark mode preference |
+
+### Router: New Session Detail Route
+
+Add to `web/src/App.tsx`:
+
+```tsx
+{ path: 'sessions/:sessionId', element: <SessionDetail /> }
+```
+
+The `createHashRouter` pattern already in use handles nested paths. Hash URLs like `/#/sessions/abc-123` work correctly.
+
+---
+
+## Global Date Range Filter: State Architecture
+
+The date range picker is the central interaction element. Its state must:
+1. Be accessible to all page components (Overview, Models, Projects, Sessions)
+2. Trigger re-fetches when changed
+3. Survive navigation between routes (not reset on route change)
+4. Not require URL params (this is a local tool, not shareable state)
+
+**Decision: Zustand store, not URL search params.**
+
+URL search params are appropriate when state must be shareable (e.g., a web app where someone emails a link to a filtered view). yclaude is local-only in Phase 1. Zustand is simpler, has no URL pollution, and integrates naturally with TanStack Query's `queryKey` arrays.
+
+### Filter Store
+
+```typescript
+// web/src/store/filters.ts
+import { create } from 'zustand';
+import { subDays } from 'date-fns';
+
+export type DatePreset = '7d' | '30d' | '90d' | 'all';
+
+interface FiltersState {
+  dateRange: { from: Date; to: Date };
+  preset: DatePreset;
+  setDateRange: (from: Date, to: Date) => void;
+  setPreset: (preset: DatePreset) => void;
+}
+
+export const useFilters = create<FiltersState>((set) => ({
+  dateRange: { from: subDays(new Date(), 30), to: new Date() },
+  preset: '30d',
+  setDateRange: (from, to) => set({ dateRange: { from, to }, preset: 'all' }),
+  setPreset: (preset) => {
+    const to = new Date();
+    const from = preset === 'all'
+      ? new Date(0)
+      : subDays(to, preset === '7d' ? 7 : preset === '30d' ? 30 : 90);
+    set({ dateRange: { from, to }, preset });
+  },
+}));
+```
+
+### TanStack Query Integration
+
+API hooks use the date range as part of the query key, so React Query re-fetches automatically when the filter changes:
+
+```typescript
+// web/src/hooks/useApi.ts
+import { useQuery } from '@tanstack/react-query';
+import { useFilters } from '../store/filters';
+import { fetchTimeline } from '../lib/api';
+
+export function useTimeline(bucket: 'day' | 'week' | 'month') {
+  const { dateRange } = useFilters();
+  return useQuery({
+    queryKey: ['timeline', bucket, dateRange.from.toISOString(), dateRange.to.toISOString()],
+    queryFn: () => fetchTimeline({ bucket, from: dateRange.from, to: dateRange.to }),
+    staleTime: 5 * 60 * 1000,  // 5 minutes — data loaded at startup, won't change
   });
 }
 ```
 
-### Pattern 2: DataProvider Interface (Local-to-Cloud Bridge)
+`staleTime: Infinity` is appropriate here because the server holds data loaded at startup. Setting 5 minutes provides a reasonable balance without aggressive re-fetching.
 
-**What:** Define a `DataProvider` interface that abstracts all data access. Phase 1 implements it with local file system reads. Phase 2 implements it with cloud API calls. The server routes are provider-agnostic.
+### QueryClient Setup
 
-**When to use:** From day one. This is the architecture that prevents a rewrite when transitioning to cloud.
-
-**Trade-offs:**
-- (+) Adding cloud support requires zero changes to server routes or frontend.
-- (+) Testable -- mock providers for unit tests.
-- (-) Slight over-engineering for Phase 1 alone, but minimal cost.
-
-**Example:**
 ```typescript
-// src/data/provider.ts
-export interface DataProvider {
-  getProjects(): Promise<Project[]>;
-  getSessions(filter?: SessionFilter): Promise<Session[]>;
-  getSessionDetail(sessionId: string): Promise<SessionDetail>;
-  getUsageSummary(filter?: UsageFilter): Promise<UsageSummary>;
-  getTimeline(filter?: TimelineFilter): Promise<TimelineBucket[]>;
-}
+// web/src/App.tsx (updated)
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-// src/data/local-provider.ts
-export class LocalFSProvider implements DataProvider {
-  constructor(private basePath: string) {} // e.g., ~/.claude/projects
-
-  async getProjects(): Promise<Project[]> {
-    // Discover project directories, decode slugs, aggregate per-project
-    const dirs = await readdir(this.basePath);
-    return Promise.all(dirs.map(slug => this.loadProject(slug)));
-  }
-
-  // ... other methods read from local JSONL files
-}
-
-// Phase 2: src/data/cloud-provider.ts
-export class CloudAPIProvider implements DataProvider {
-  constructor(private apiUrl: string, private authToken: string) {}
-
-  async getProjects(): Promise<Project[]> {
-    const res = await fetch(`${this.apiUrl}/projects`, {
-      headers: { Authorization: `Bearer ${this.authToken}` }
-    });
-    return res.json();
-  }
-}
-```
-
-### Pattern 3: FormatAdapter (Provider-Agnostic Parsing)
-
-**What:** Each AI tool (Claude Code, Cursor, Copilot) produces different data formats. A `FormatAdapter` normalizes them into a canonical `NormalizedEvent` schema. The adapter is selected based on data source detection.
-
-**When to use:** From day one. Even with only Claude Code, the adapter pattern costs almost nothing and prevents a painful refactor later.
-
-**Trade-offs:**
-- (+) Adding a new tool = adding one adapter file. No changes to aggregation, API, or frontend.
-- (+) Canonical schema means all downstream code works with one type.
-- (-) Very slight indirection for Phase 1. Worthwhile for Phase 3.
-
-**Example:**
-```typescript
-// src/parser/adapters/adapter.ts
-export interface FormatAdapter {
-  /** Detect if a file/directory belongs to this tool */
-  canHandle(path: string): boolean;
-  /** Parse a raw JSONL line into a NormalizedEvent (or null if irrelevant) */
-  parseLine(line: string): NormalizedEvent | null;
-  /** Detect the tool name for display */
-  toolName: string;
-}
-
-// src/parser/adapters/claude-code.ts
-export class ClaudeCodeAdapter implements FormatAdapter {
-  toolName = 'Claude Code';
-
-  canHandle(path: string): boolean {
-    // Claude Code stores data in ~/.claude/projects/
-    return path.includes('.claude/projects');
-  }
-
-  parseLine(line: string): NormalizedEvent | null {
-    const raw = JSON.parse(line);
-    if (raw.type === 'assistant' && raw.message?.usage) {
-      return {
-        type: 'response',
-        timestamp: new Date(raw.timestamp),
-        sessionId: raw.sessionId,
-        model: raw.message.model,
-        tokens: {
-          input: raw.message.usage.input_tokens,
-          output: raw.message.usage.output_tokens,
-          cacheCreation: raw.message.usage.cache_creation_input_tokens ?? 0,
-          cacheRead: raw.message.usage.cache_read_input_tokens ?? 0,
-        },
-        metadata: {
-          cwd: raw.cwd,
-          gitBranch: raw.gitBranch,
-          isSidechain: raw.isSidechain,
-          agentId: raw.agentId,
-        }
-      };
-    }
-    // Handle 'user' type for session tracking, etc.
-    return null;
-  }
-}
-```
-
-### Pattern 4: Hono App Factory (Testable, Composable Server)
-
-**What:** Create the Hono app via a factory function that accepts dependencies (DataProvider, config). This makes the server testable without file system access and composable for different deployment targets.
-
-**When to use:** Always. This is standard practice for any non-trivial HTTP server.
-
-**Trade-offs:**
-- (+) Unit tests pass in a mock provider, get deterministic results.
-- (+) Cloud deployment imports the factory and passes a CloudAPIProvider.
-- (+) The CLI calls the factory with LocalFSProvider and starts the Node server.
-
-**Example:**
-```typescript
-// src/server/index.ts
-import { Hono } from 'hono';
-import { cors } from 'hono/cors';
-import type { DataProvider } from '../data/provider';
-
-export interface AppConfig {
-  provider: DataProvider;
-  basePath?: string; // API base path, default /api/v1
-}
-
-export function createApp(config: AppConfig): Hono {
-  const app = new Hono();
-
-  app.use('*', cors());
-
-  // Mount API routes with provider injected
-  const api = createApiRoutes(config.provider);
-  app.route(config.basePath ?? '/api/v1', api);
-
-  // Mount static asset serving (only in CLI mode, not cloud)
-  setupStaticServing(app);
-
-  return app;
-}
-
-// src/cli/index.ts
-import { serve } from '@hono/node-server';
-import { createApp } from '../server';
-import { LocalFSProvider } from '../data/local-provider';
-import open from 'open';
-
-const provider = new LocalFSProvider(resolvedPath);
-const app = createApp({ provider });
-
-serve({ fetch: app.fetch, port }, (info) => {
-  console.log(`yclaude running at http://localhost:${info.port}`);
-  open(`http://localhost:${info.port}`);
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { staleTime: 5 * 60 * 1000, retry: 1 },
+  },
 });
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  );
+}
 ```
 
-## Data Flow
+---
 
-### Primary Data Flow: JSONL to Dashboard
+## Dark Mode Architecture (Phase 8)
+
+**Decision: Tailwind v4 `@custom-variant` class strategy with Zustand `persist` store.**
+
+This gives system-default behavior on first visit and manual override that persists across sessions.
+
+### CSS Configuration
+
+```css
+/* web/src/index.css */
+@import "tailwindcss";
+
+/* Enable class-based dark mode — dark: utilities activate when .dark is on <html> */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Chart color variables with dark mode variants */
+:root {
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6  0.118 184.704);
+  --chart-3: oklch(0.7  0.15  60);
+  --chart-4: oklch(0.55 0.18  240);
+  --chart-5: oklch(0.65 0.14  140);
+}
+.dark {
+  --chart-1: oklch(0.75 0.19  41.116);
+  --chart-2: oklch(0.7  0.12  184.704);
+  /* ... shifted for dark backgrounds */
+}
+```
+
+### Theme Store with Persist
+
+```typescript
+// web/src/store/theme.ts
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
+export type Theme = 'light' | 'dark' | 'system';
+
+interface ThemeState {
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
+}
+
+export const useTheme = create<ThemeState>()(
+  persist(
+    (set) => ({
+      theme: 'system',
+      setTheme: (theme) => {
+        set({ theme });
+        applyTheme(theme);
+      },
+    }),
+    { name: 'yclaude-theme' }
+  )
+);
+
+function applyTheme(theme: Theme) {
+  const root = document.documentElement;
+  const isDark = theme === 'dark' ||
+    (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  root.classList.toggle('dark', isDark);
+}
+```
+
+### FOUC Prevention (Flash of Unstyled Content)
+
+The theme must be applied before React hydrates to prevent flash. Add an inline script to `web/index.html`:
+
+```html
+<!-- web/index.html — add inside <head> before any stylesheets -->
+<script>
+  (function() {
+    const stored = localStorage.getItem('yclaude-theme');
+    const theme = stored ? JSON.parse(stored).state?.theme : 'system';
+    const isDark = theme === 'dark' ||
+      (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (isDark) document.documentElement.classList.add('dark');
+  })();
+</script>
+```
+
+This reads the same `yclaude-theme` key that Zustand persist uses, ensuring consistency.
+
+---
+
+## Charting Components
+
+### Cost Over Time: AreaChart (Phase 4)
+
+Use Recharts `AreaChart` directly (not shadcn/ui wrapper) for maximum control. The shadcn ChartContainer and ChartTooltipContent are used for consistent theming.
+
+```tsx
+// web/src/components/charts/AreaChart.tsx
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
+import { ChartContainer, ChartTooltipContent, ChartConfig } from '../ui/chart'; // shadcn generated
+
+const config: ChartConfig = {
+  cost: { label: 'Estimated Cost', color: 'var(--chart-1)' },
+};
+
+export function CostAreaChart({ data }: { data: TimelineBucket[] }) {
+  return (
+    <ChartContainer config={config} className="min-h-[200px] w-full">
+      <AreaChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="date" tickFormatter={(d) => formatDateShort(d)} />
+        <YAxis tickFormatter={(v) => `$${v.toFixed(2)}`} />
+        <Tooltip content={<ChartTooltipContent />} />
+        <Area type="monotone" dataKey="cost" stroke="var(--color-cost)" fill="var(--color-cost)" fillOpacity={0.2} />
+      </AreaChart>
+    </ChartContainer>
+  );
+}
+```
+
+### Model Breakdown: PieChart (Phase 5)
+
+```tsx
+// web/src/components/charts/DonutChart.tsx
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+// Each model gets a CSS variable color from the chart config
+```
+
+### Activity Heatmap (Phase 7)
+
+Use `@uiw/react-heat-map` (a dedicated SVG heatmap library). Not installed yet.
+
+```tsx
+// web/src/components/charts/Heatmap.tsx
+import HeatMap from '@uiw/react-heat-map';
+
+export function ActivityHeatmap({ data }: { data: HeatmapDay[] }) {
+  return (
+    <HeatMap
+      value={data}
+      startDate={new Date(new Date().getFullYear(), 0, 1)}
+      panelColors={{
+        0: 'var(--tw-color-slate-100)',
+        5: 'var(--tw-color-violet-200)',
+        20: 'var(--tw-color-violet-400)',
+        50: 'var(--tw-color-violet-600)',
+      }}
+    />
+  );
+}
+```
+
+`panelColors` must use CSS variables linked to Tailwind color values or hardcoded hex. Dark mode adjustment via CSS `@custom-variant dark` selectors targeting `.w-heatmap` class.
+
+---
+
+## Data Flow: End-to-End (Phase 4+)
 
 ```
 ~/.claude/projects/{slug}/*.jsonl
     |
-    | (1) File discovery: glob for *.jsonl files
-    v
-JSONL Reader (streaming, line-by-line)
-    |
-    | (2) Each line parsed by FormatAdapter
-    v
-ClaudeCodeAdapter.parseLine()
-    |
-    | (3) Returns NormalizedEvent or null (skip irrelevant types)
+    | parseAll() — streaming JSONL reader + normalizer + DedupAccumulator
     v
 NormalizedEvent[]
     |
-    | (4) Aggregation engine computes derived data
+    | applyPrivacyFilter() — strips conversation content fields
     v
-Aggregation: cost calculation, time bucketing, project grouping
+NormalizedEvent[] (filtered)
     |
-    | (5) Results cached in memory for the server lifecycle
+    | computeCosts() — adds costUsd to each event
     v
-In-Memory Cache (Map<string, AggregatedData>)
+CostEvent[]
     |
-    | (6) API routes read from cache
+    | buildTimelineIndex()  buildModelIndex()  buildProjectIndex()
+    | buildSessionIndex()   buildHeatmapData()
     v
-Hono API Routes: /api/v1/usage, /projects, /sessions, /timeline
+AppState { events, costs, timeline, byModel, byProject, sessions, heatmap }
     |
-    | (7) JSON responses
+    | createApp(AppState) — Hono factory injects state into route closures
     v
-React SPA fetches from /api/v1/*
+Hono HTTP Server (127.0.0.1:3000)
     |
-    | (8) Renders charts, tables, drill-downs
+    | /api/v1/summary?from=...&to=...   GET
+    | /api/v1/timeline?bucket=day       GET
+    | /api/v1/models?from=...           GET
+    | /api/v1/projects                  GET
+    | /api/v1/sessions?sort=cost        GET
+    | /api/v1/sessions/:id              GET
+    | /api/v1/heatmap                   GET
     v
-User sees dashboard in browser
-```
-
-### Key Data Flows
-
-1. **Initial load:** CLI starts -> discovers JSONL files -> parses ALL files -> aggregates -> caches in memory -> server begins accepting requests. This happens once at startup. For a typical developer with weeks of Claude Code usage, this takes 1-3 seconds.
-
-2. **API request flow:** Browser loads SPA -> SPA calls `/api/v1/usage?range=7d` -> Hono route handler queries in-memory cache -> returns JSON -> SPA renders chart.
-
-3. **File watch (optional, Phase 1.5):** `fs.watch` or `chokidar` on `~/.claude/projects/` -> detect new/changed JSONL files -> re-parse only changed files -> update in-memory cache -> push update via SSE or WebSocket to connected browsers.
-
-4. **Cloud transition (Phase 2):** Same SPA, same API contract. Server routes call `CloudAPIProvider.getUsage()` instead of `LocalFSProvider.getUsage()`. The frontend does not change. The API response shape does not change.
-
-### State Management (Frontend)
-
-```
-API Response (JSON)
+React SPA (hash-routed, served as static from web-dist/)
     |
+    | useFilters() Zustand store → dateRange, preset
+    | useTimeline() / useModels() / useSessions() TanStack Query hooks
+    |   → queryKey includes dateRange ISO strings
+    |   → staleTime: 5 minutes
     v
-React Query / TanStack Query (caching, deduplication, refetch)
+Page Components (Overview, Models, Projects, Sessions, SessionDetail)
     |
+    | CostAreaChart, DonutChart, ActivityHeatmap, StatCard, SessionTable
     v
-Page Components (Dashboard, Projects, Sessions)
-    |
-    v
-Chart Components (Recharts) + Filter Controls
+User sees dashboard
 ```
 
-Use TanStack Query (React Query) for frontend state. It handles caching, loading states, error states, and refetching. No global state store needed for Phase 1 -- the server is the source of truth, and TanStack Query is the cache layer.
+---
 
-## Local-to-Cloud Transition Path
+## Suggested Build Order for Phases 4-8
 
-This is the most architecturally important concern. The design must prevent a rewrite at Phase 2.
+Phase dependencies and integration points determine this ordering.
 
-### Phase 1: Local Only
+### Phase 4: Cost Analytics Dashboard
 
+**Builds on:** `/api/v1/summary` (already exists, needs `from`/`to` params), AppState.costs
+
+**New server code:**
+1. `src/aggregation/timeline.ts` — `buildTimelineIndex(costs)`
+2. `src/aggregation/types.ts` — shared aggregation types
+3. Extend `AppState` with `timeline`
+4. Add `GET /api/v1/timeline` route with `bucket` + date range params
+5. Extend `GET /api/v1/summary` with `from`/`to` params
+
+**New web code:**
+1. Install: `@tanstack/react-query`, `recharts`, `zustand`, `date-fns` in web/package.json
+2. Install: `@hono/zod-validator` in root package.json
+3. `web/src/store/filters.ts` — Zustand date range store
+4. `web/src/lib/api.ts` — typed fetch functions
+5. `web/src/hooks/useApi.ts` — TanStack Query hooks
+6. `web/src/components/ui/DateRangePicker.tsx` — shadcn Calendar + Popover
+7. `web/src/components/ui/StatCard.tsx` — stat display
+8. `web/src/components/charts/AreaChart.tsx` — Recharts AreaChart
+9. Update `web/src/components/Layout.tsx` — add date picker to header
+10. Replace `web/src/pages/Overview.tsx` — full dashboard implementation
+
+**Critical ordering:** Zustand store and TanStack Query must be set up before any page components. DateRangePicker before Layout update.
+
+### Phase 5: Model & Project Breakdowns
+
+**Builds on:** Phase 4's filter store, TanStack Query setup, AppState pattern
+
+**New server code:**
+1. `src/aggregation/by-model.ts` — `buildModelIndex(costs)`
+2. `src/aggregation/by-project.ts` — `buildProjectIndex(costs)` with path display name logic
+3. Extend `AppState` with `byModel`, `byProject`
+4. Add `GET /api/v1/models` and `GET /api/v1/projects` routes
+
+**New web code:**
+1. `web/src/components/charts/DonutChart.tsx` — Recharts PieChart
+2. Replace `web/src/pages/Models.tsx`
+3. Replace `web/src/pages/Projects.tsx`
+
+**Note:** Project display name logic — use last 2 path segments of `cwd` (e.g., `/Users/alex/work/myapp` → `work/myapp`). Do not use slug decoding (decided broken in Phase 1, cwd is ground truth).
+
+### Phase 6: Session Explorer
+
+**Builds on:** Phase 4's filter store, Phase 5's aggregation pattern
+
+**New server code:**
+1. `src/aggregation/sessions.ts` — `buildSessionIndex(costs)`
+2. Extend `AppState` with `sessions`
+3. Add `GET /api/v1/sessions` (list) and `GET /api/v1/sessions/:id` (detail) routes
+
+**New web code:**
+1. Add route `sessions/:sessionId` to `web/src/App.tsx`
+2. `web/src/components/ui/SessionTable.tsx` — sortable session list
+3. Replace `web/src/pages/Sessions.tsx` — session list page
+4. `web/src/pages/SessionDetail.tsx` — new page, per-turn token breakdown
+
+**Note:** Session duration = `endTime - startTime` computed from `SessionSummary`. Duration for display-only; no `durationMs` field in `NormalizedEvent` from parser (that field is from system events, not always present). Compute it.
+
+### Phase 7: Differentiator Features
+
+**Builds on:** Phase 5 (by-model data for cache efficiency), Phase 6 (sessions for sidechain flagging)
+
+**New server code:**
+1. `src/aggregation/heatmap.ts` — `buildHeatmapData(costs)`
+2. Cache efficiency: computed per-request from `state.costs` in route handler (no separate index needed — O(n) scan is fast enough for a single user's data)
+3. Add `GET /api/v1/cache-efficiency` route
+4. Add `GET /api/v1/heatmap` route (serves `state.heatmap`)
+5. Extend `GET /api/v1/sessions` to include `isSidechain` and `gitBranch` in response
+
+**New web code:**
+1. Install `@uiw/react-heat-map` in web/package.json
+2. `web/src/components/charts/Heatmap.tsx`
+3. `web/src/components/ui/CacheEfficiencyScore.tsx`
+4. Update Overview, Sessions pages with new components
+
+### Phase 8: Dark Mode & Personality
+
+**Builds on:** All prior phases. This is a full-app pass.
+
+**No new backend code needed.**
+
+**Web code changes:**
+1. Install `zustand` middleware (already installed from Phase 4, just use persist)
+2. `web/src/store/theme.ts` — Zustand persist store for theme preference
+3. `web/src/index.css` — add `@custom-variant dark` directive + dark color variables
+4. `web/index.html` — add inline theme-init script in `<head>`
+5. Update `web/src/components/Layout.tsx` — dark mode toggle button
+6. Pass through all page/component files adding `dark:` Tailwind variants
+7. `web/src/lib/copy.ts` — humor copy strings keyed by context (stat callouts, empty states, etc.)
+8. Personality copy integration across all pages
+
+---
+
+## Integration Points: Explicit Mapping
+
+### What Phases 4-8 Touch vs Leave Alone
+
+| Existing File | Touched? | Why |
+|---------------|----------|-----|
+| `src/parser/` (all) | No | Parser is complete and stable |
+| `src/cost/engine.ts` | No | computeCosts() is correct and complete |
+| `src/cost/pricing.ts` | Maybe | Update when new model pricing needed |
+| `src/cost/privacy.ts` | No | Privacy filter is complete |
+| `src/index.ts` | Minor | Add aggregation function re-exports as needed |
+| `src/server/server.ts` | Yes | AppState interface grows per phase |
+| `src/server/routes/api.ts` | Yes | New routes added, summary extended |
+| `src/server/cli.ts` | Yes | Add buildXxx() calls per phase |
+| `web/src/index.css` | Yes (Phase 8) | Add @custom-variant dark |
+| `web/src/main.tsx` | No | No changes needed |
+| `web/src/App.tsx` | Yes (Phase 4, 6) | Add QueryClientProvider, new session detail route |
+| `web/src/components/Layout.tsx` | Yes (Phase 4, 8) | Date picker + dark mode toggle |
+
+### Where Each New API Endpoint Gets Its Data
+
+| Endpoint | Data Source | Aggregation Function |
+|----------|-------------|---------------------|
+| `/api/v1/summary?from&to` | `state.costs` (filter inline) | None (direct reduce) |
+| `/api/v1/timeline?bucket` | `state.timeline` | `buildTimelineIndex()` |
+| `/api/v1/models?from&to` | `state.byModel` (filter inline) | `buildModelIndex()` |
+| `/api/v1/projects?from&to` | `state.byProject` (filter inline) | `buildProjectIndex()` |
+| `/api/v1/sessions` | `state.sessions` (filter + sort inline) | `buildSessionIndex()` |
+| `/api/v1/sessions/:id` | `state.sessions.get(id)` | Same `buildSessionIndex()` |
+| `/api/v1/heatmap` | `state.heatmap` | `buildHeatmapData()` |
+| `/api/v1/cache-efficiency` | `state.costs` (inline compute) | None (O(n) reduce in route) |
+
+---
+
+## Anti-Patterns to Avoid (Phase 4-8 Specific)
+
+### Anti-Pattern 1: Per-Request Aggregation
+
+**What goes wrong:** Route handlers call `buildTimelineIndex(state.costs)` on every request.
+
+**Why it's bad:** With months of Claude Code history, `state.costs` can be 50K+ events. Re-aggregating on every chart request adds 100-500ms per request.
+
+**Prevention:** Aggregation indexes are computed once at startup (see CLI startup pattern above). Route handlers only filter/sort pre-built indexes.
+
+### Anti-Pattern 2: Waterfall API Calls in Overview Page
+
+**What goes wrong:** Overview page calls `/summary`, then waits, then calls `/timeline`, then waits, creating a chain of sequential requests.
+
+**Prevention:** All TanStack Query hooks are called at the top of the component. React Query fires all requests in parallel. Never chain `.then()` to sequence API calls.
+
+### Anti-Pattern 3: Date Range in Component Local State
+
+**What goes wrong:** Each page (Overview, Models, Sessions) has its own `useState` for date range. Changing the date picker on Overview doesn't affect Sessions.
+
+**Prevention:** Date range lives in Zustand store (`useFilters`). Every page reads from the same store. Layout places the single DateRangePicker, all pages react to its changes.
+
+### Anti-Pattern 4: Tailwind Dark Mode via `media` Strategy
+
+**What goes wrong:** Using `@media (prefers-color-scheme: dark)` only (the Tailwind v4 default) means users cannot override the theme manually.
+
+**Prevention:** The `@custom-variant dark` directive in CSS switches control to the `.dark` class on `<html>`. Tailwind's dark: utilities then respond to class, not media. The Zustand theme store and FOUC prevention script control the class.
+
+### Anti-Pattern 5: shadcn/ui Installed as Dependency
+
+**What goes wrong:** `npm install shadcn-ui` as a runtime dependency. This is not how shadcn/ui works and will fail or bring in an outdated package.
+
+**Prevention:** shadcn/ui uses a CLI to copy component source into `web/src/components/ui/`. Run `npx shadcn@latest add chart card button popover calendar` from the `web/` directory. Components are owned by the project, not a dependency. radix-ui primitives become actual dependencies.
+
+---
+
+## New Dependencies Required
+
+### Root `package.json`
+
+```bash
+npm install @hono/zod-validator
 ```
-User's machine:
-  npx yclaude
-    → LocalFSProvider reads ~/.claude/projects/
-    → Hono serves API + SPA on localhost:3000
-    → Browser opens, data stays local
+
+### `web/package.json`
+
+```bash
+# Phase 4
+npm install @tanstack/react-query zustand date-fns recharts
+# shadcn/ui (run from web/)
+npx shadcn@latest init
+npx shadcn@latest add chart card button popover calendar
+
+# Phase 7
+npm install @uiw/react-heat-map
 ```
 
-### Phase 2: Cloud Deployment (Same SPA)
+Note: `@tanstack/react-query` v5.90.x, `zustand` v5.0.x, `date-fns` v4.1.x, `recharts` v3.7.x, `@uiw/react-heat-map` latest.
 
-```
-Option A: Upload-based cloud
-  User visits yclaude.dev
-    → SPA loads from CDN
-    → User uploads ZIP of their .claude/projects/ data
-    → Cloud server parses with same parser code
-    → CloudAPIProvider backed by uploaded data in temp storage or DB
-    → Same API contract, same SPA
+---
 
-Option B: Browser-local with File System Access API
-  User visits yclaude.dev
-    → SPA loads from CDN
-    → User grants access to ~/.claude directory via File System Access API
-    → Parser runs IN THE BROWSER (same parser code, bundled for browser)
-    → No server needed for data -- SPA does everything client-side
-    → BrowserFSProvider implements DataProvider using File System Access API
+## Scalability Notes
 
-Option C: Persisted cloud (paid tier)
-  User signs in at yclaude.dev
-    → CloudAPIProvider calls REST API backed by database
-    → Data previously uploaded/synced is persisted
-    → Same SPA, same API contract
-```
+For a single-user local tool, the in-memory aggregation approach is correct. Typical Claude Code heavy user has:
+- ~500-5000 JSONL events (1-6 months of active use)
+- Total data: 1-20 MB of JSONL
+- Startup time: 1-3 seconds (already measured in Phase 1 human checkpoint)
+- In-memory aggregation of 5K events: <100ms
 
-### What Makes This Work Without Rewrite
+No database, no pagination, no lazy loading needed for Phase 1 scale. The architecture supports adding these in Phase 2 (cloud) by replacing `AppState` with `CloudAPIProvider` without touching the frontend.
 
-1. **DataProvider interface** -- Server routes never import filesystem modules directly. They call `provider.getProjects()`. Swap the provider, everything else works.
-
-2. **Canonical event schema** -- The `NormalizedEvent` type is the contract between parsing and aggregation. Whether events come from local JSONL or a cloud database, they conform to the same shape.
-
-3. **API contract stability** -- The REST API shape (`/api/v1/usage`, `/api/v1/projects`, etc.) is the contract between backend and frontend. As long as the response shape is stable, the frontend works with any backend.
-
-4. **Parser code reuse in browser** -- Because the parser is pure TypeScript with no Node.js-specific dependencies (no `fs`, no `path` in the parser itself -- those are in the reader), it can be bundled for browser execution. The File System Access API path in Phase 2 reuses the exact same parsing and aggregation logic.
-
-## Scaling Considerations
-
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| Single user (Phase 1) | In-memory cache of parsed data. Re-parse on startup. No database. This is fine for months of a single developer's usage data (typically < 100MB of JSONL). |
-| Cloud, 100s of users (Phase 2) | Per-user data isolation. Parsed data stored in PostgreSQL or SQLite (cloud). Background jobs for parsing uploads. Add caching layer (Redis or in-memory). |
-| Teams, 1000s of users (Phase 3) | Team-scoped queries. Database indexes on team_id, project, date range. Consider read replicas. Background aggregation jobs for expensive team-wide queries. |
-| Crowdsourced benchmarks (Phase 4) | Pre-computed aggregate tables. Materialized views. Nightly batch jobs for benchmark statistics. This is a different query pattern -- reads from aggregate tables, not raw events. |
-
-### Scaling Priorities
-
-1. **First bottleneck (Phase 1):** Startup parse time for users with very large JSONL histories (months of heavy use). Mitigation: streaming parser, optional date range filter at parse time (`--since 30d`), cache parsed results to a local SQLite file.
-
-2. **Second bottleneck (Phase 2):** Upload and parse time for large data sets in the cloud. Mitigation: background job queue (BullMQ or similar), progress indicators, incremental parsing.
-
-3. **Third bottleneck (Phase 3):** Team-wide aggregation queries spanning many users. Mitigation: pre-computed aggregates, database materialized views, per-team caching.
-
-## Anti-Patterns
-
-### Anti-Pattern 1: Monorepo for Phase 1
-
-**What people do:** Set up a full pnpm workspace monorepo with `packages/parser`, `packages/server`, `packages/web`, `apps/cli` before writing any features.
-
-**Why it's wrong:** For a single npm package with an embedded dashboard, monorepo adds CI complexity, workspace configuration, cross-package build orchestration, and version management overhead. ccusage moved to a monorepo because it grew MCP integration and docs site -- yclaude has neither at Phase 1.
-
-**Do this instead:** Single package with clear folder boundaries (`src/parser/`, `src/server/`, `web/`). The folder structure provides the same separation without the tooling overhead. Migrate to monorepo at Phase 3 if/when you have genuinely independent packages (CLI SDK, cloud service, shared types).
-
-### Anti-Pattern 2: Runtime Frontend Bundling
-
-**What people do:** Ship Vite or Webpack as a dependency and build the frontend at runtime when users run `npx yclaude`.
-
-**Why it's wrong:** Adds 100MB+ of dependencies. Makes `npx` startup take 30+ seconds. Creates Node.js version compatibility issues. Breaks offline usage.
-
-**Do this instead:** Build frontend at publish time (`prepublishOnly` script). Ship pre-built static assets. The npm package includes `web-dist/` with ready-to-serve HTML/JS/CSS. Zero build tools needed at runtime.
-
-### Anti-Pattern 3: Direct File System Access in Route Handlers
-
-**What people do:** Import `fs` and `path` directly in Hono route handlers to read JSONL files.
-
-**Why it's wrong:** Couples routes to local filesystem. Makes cloud migration require rewriting every route. Makes testing require actual files on disk.
-
-**Do this instead:** DataProvider interface. Routes call `provider.getProjects()`. Provider implementation decides whether that means reading local files or querying a database.
-
-### Anti-Pattern 4: Parsing on Every Request
-
-**What people do:** Re-read and re-parse JSONL files for each API request.
-
-**Why it's wrong:** JSONL parsing is I/O-bound and CPU-intensive for large histories. A single dashboard page load triggers 4-6 API calls. Re-parsing on every request means 4-6x the work, adding seconds of latency.
-
-**Do this instead:** Parse once at startup, cache in memory. Optionally watch for file changes and incrementally update the cache. For Phase 2 cloud, the "cache" becomes the database.
-
-### Anti-Pattern 5: Tight Coupling to Claude Code JSONL Format
-
-**What people do:** Hardcode Claude Code field names (`message.usage.input_tokens`, `sessionId`, etc.) throughout the aggregation and API layers.
-
-**Why it's wrong:** When adding Cursor or Copilot support, field access is scattered across dozens of files.
-
-**Do this instead:** FormatAdapter normalizes tool-specific formats into a canonical `NormalizedEvent` schema. All downstream code works with canonical types. Adding a new tool means adding one adapter file.
-
-## Integration Points
-
-### External Services
-
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| Local filesystem (`~/.claude`) | `fs.readdir` + `readline` for streaming JSONL | Use `import.meta.dirname` or user-provided `--dir` flag. Always resolve to absolute path. |
-| Browser (SPA) | HTTP fetch to `/api/v1/*` | Same-origin in local mode. CORS configured for cloud mode. |
-| File System Access API (Phase 2) | Browser-side `showDirectoryPicker()` | Chromium-only. Provide upload fallback for Firefox/Safari. |
-| Auth provider (Phase 2+) | OAuth 2.0 / email magic link | Use a managed service (Clerk, Auth.js). Don't roll your own. |
-| Database (Phase 2+) | PostgreSQL via Drizzle ORM or Prisma | Schema mirrors canonical event types. Migrations via ORM. |
-| Background jobs (Phase 2+) | BullMQ or inngest | For async parsing of uploaded data. Not needed in Phase 1. |
-
-### Internal Boundaries
-
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| CLI -> Server | Function call (imports `createApp`) | Same process. CLI configures, server runs. |
-| Server -> DataProvider | TypeScript interface method calls | Async. Provider may do I/O (local) or HTTP (cloud). |
-| DataProvider -> Parser | Function call (provider imports parser) | Parser is a dependency of LocalFSProvider only. CloudAPIProvider has no parser dependency. |
-| Parser -> FormatAdapter | Interface method call | Adapter selected by `canHandle()` detection. |
-| Aggregation -> Pricing | Pure function import | `pricing.ts` exports a static lookup table. Updated manually when Anthropic changes prices. |
-| Frontend -> Server | HTTP REST (`fetch`) | Contract defined by API response types. Shared types ensure consistency. |
-
-## Build and Distribution Strategy
-
-### Build Pipeline
-
-```
-Development:
-  Terminal 1: tsup --watch (builds backend to dist/)
-  Terminal 2: cd web && vite dev --proxy (frontend dev server proxying /api to Hono)
-
-Production build:
-  1. tsup src/cli/index.ts --format esm  (backend → dist/)
-  2. cd web && vite build               (frontend → web-dist/)
-  3. npm publish                        (ships dist/ + web-dist/)
-
-npx execution:
-  npx yclaude
-    → npm downloads package (includes dist/ + web-dist/)
-    → runs dist/cli/index.js
-    → Hono serves web-dist/ as static assets
-    → opens browser
-```
-
-### package.json Key Fields
-
-```json
-{
-  "name": "yclaude",
-  "type": "module",
-  "bin": {
-    "yclaude": "./dist/cli/index.js"
-  },
-  "files": [
-    "dist",
-    "web-dist"
-  ],
-  "scripts": {
-    "build": "tsup && cd web && npm run build",
-    "prepublishOnly": "npm run build"
-  }
-}
-```
-
-### Why This Works for npx
-
-When a user runs `npx yclaude`, npm downloads the package to a temp directory and executes the `bin` entry. Because the frontend is pre-built and included in `files`, no build step happens at runtime. The package includes everything needed to serve a full dashboard.
+---
 
 ## Sources
 
-- [Hono Node.js server and static serving](https://hono.dev/docs/getting-started/nodejs) (HIGH confidence -- official docs)
-- [Hono static file serving with absolute paths](https://deepwiki.com/honojs/node-server/2.4-static-file-serving) (MEDIUM confidence)
-- [Vite build for production](https://vite.dev/guide/build) (HIGH confidence -- official docs)
-- [tsup for TypeScript library bundling](https://tsup.egoist.dev/) (HIGH confidence -- official docs)
-- [Express static serving patterns](https://expressjs.com/en/starter/static-files.html) (HIGH confidence -- pattern reference)
-- [File System Access API](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access) (HIGH confidence -- Chrome official docs)
-- [File System Access API browser support](https://caniuse.com/native-filesystem-api) (HIGH confidence -- Chromium only, no Firefox/Safari)
-- [Adapter pattern in TypeScript](https://refactoring.guru/design-patterns/adapter/typescript/example) (HIGH confidence)
-- [ccusage repository architecture](https://github.com/ryoppippi/ccusage) (HIGH confidence -- direct competitor reference)
-- [Local-first web architecture patterns](https://plainvanillaweb.com/blog/articles/2025-07-16-local-first-architecture/) (MEDIUM confidence)
-- [`open` npm package for browser launching](https://github.com/sindresorhus/open) (HIGH confidence)
-- [Local-first architecture CTO guide](https://blog.4geeks.io/implementing-local-first-architecture-a-ctos-guide-to-performance-resilience-and-data-sovereignty/) (MEDIUM confidence)
+- `src/` directory — read directly (HIGH confidence — ground truth)
+- `web/src/` directory — read directly (HIGH confidence — ground truth)
+- [Tailwind v4 dark mode configuration](https://tailwindcss.com/docs/dark-mode) (HIGH confidence — official docs)
+- [shadcn/ui chart component docs](https://ui.shadcn.com/docs/components/radix/chart) (HIGH confidence — official docs)
+- [shadcn/ui DatePickerWithRange](https://ui.shadcn.com/docs/components/radix/date-picker) (HIGH confidence — official docs)
+- [TanStack Query v5 caching](https://tanstack.com/query/v5/docs/react/guides/caching) (HIGH confidence — official docs)
+- [@hono/zod-validator npm](https://www.npmjs.com/package/@hono/zod-validator) (HIGH confidence — npm registry)
+- [Hono validation guide](https://hono.dev/docs/guides/validation) (HIGH confidence — official docs)
+- [@uiw/react-heat-map GitHub](https://github.com/uiwjs/react-heat-map) (MEDIUM confidence — read directly)
+- [React Router v7 useSearchParams](https://reactrouter.com/api/hooks/useSearchParams) (HIGH confidence — official docs)
+- [React Router v7 hash router discussion](https://github.com/remix-run/react-router/discussions/13057) (MEDIUM confidence — community verified)
+- [Zustand + TanStack Query pattern](https://dev.to/cristiansifuentes/react-state-management-in-2025-context-api-vs-zustand-385m) (MEDIUM confidence — community verified against zustand docs)
 
 ---
-*Architecture research for: yclaude -- npm-distributed local-first analytics dashboard*
+*Architecture research for: yclaude dashboard features integration — Phases 4-8*
 *Researched: 2026-02-28*

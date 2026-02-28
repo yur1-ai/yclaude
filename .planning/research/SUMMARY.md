@@ -3,229 +3,227 @@
 **Project:** yclaude
 **Domain:** Local-first AI coding analytics dashboard distributed via npm CLI
 **Researched:** 2026-02-28
+**Milestone:** Dashboard/Visualization (Phases 4-8)
 **Confidence:** HIGH
 
 ## Executive Summary
 
-yclaude is a local-first analytics dashboard for Claude Code usage data, distributed as an npm package and launched via `npx yclaude`. Research across all four dimensions confirms this is a well-understood problem domain with a clear technical path: a pre-built React SPA (produced at publish time by Vite) served by a lightweight Hono HTTP server, launched from a Commander-based CLI entrypoint. The primary competitive gap is that no existing tool combines `npx` zero-install simplicity with a full web dashboard — ccusage has the distribution model but is CLI-only, and Claud-ometer has the web dashboard but requires manual git-clone setup. The recommended approach is to build around the CLI-embedded SPA pattern from day one, with strict provider abstraction that prevents a rewrite when adding cloud features later.
+yclaude has a solid foundation from Phases 1-3: a streaming JSONL parser with UUID deduplication, a full cost calculation engine with cache tier pricing, a privacy filter, a Hono HTTP server, and a React SPA shell with four placeholder pages. The research for this milestone covers everything needed to transform those placeholders into a fully functional analytics dashboard — charts, session explorer, activity heatmap, dark mode, and a humorous personality layer. The recommended approach is a five-phase execution (Phases 4-8) that builds from foundational data infrastructure outward to progressively richer views, ending with polish and differentiators that no competitor ships.
 
-The key recommendation from the research is to prioritize breadth over depth in Phase 1: ship the JSONL parser, cost calculator, and all core dashboard views (cost over time, per-model, per-project, session list) as a coherent v1.0. The humorous personality layer is identified as a genuine differentiator that costs almost nothing to implement but makes the tool memorable and shareable — it should be woven through all copy from the start, not bolted on later. Three features stand out as uniquely differentiated against all competitors: cache efficiency scoring, sidechain/subagent analysis, and git branch correlation; these are P2 additions once the core is validated.
+The central architectural decision is to keep aggregation server-side. Route handlers should receive pre-computed `AppState` indexes (timeline, byModel, byProject, sessions, heatmap) computed once at CLI startup from `CostEvent[]`, rather than aggregating per-request or sending raw events to the frontend. This pattern is already established by `computeCosts()` and needs only to be extended into a new `src/aggregation/` module. The frontend communicates via typed API endpoints using TanStack Query hooks keyed on the Zustand date range store, ensuring that changing the global date picker re-fetches all views simultaneously without any manual coordination.
 
-The dominant risk across all research is the JSONL format instability: Anthropic treats `~/.claude/projects/**/*.jsonl` as an internal implementation detail, not a public API. The schema has already changed in breaking ways (directory moved in v1.0.30, `<persisted-output>` wrapping causes files to balloon to 12MB+, token usage data has documented duplication bugs). Defensive parsing with per-line error handling, UUID deduplication, and explicit "estimated cost" labeling are non-negotiable for Phase 1. A secondary risk is the pricing table going stale — every Anthropic model launch (roughly quarterly) requires a pricing update, and shipping stale prices immediately erodes user trust.
+The dominant risk for this milestone is not the data pipeline — that is already built and validated — but the charting integration. Recharts v3 is the correct choice, but shadcn/ui's `chart` component still wraps Recharts v2 as of February 2026 (PR #8486 is unmerged). The resolution is to use a community-maintained drop-in `chart.tsx` replacement targeting v3. A second risk is dark mode: Tailwind v4 requires `@custom-variant dark` in CSS (not `darkMode: 'class'` in a config file, which does not exist in v4), and chart colors must use CSS variables rather than hex literals or they will not respond to theme toggling. Both risks are clearly bounded and preventable with the patterns documented in the research.
 
 ## Key Findings
 
-### Recommended Stack
+### From STACK.md — New Dependencies for This Milestone
 
-The stack is converged and high-confidence across sources. React 19 + Vite 7 + Tailwind CSS 4 + shadcn/ui is the 2026 standard for dashboard UIs; Recharts 3.7 is the right charting library because shadcn/ui's built-in chart components wrap it directly, giving 53 pre-built chart patterns with zero extra dependency cost. Hono 4.12 with `@hono/node-server` is the correct server choice: it is 3.5x faster than Express, 14KB with zero dependencies, and its Web Standards API means the same code runs on Cloudflare Workers for future cloud deployment. tsup 8.5 bundles the CLI; `vite-plugin-singlefile` inlines the entire dashboard into one `index.html` for clean npm distribution.
+The base stack (React 19, Tailwind 4, Vite 7, Hono 4.12, TypeScript 5.7, React Router v7) is installed and stable. New additions for Phases 4-8:
 
-The critical stack decision is **the CLI-embedded SPA pattern**: the React frontend is built at publish time (`prepublishOnly` script), the resulting `web-dist/` is included in the npm package `files`, and Hono serves it as static assets at runtime. This means `npx yclaude` downloads a complete, self-contained package — no build tools needed at runtime.
+| Library | Version | Purpose | Notes |
+|---------|---------|---------|-------|
+| recharts | 3.7.x | All charts (area, bar, pie/donut) | React 19 peer dep fix: `overrides.react-is` in package.json |
+| react-activity-calendar | 3.0.x | GitHub-style activity heatmap | v3 released Nov 2025; replaces unmaintained react-calendar-heatmap |
+| @tanstack/react-table | 8.21.x | Session list table with sorting/filtering | Official shadcn/ui recommendation; headless |
+| @tanstack/react-query | 5.x | API data fetching with cache keyed on date range | Required before Phase 2 cloud; good to add now |
+| zustand | 5.x | Global filter state (date range) + theme store | 1.2KB; use `persist` middleware for theme store |
+| @hono/zod-validator | latest | Query param validation on new API endpoints | Install in root package.json |
+| date-fns | 4.1.x | Date bucketing for chart x-axis | Already confirmed in stack |
 
-**Core technologies:**
-- **React 19.2 + Vite 7.3**: UI framework + build tool — first-class Tailwind v4 integration via official Vite plugin; 5x faster builds than Vite 5
-- **Hono 4.12**: HTTP server — 14KB, Web Standards API, runs identically on Node.js and Cloudflare Workers; critical for Phase 2 cloud portability
-- **Recharts 3.7 + shadcn/ui**: Charts + UI components — shadcn/ui's copy-paste model means zero runtime dependency bloat; Recharts is React-native with composition API
-- **Tailwind CSS 4.2**: Styling — zero-config in v4, CSS-only configuration, 100x faster incremental builds than v3
-- **Zustand 5**: State management — 1.2KB, centralized store ideal for interconnected filter state (date range, model, project)
-- **Commander 14**: CLI arg parsing — 25M+ weekly downloads, battle-tested for `--dir`, `--port`, `--no-open` CLI surface
-- **tsup 8.5**: CLI bundler — esbuild-powered, bundles TypeScript CLI into single JS file with all deps inlined
-- **TypeScript 5.7 strict mode**: Non-negotiable for a project of this complexity
-- **Node.js 22 LTS**: Runtime target — native ESM, minimum for Commander v14
+**Critical note:** shadcn/ui chart wrapper targets Recharts v2, not v3. Use the community gist `noxify/92bc410cc2d01109f4160002da9a61e5` as a drop-in v3-compatible `chart.tsx` instead of the default `npx shadcn add chart` output. This is the recommended Option A — battle-tested with 87 upvotes on the pending PR.
 
-**Stack note:** TanStack Router and TanStack Query are recommended if building cloud features from the start. For Phase 1 local-only, simple `fetch()` + Zustand is sufficient. Add TanStack Query before Phase 2 to handle caching, refetching, and loading states properly.
+**Dark mode:** No extra library needed. Use a custom `ThemeProvider` (~40 LOC) following the shadcn/ui Vite dark mode guide. `next-themes` is Next.js-specific and should not be used.
 
-### Expected Features
+**What NOT to add:** D3.js (conflicts with Recharts), Nivo (200KB+), Victory (no shadcn integration), AG Grid (enterprise bloat), Framer Motion (chart animations are built into Recharts), react-table v7 (deprecated), CSS-in-JS (conflicts with Tailwind v4).
 
-All competitors (ccusage, Claud-ometer, Sniffly, Claude Code Usage Monitor) converge on the same set of table-stakes features. The v1.0 MVP is clear: ship these and yclaude is competitive. The differentiators are identified, costed, and ordered by impact-vs-effort.
+### From FEATURES.md — Feature Set for Phases 4-8
 
-**Must have (table stakes) — v1.0:**
-- Total cost overview with model pricing — every competitor has this; first question every user asks
-- Cost over time chart (daily/weekly/monthly toggle) — line/area chart with date grouping
-- Per-model breakdown — donut chart + table; data is in `message.model`
-- Per-project breakdown — decoded directory names; slug decoding is required
-- Session list with metadata drill-down (NO conversation text — privacy)
-- Date range filter — applies globally to all views
-- Token breakdown (input/output/cache_creation/cache_read) — critical for cost accuracy
-- Dark mode with system preference detection
-- GitHub-style activity heatmap — Claud-ometer has this; yclaude adds personality annotations
-- Cache efficiency score — percentage + trend; NO competitor surfaces this as a first-class metric
-- Humorous personality copy — woven through all states; this IS the brand, not a feature
-- `npx yclaude` zero-install entrypoint with auto-open browser
+All features consume from `CostEvent[]` via typed API endpoints. No new parsing work is required.
 
-**Should have (competitive) — v1.x:**
-- Sidechain/subagent analysis — `isSidechain` field exists but no competitor uses it; unique insight
-- Git branch correlation — `gitBranch` field exists but no competitor uses it; connects spend to work
-- Cost per conversation turn — normalizes cost by interaction, more intuitive than raw tokens
-- Smart cost projections — rolling average projection line on cost chart
-- Session compaction detection — actionable coaching for power users
-- Insights panel — data-driven optimization tips (build last among v1.x features)
-- Shareable snapshots — static HTML export of stats (no conversation content)
-- CSV/JSON export
+**Table stakes — users expect these (must ship in v1.0):**
 
-**Defer (v2+):**
-- Cloud sync (requires infrastructure, auth, privacy framework)
-- Crowdsourced benchmarking (requires critical mass of users + cloud)
-- Multi-tool support (Cursor, Copilot, Windsurf)
-- Team dashboards with per-developer views (SMB monetization gap; Anthropic Console is Enterprise-only)
-- Budget alerts with push notifications (requires always-on service)
+| Feature ID | Feature | Complexity | API Needed |
+|------------|---------|------------|------------|
+| ANLT-01 | Total cost display | LOW | `/api/v1/summary` (already exists, extend with date params) |
+| ANLT-02 | Token breakdown by type | LOW | Extend summary response |
+| ANLT-03 | Cost-over-time chart (day/week/month toggle) | LOW | `/api/v1/timeline` (new) |
+| ANLT-06 | Global date range picker | LOW | Client-side Zustand state |
+| SESS-01 | Session list with sort/filter | MEDIUM | `/api/v1/sessions` (stub exists) |
+| SESS-02 | Session detail (per-turn breakdown) | MEDIUM | `/api/v1/sessions/:id` (new) |
+| CLI-03 | Dark mode (system + manual override) | LOW | None |
 
-**Anti-features — do not build in v1:**
-- Real-time token streaming monitor (different product category; competes with Usage Monitor on their turf)
-- Conversation content display (privacy liability; kills any future cloud/team features)
-- OpenTelemetry/Prometheus export (wrong audience for Phase 1)
-- AI-powered natural language queries (breaks local-first; adds LLM dependency)
+**Differentiators — these win against competitors:**
 
-### Architecture Approach
+| Feature ID | Feature | Value Proposition | Complexity |
+|------------|---------|------------------|------------|
+| PRSL-01 | Humorous personality copy | Memorable, shareable, no competitor has it | LOW |
+| ANLT-07 | Cache efficiency score | No competitor surfaces this as first-class metric | LOW-MEDIUM |
+| ANLT-04 | Per-model donut chart | Adds interactivity + personality annotations | LOW |
+| ANLT-05 | Per-project cost breakdown | `cwd` decoded to project name; standard expectation | MEDIUM |
+| ANLT-08 | Activity heatmap | react-activity-calendar reduces effort; personality tooltips differentiate | LOW-MEDIUM |
+| SESS-03 | Subagent/sidechain flagging | Unique: no competitor surfaces `isSidechain` data | MEDIUM |
+| SESS-04 | Git branch display and filtering | Unique: no competitor uses `gitBranch` field | MEDIUM |
 
-The architecture follows a clean four-layer separation: CLI entry (thin shell, parse args and start server), HTTP server (Hono, serves API routes and pre-built SPA), data layer (DataProvider interface abstracting local file system from future cloud API), and parser layer (JSONL streaming reader + FormatAdapter normalizing tool-specific formats into a canonical NormalizedEvent schema). The data layer abstraction is the most architecturally important decision: server routes call `provider.getProjects()` and never import `fs` directly, which means adding CloudAPIProvider in Phase 2 requires zero changes to routes or frontend.
+**Anti-features — explicitly do not build in this milestone:**
+- Conversation content display (privacy liability; `applyPrivacyFilter()` already enforces the boundary)
+- Real-time file watching (different product category; serve "data as of startup" with manual refresh)
+- Natural language query (breaks local-first promise)
+- CSV/JSON export (v1.x, not MVP)
+- Cost projections (v1.x)
 
-The recommended project structure uses a single npm package (not a monorepo) with clear folder boundaries: `src/cli/`, `src/server/`, `src/data/`, `src/parser/`, `src/aggregation/`, and `web/` (a separate Vite project that produces pre-built assets). Data flows from JSONL files through FormatAdapter normalization through aggregation into an in-memory cache, then served via Hono API routes to the React SPA. Parse once at startup, serve from cache — never re-parse on each request.
+**Proposed phase-to-feature mapping:**
+- Phase 4: ANLT-01, ANLT-02, ANLT-03, ANLT-06 (core cost analytics dashboard)
+- Phase 5: ANLT-04, ANLT-05 (model and project breakdowns)
+- Phase 6: SESS-01, SESS-02 (session explorer)
+- Phase 7: ANLT-07, ANLT-08, SESS-03, SESS-04 (differentiators)
+- Phase 8: CLI-03, PRSL-01 (dark mode + personality — full-app pass)
 
-**Major components:**
-1. **CLI Entry** (`src/cli/`) — arg parsing, config resolution, browser auto-open; thin shell with near-zero business logic
-2. **Hono Server** (`src/server/`) — factory function accepting DataProvider; API routes under `/api/v1/*`; static asset + SPA fallback serving
-3. **DataProvider Interface** (`src/data/`) — `LocalFSProvider` for Phase 1, `CloudAPIProvider` for Phase 2; server routes are provider-agnostic
-4. **Parser + FormatAdapter** (`src/parser/`) — streaming JSONL reader + `ClaudeCodeAdapter` normalizing to canonical `NormalizedEvent`; adapter pattern means adding Cursor = adding one file
-5. **Aggregation Engine** (`src/aggregation/`) — pure functions over normalized events; cost calculation, time bucketing, project/session grouping
-6. **React SPA** (`web/`) — pre-built at publish time; Dashboard, Projects, Sessions, SessionDetail views; Recharts + shadcn/ui components
-7. **In-Memory Cache** — parsed and aggregated data held in memory for the server lifecycle; optional file-watch for incremental updates
+### From ARCHITECTURE.md — Integration Patterns
 
-### Critical Pitfalls
+The existing code is read directly and confirms the baseline. Key architectural decisions for Phases 4-8:
 
-Research surfaced six critical pitfalls verified against real ccusage and Claude Code GitHub issues, all requiring Phase 1 attention.
+**Aggregation layer:** Create `src/aggregation/` with pure functions (`buildTimelineIndex`, `buildModelIndex`, `buildProjectIndex`, `buildSessionIndex`, `buildHeatmapData`) called once in `src/server/cli.ts` before `createApp()`. `AppState` grows additively — no breaking changes to existing structure.
 
-1. **JSONL format is unstable and undocumented** — Parse defensively with optional chaining on every field; detect both `~/.claude` and `~/.config/claude` paths; check `CLAUDE_CONFIG_DIR`; per-line try/catch so one bad line never crashes the parser; build integration tests against a JSONL corpus from multiple Claude Code versions
-2. **Token usage data is unreliable** — Deduplicate by `uuid` (same API call appears multiple times in JSONL); flag suspiciously high counts; always label costs as "estimated" in the UI; never claim billing-level accuracy
-3. **Pricing table goes stale with every model launch** — Store pricing in a separate versioned JSON file (not hardcoded); handle unknown models by showing tokens without cost (never show $0.00 for non-zero tokens); fuzzy-match date-suffixed model names (e.g., `claude-sonnet-4-20250514` maps to `claude-sonnet-4`); track cache token pricing complexity (1.25x 5-min write, 2x 1-hour write, 0.1x cache read)
-4. **npx bundle size and cold start kill first impressions** — Target < 5MB total package size; pre-build frontend at publish time; stream JSONL parsing (never load all files into memory); benchmark cold start in CI (< 10 seconds); show CLI spinner immediately
-5. **Privacy violations destroy an analytics tool** — Bind server to `127.0.0.1` exclusively (never `0.0.0.0`); zero telemetry in v1; never display conversation content; add random startup token to URL to prevent cross-origin scraping; CSP headers blocking all external requests
-6. **Licensing trap** — Choose MIT for local CLI/parser (maximum adoption) with cloud/team features in a separate proprietary codebase from day one; do not relicense after gaining contributors
+**Frontend state:** Zustand store in `web/src/store/filters.ts` holds the global date range. TanStack Query hooks include `dateRange.from.toISOString()` and `dateRange.to.toISOString()` in their `queryKey` arrays, so changing the date picker automatically re-fetches all views. Set `staleTime: 5 * 60 * 1000` — data is loaded at startup and will not change.
+
+**New API endpoints (by phase):**
+- Phase 4: `GET /api/v1/summary?from&to`, `GET /api/v1/timeline?bucket=day|week|month&from&to`
+- Phase 5: `GET /api/v1/models?from&to`, `GET /api/v1/projects?from&to`
+- Phase 6: `GET /api/v1/sessions?from&to&project&sort&order`, `GET /api/v1/sessions/:id`
+- Phase 7: `GET /api/v1/cache-efficiency?from&to`, `GET /api/v1/heatmap?year`
+
+**Dark mode architecture:** `@custom-variant dark (&:where(.dark, .dark *))` in `web/src/index.css`. Zustand `persist` store in `web/src/store/theme.ts`. FOUC prevention via inline `<script>` in `web/index.html` that reads `localStorage['yclaude-theme']` and applies `.dark` class before React mounts. Chart CSS variables defined in `index.css` under `.dark` selector.
+
+**Files touched vs. untouched:** Parser (`src/parser/`), cost engine (`src/cost/engine.ts`), and privacy filter are complete and stable — do not modify them. Server (`src/server/server.ts`, `routes/api.ts`, `cli.ts`) and all SPA pages get additions per phase.
+
+**Scalability:** In-memory aggregation is correct for Phase 1 scale. A typical heavy user has 500-5,000 JSONL events; aggregation of 5K events takes under 100ms. No database, no pagination at the server level, no lazy loading needed until Phase 2 cloud.
+
+### From PITFALLS.md — Top Pitfalls for This Milestone
+
+Fourteen pitfalls were documented. The most critical for Phases 4-8:
+
+**Pitfall 7 — Chart colors break dark mode (hardcoded hex vs CSS variables):** Never pass `stroke="#..."` or `fill="#..."` hex literals to Recharts props — they are immune to CSS theme toggling. All chart colors must use `var(--color-*)` CSS variable references. Create a single `chartTheme.ts` module. Test both themes. Prevention: establish the CSS variable pattern before writing the first chart component, not after.
+
+**Pitfall 8 — Date filter causes client-side N+1 re-aggregation:** The naive approach sends all `CostEvent[]` to the frontend and re-aggregates in React on every filter change. With 50K+ events, this freezes the UI thread. Prevention: aggregation is always server-side; route handlers accept `?from&to` params, filter the pre-built index, and return summary objects — never raw event arrays.
+
+**Pitfall 9 — Dark mode with Tailwind v4 requires different setup than v3:** `darkMode: 'class'` in `tailwind.config.js` does not exist in v4 and is silently ignored. The correct approach is `@custom-variant dark (&:where(.dark, .dark *))` in `index.css`. Theme class must be applied before React mounts (blocking `<script>` in `index.html`) to prevent flash of wrong theme.
+
+**Pitfall 10 — Activity heatmap UTC/local timezone mismatch:** Timestamp fields in JSONL are UTC. Bucketing by `new Date(ts).toISOString().slice(0, 10)` produces wrong calendar days for users in negative UTC offsets. Use `toLocaleDateString('en-CA')` client-side or `Intl.DateTimeFormat` with user timezone server-side.
+
+**Pitfall 11 — Session list unresponsive with large datasets:** 500-2,000 sessions rendered as DOM nodes causes jank. Use server-side pagination at `GET /api/v1/sessions?page=N&limit=50` with TanStack Table for the current page. Add `@tanstack/react-virtual` only if profiling shows it is needed.
+
+**Pitfall 12 — Cache efficiency score double-counts tokens:** `input_tokens` in JSONL already includes `cache_creation` and `cache_read` subtypes as a gross total. The correct formula is `cacheRead / input` (not `cacheRead / (input - cacheRead)`). Compute in the server route handler, not in React components, and guard against division by zero.
+
+**Pitfall 13 — Humorous copy becomes annoying through repetition:** Static copy that appears on every load is irritating after 50 visits. Use rotating pools of quips (at least 5 per metric context) keyed to a seed (e.g., week number). Reserve premium humor for milestone moments (first $1, first $100). Data always leads; personality follows adjacent, never replacing data labels.
+
+**Pitfall 14 — Global date filter without URL sync:** ARCHITECTURE.md recommends Zustand (not URL params) because yclaude is local-only and state shareability is not a Phase 1 requirement. This conflicts with PITFALLS.md, which recommends URL params. The resolution: for Phase 4, use Zustand as the source of truth (simpler, no URL pollution) and defer URL sync to v1.x when user feedback confirms it is needed.
 
 ## Implications for Roadmap
 
-Based on research, suggested phase structure (4 phases):
+### Suggested Phase Structure
 
-### Phase 1: Local MVP — "npx yclaude just works"
-**Rationale:** The JSONL parser and pricing table are the foundation of everything. All dashboard features depend on them. The critical pitfalls (format instability, token unreliability, bundle size, privacy) must all be addressed at Phase 1 — they cannot be retrofitted. This phase validates whether the product has any value before investing in cloud infrastructure.
-**Delivers:** A fully working local dashboard accessible via `npx yclaude`. Core cost analytics, session browsing, date filtering, and the personality layer that makes it memorable.
-**Addresses:**
-- JSONL parser with resilient error handling (defensive parsing, per-line try/catch, UUID deduplication)
-- Static pricing table for all current Claude models with full cache token complexity
-- Cost dashboard — total spend, cost over time (day/week/month), model breakdown donut
-- Per-project breakdown with decoded directory names
-- Session list + session detail (metadata only, no conversation text)
-- Date range filter (global)
-- Activity heatmap (GitHub-style)
-- Cache efficiency score (first-class metric, unique differentiator)
-- Humorous personality copy throughout
-- Dark mode (system preference + manual toggle)
-- `npx yclaude` entrypoint, auto-open browser, `--port`/`--dir`/`--no-open` flags
-**Avoids:**
-- Pitfall 1: Parser must handle `<persisted-output>` wrapped lines, schema drift, both config directory paths
-- Pitfall 2: UUID deduplication and "estimated" cost labeling from day one
-- Pitfall 4: Bundle size CI check, streaming JSONL reader, CLI spinner
-- Pitfall 5: Bind to 127.0.0.1, zero telemetry, CSP headers, no conversation content display
-- Pitfall 6: License decision and repo structure before first public commit
+**Phase 4: Cost Analytics Dashboard**
+- Rationale: Foundational data infrastructure (aggregation layer, API endpoints, global date filter, TanStack Query setup) must exist before any views can be built. This phase is prerequisites + the most critical page.
+- Delivers: Overview page with total cost cards, cost-over-time area chart (day/week/month toggle), token breakdown, and the global date range picker that all subsequent phases inherit.
+- New server code: `src/aggregation/timeline.ts`, extend `AppState`, add `/api/v1/timeline` route, extend `/api/v1/summary` with date params
+- New frontend code: Zustand filter store, TanStack Query hooks, `web/src/lib/api.ts`, `StatCard`, `DateRangePicker`, `CostAreaChart`, full `Overview.tsx` implementation
+- Critical ordering: Zustand store and TanStack Query must be set up before any page components. Chart CSS variable pattern must be established before writing the first chart.
+- Pitfalls to avoid: Pitfall 7 (hex chart colors), Pitfall 8 (client-side aggregation), Pitfall 9 partial (@custom-variant directive must be added to index.css now, even if dark mode toggle is Phase 8)
+- Research flag: Standard patterns, no additional research needed
 
-### Phase 2: v1.x Polish and Differentiators
-**Rationale:** Once core analytics are validated by real users, add the features that make yclaude clearly better than alternatives. These all build on the same data foundation but require user feedback to confirm which ones matter most. This phase is ordered by feature dependency: sidechain/git/projections require the same aggregation engine already built; the insights panel requires all other metrics to exist first.
-**Delivers:** Features that separate yclaude from every competitor; a product users recommend to teammates.
-**Uses:**
-- Sidechain/subagent analysis (`isSidechain` + `agentId` fields — unique; no competitor surfaces this)
-- Git branch correlation (`gitBranch` field — unique; connects AI spend to actual work)
-- Cost per conversation turn metric
-- Smart cost projections (rolling average projection line)
-- Session compaction detection with coaching messages
-- Insights panel (rule engine: model selection optimization, session length advice)
-- Shareable snapshots (static HTML export, metadata only, privacy-safe)
-- CSV/JSON export
-- Pricing auto-update endpoint (`yclaude.dev/api/pricing.json`) to avoid stale pricing pitfall
+**Phase 5: Model and Project Breakdowns**
+- Rationale: Builds directly on Phase 4's filter store, TanStack Query setup, and aggregation pattern. Two new aggregation indexes (byModel, byProject), two new routes, two placeholder pages replaced.
+- Delivers: Models page with donut chart + companion table; Projects page with sortable cost breakdown table.
+- New server code: `src/aggregation/by-model.ts`, `src/aggregation/by-project.ts`, extend `AppState`, add `/api/v1/models` and `/api/v1/projects` routes
+- New frontend code: `DonutChart.tsx`, replace `Models.tsx` and `Projects.tsx`
+- Note: Project display name uses `path.basename(cwd)` or last 2 path segments — not slug decoding (cwd is the ground truth field, confirmed in Phase 1)
+- Research flag: Standard patterns, no additional research needed
 
-### Phase 3: Cloud and Teams
-**Rationale:** The DataProvider abstraction designed in Phase 1 makes this phase a matter of implementing CloudAPIProvider without touching routes or frontend. This phase requires infrastructure decisions (auth, database, background jobs) and should only start once Phase 1-2 validate product-market fit. The SMB team segment (5-50 developers) is currently unserved — Anthropic's dashboard is Enterprise-only.
-**Delivers:** Cloud-hosted dashboard, team analytics, per-developer views, budget visibility.
-**Uses:**
-- CloudAPIProvider implementing the DataProvider interface (no route changes needed)
-- Auth (recommend Clerk or Auth.js — do not build your own)
-- PostgreSQL (schema mirrors canonical NormalizedEvent types)
-- Background job queue (BullMQ or inngest) for async parsing of uploaded data
-- Multi-tool parser support (Cursor, Copilot, Windsurf — adapter per tool)
-**Implements:** Cloud deployment architecture (upload-based or File System Access API path; fallback for Firefox/Safari)
+**Phase 6: Session Explorer**
+- Rationale: Requires the most complex aggregation (`buildSessionIndex` must group `CostEvent[]` by `sessionId`, compute turn-level breakdowns, and derive session duration). Depends on Phase 4 filter infrastructure but not on Phase 5 breakdowns.
+- Delivers: Sessions list page with sortable/filterable table; Session Detail page with per-turn cost breakdown and cumulative sparkline; new `/sessions/:sessionId` route.
+- New server code: `src/aggregation/sessions.ts`, extend `AppState`, add `/api/v1/sessions` (list) and `/api/v1/sessions/:id` (detail) routes
+- New frontend code: new `sessions/:sessionId` route in App.tsx, `SessionTable.tsx`, replace `Sessions.tsx`, new `SessionDetail.tsx`
+- Note: Session duration = `endTime - startTime` derived from events; `durationMs` from parser is from system events and not always present.
+- Pitfalls to avoid: Pitfall 11 (session list performance — use server-side pagination from the start)
+- Research flag: Session aggregation logic (grouping by sessionId, turn ordering, sidechain handling) warrants a dedicated plan step to nail the data shapes before building
 
-### Phase 4: Monetization and Scale
-**Rationale:** Crowdsourced benchmarking is the long-term moat but requires critical mass of users and significant infrastructure. Team features with budget alerts require an always-on service. These are deferred until Phase 3 validates the cloud architecture and builds the user base needed to make benchmarking statistically meaningful.
-**Delivers:** "Your team spends 2.3x the median" — industry benchmarking, team budget controls, enterprise features (SSO, audit logs, RBAC).
-**Note:** Design the canonical data schema in Phase 1 to anticipate the anonymous contribution format needed here. The aggregation schema should not require a rewrite to support opt-in benchmarking.
+**Phase 7: Differentiator Features**
+- Rationale: These are the features that separate yclaude from all competitors. They build on Phase 5 (model data for cache efficiency) and Phase 6 (sessions for sidechain flagging). Deliberately deferred until the core is solid.
+- Delivers: Activity heatmap on Overview, cache efficiency score, sidechain/subagent analysis in session views, git branch column and filter in session list.
+- New server code: `src/aggregation/heatmap.ts`, add `/api/v1/heatmap` and `/api/v1/cache-efficiency` routes, extend sessions endpoints with `isSidechain` and `gitBranch`
+- New frontend code: `Heatmap.tsx` (react-activity-calendar), `CacheEfficiencyScore.tsx`, updates to Overview/Sessions/SessionDetail pages
+- Pitfalls to avoid: Pitfall 10 (UTC/local timezone for heatmap bucketing), Pitfall 12 (cache efficiency formula — gross denominator, guard zero division)
+- Research flag: react-activity-calendar theming integration with Tailwind v4 CSS variables needs a proof-of-concept before full implementation
+
+**Phase 8: Dark Mode and Personality**
+- Rationale: This is a full-app pass that should happen after all pages exist so the dark mode variants and personality copy can be applied comprehensively rather than page by page. No new backend code needed.
+- Delivers: System-aware dark mode with manual toggle and no flash of wrong theme; humorous personality copy throughout all states (empty states, loading, spend thresholds, model commentary, heatmap peak annotations).
+- New frontend code: `web/src/store/theme.ts` (Zustand persist), FOUC prevention script in `web/index.html`, dark mode toggle in Layout, dark: variants added across all pages/components, `web/src/lib/copy.ts` personality module
+- Pitfalls to avoid: Pitfall 9 (Tailwind v4 dark mode setup), Pitfall 13 (personality copy rotation — minimum 5 quips per context, data leads, humor follows)
+- Research flag: Standard patterns. shadcn/ui Vite dark mode guide is authoritative. No additional research needed.
 
 ### Phase Ordering Rationale
 
-- **Parser before features:** Every dashboard feature depends on accurate JSONL parsing. Starting with a shaky parser and adding features on top creates compounding technical debt that is painful to unwind.
-- **Privacy before cloud:** Establishing a strong local-first privacy posture in Phase 1 makes the transition to opt-in cloud features in Phase 3 credible. Users who trust the local tool will trust the cloud product.
-- **Personality from day one:** The humorous copy is a cross-cutting differentiator. Adding it after features are built means retrofitting every component. It belongs in Phase 1 as a design constraint, not a feature.
-- **DataProvider abstraction before cloud:** Implementing the interface in Phase 1 (when LocalFSProvider is the only implementation) costs almost nothing extra. Doing it after Phase 2 requires rewriting every route handler.
-- **Single package before monorepo:** Monorepo complexity is not justified until Phase 3+ when genuinely independent packages emerge (shared SDK, cloud service). Single package with clear folder boundaries is sufficient and faster for Phase 1-2.
+- Phase 4 before all others: The aggregation infrastructure (Zustand, TanStack Query, AppState indexes, API endpoint pattern with date params) is a prerequisite for every subsequent phase. Building it first means Phases 5-8 compose naturally on top.
+- Phase 5 and 6 can be parallelized: They share no dependencies on each other. If two developers are available, they can proceed simultaneously after Phase 4.
+- Phase 7 after 5 and 6: Cache efficiency needs per-model data (Phase 5); sidechain flagging needs session infrastructure (Phase 6).
+- Phase 8 last: All pages must exist before dark mode and personality can be applied comprehensively.
 
 ### Research Flags
 
-Phases likely needing deeper research during planning:
-- **Phase 1 — JSONL Parser:** The format instability is the highest-risk area. Before building, audit the ccusage parser as reference implementation and collect a JSONL fixture corpus spanning multiple Claude Code versions (v1.0.30 through v2.1.51+). Research the `<persisted-output>` wrapping behavior and token deduplication edge cases.
-- **Phase 3 — Cloud Architecture:** File System Access API has no Firefox/Safari support. The upload-based fallback, auth service choice, database schema design, and background job architecture all warrant dedicated research before Phase 3 planning.
-- **Phase 3 — Multi-tool Parsers:** Cursor, Copilot, and Windsurf each have completely different data formats. Each new tool adapter is a small research task (where does it store data? what fields matter?).
-
-Phases with standard patterns (skip research-phase):
-- **Phase 1 — React SPA + Hono server:** CLI-embedded SPA is a well-documented pattern. Stack choices are validated with high confidence. Standard Vite + Hono + shadcn/ui setup.
-- **Phase 1 — shadcn/ui charts:** 53 pre-built patterns documented on ui.shadcn.com. Recharts composition API is well-documented. No novel integration needed.
-- **Phase 2 — v1.x features:** All features in Phase 2 use the same data model built in Phase 1. No new architectural patterns required.
+- Phase 4: No additional research needed — standard patterns with high-confidence documentation.
+- Phase 5: No additional research needed — aggregation pattern established in Phase 4.
+- Phase 6: Session aggregation logic warrants a plan step (not full research-phase) to nail `SessionSummary` data shapes and the `buildSessionIndex` contract before implementation.
+- Phase 7: Heatmap theming integration (react-activity-calendar + Tailwind v4 CSS variables) warrants a proof-of-concept before full implementation. Consider a spike in the plan.
+- Phase 8: No additional research needed — shadcn/ui Vite dark mode guide is authoritative; copy module is straightforward.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Nearly all sources are official docs or npm registry data. Version compatibility table verified. Only MEDIUM items are a few community blog posts confirming behavior. |
-| Features | HIGH | Feature landscape validated against 5 live competitors with real GitHub repositories. Competitor feature table is directly observable. Gaps in competitor coverage are verifiable facts. |
-| Architecture | HIGH | Patterns drawn from official Hono docs, Vite docs, Node.js docs. Anti-patterns validated against ccusage architecture decisions. DataProvider pattern is standard OOP; no novel approaches. |
-| Pitfalls | HIGH | Every critical pitfall is backed by a specific GitHub issue number (ccusage#866, ccusage#844, anthropics/claude-code#23948, etc.) with real-world reproduction evidence. |
+| Stack | HIGH | Sources are npm registry data, official GitHub releases, and official docs. Recharts v3 / shadcn chart v2 discrepancy is documented with primary source (shadcn author's X post). |
+| Features | HIGH | Feature landscape validated against live competitors (ccusage, Claud-ometer). `CostEvent[]` data shapes confirmed by reading actual Phase 1-3 source code. |
+| Architecture | HIGH | Architecture research read the actual `src/` and `web/src/` directories directly. Patterns drawn from official Hono, TanStack Query, Zustand, and Tailwind v4 docs. |
+| Pitfalls | HIGH | All critical pitfalls backed by specific GitHub issue numbers or npm publish date verification. Dark mode pitfalls verified against Tailwind v4 migration docs. |
 
 **Overall confidence:** HIGH
 
+**Tension to resolve — Pitfall 14 vs. Architecture recommendation:**
+PITFALLS.md recommends URL search params for the date filter (state persists across refreshes, bookmarkable). ARCHITECTURE.md recommends Zustand (simpler, no URL pollution, yclaude is local-only). The resolution: use Zustand for Phase 4 as designed, and add URL sync as a v1.x enhancement once user feedback confirms whether bookmarking/sharing date ranges is actually needed. Document this decision explicitly in the Phase 4 plan.
+
 ### Gaps to Address
 
-- **Exact sub-agent token accounting:** The PITFALLS research flags that sub-agent transcripts are stored separately as `todos/{sessionId}-agent-{agentId}.json`. The exact structure of these files and how their token usage should roll up into session totals needs verification against real data before Phase 1 parser implementation.
-- **`<persisted-output>` wrapping behavior:** Files up to 12MB exist due to this wrapping (claude-code#23948). The parser must handle or skip these gracefully, but the exact structure of the wrapping needs to be confirmed against real JSONL samples before writing the parser.
-- **Cache token pricing tiers:** Anthropic has both 5-minute and 1-hour cache write tiers with different multipliers (1.25x vs 2x). The JSONL field names for distinguishing these (`cache_creation.ephemeral_5m_input_tokens` vs `ephemeral_1h_input_tokens`) need to be confirmed against current Claude Code JSONL output before coding the cost calculator.
-- **File System Access API Phase 3 path:** Confirmed Chromium-only (no Firefox/Safari). Upload-based fallback design for Phase 3 cloud needs to be planned before Phase 3 starts to avoid a UX dead-end for non-Chromium users.
+- **Recharts v3 + community chart.tsx validation:** The community gist replacing shadcn's chart.tsx needs a hands-on proof-of-concept to confirm it works without regression before Phase 4 commits to it.
+- **react-activity-calendar dark mode + Tailwind v4 theming:** The library accepts a `theme` prop with hex/oklch color arrays. Deriving these from Tailwind CSS variables at runtime via `getComputedStyle` needs to be validated in the actual Vite + Tailwind v4 environment.
+- **Session duration computation:** `durationMs` in NormalizedEvent is from system events and may not be present on all events. The fallback of computing `endTime - startTime` from first/last event timestamps needs to be confirmed as sufficient before Phase 6 aggregation code is written.
+- **Sub-agent token accounting:** `isSidechain: true` events are grouped by `sessionId` in the parser. Whether sub-agent token usage is additive to the parent session or separately tracked needs confirmation before Phase 7 sidechain analysis is built.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [shadcn/ui official chart docs](https://ui.shadcn.com/docs/components/radix/chart) — chart component patterns, Recharts integration
-- [Hono official Node.js docs](https://hono.dev/docs/getting-started/nodejs) — server setup, static serving, adapter pattern
-- [Vite build docs](https://vite.dev/guide/build) — production build, SPA output
-- [React blog v19.2](https://react.dev/blog/2025/10/01/react-19-2) — version status, breaking changes
-- [Anthropic Official Pricing](https://platform.claude.com/docs/en/about-claude/pricing) — model pricing, cache multipliers
-- [ccusage GitHub](https://github.com/ryoppippi/ccusage) — competitor feature analysis, parser reference, issue tracker
-- [Claud-ometer GitHub](https://github.com/deshraj/Claud-ometer) — web dashboard competitor analysis
-- [anthropics/claude-code#23948](https://github.com/anthropics/claude-code/issues/23948) — persisted-output JSONL bloat
-- [anthropics/claude-code#5904](https://github.com/anthropics/claude-code/issues/5904) — /cost doubling bug
-- [anthropics/claude-code#6805](https://github.com/anthropics/claude-code/issues/6805) — stream-JSON token duplication
-- [ccusage#866](https://github.com/ryoppippi/ccusage/issues/866) — JSONL token unreliability upstream
-- [File System Access API (Chrome docs)](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access) — browser FS API, Chromium-only status
-- [npm registry](https://www.npmjs.com) — all package version data (Hono 4.12.2, React 19.2.4, Vite 7.3.1, etc.)
+- Phase 1-3 source code (`src/`, `web/src/`) — read directly; ground truth for current architecture
+- [shadcn/ui chart docs](https://ui.shadcn.com/docs/components/radix/chart) — chart patterns, Recharts integration
+- [shadcn/ui data table docs](https://ui.shadcn.com/docs/components/radix/data-table) — TanStack Table integration
+- [shadcn/ui dark mode Vite guide](https://ui.shadcn.com/docs/dark-mode/vite) — custom ThemeProvider for Vite SPA
+- [shadcn/ui Tailwind v4 docs](https://ui.shadcn.com/docs/tailwind-v4) — v4 integration notes
+- [shadcn/ui PR #8486](https://github.com/shadcn-ui/ui/pull/8486) — Recharts v3 upgrade, open as of Feb 2026
+- [shadcn author on X confirming recharts v2](https://x.com/shadcn/status/1943312755412365530) — "Still working on v3"
+- [Recharts npm registry](https://www.npmjs.com/package/recharts) — v3.7.0 confirmed
+- [react-activity-calendar npm](https://www.npmjs.com/package/react-activity-calendar) — v3.0.5, 19,789 weekly downloads
+- [TanStack Table docs](https://tanstack.com/table/latest) — sorting, filtering, pagination APIs
+- [Tailwind CSS dark mode docs](https://tailwindcss.com/docs/dark-mode) — @custom-variant approach in v4
+- [ccusage GitHub](https://github.com/ryoppippi/ccusage) — competitor features, issue tracker (pitfall evidence)
+- [Claud-ometer GitHub](https://github.com/deshraj/Claud-ometer) — competitor dashboard feature reference
 
 ### Secondary (MEDIUM confidence)
-- [Claud-ometer GitHub](https://github.com/deshraj/Claud-ometer) — dashboard views, tech stack
-- [Sniffly GitHub](https://github.com/chiphuyen/sniffly) — error analysis, shareable dashboard pattern
-- [Claude Code Usage Monitor GitHub](https://github.com/Maciek-roboblog/Claude-Code-Usage-Monitor) — real-time monitoring, ML predictions
-- [ryoppippi JS CLI stack 2025](https://ryoppippi.com/blog/2025-08-12-my-js-cli-stack-2025-en) — ccusage author's stack rationale
-- [TanStack Router vs React Router v7](https://medium.com/ekino-france/tanstack-router-vs-react-router-v7-32dddc4fcd58) — routing library comparison, verified with official docs
-- [Zustand vs Jotai 2026](https://inhaq.com/blog/react-state-management-2026-redux-vs-zustand-vs-jotai.html) — state management comparison
-- [Chrome 144 Temporal API](https://www.infoq.com/news/2026/02/chrome-temporal-date-api/) — browser Temporal status
-- [Claude Code JSONL Gist](https://gist.github.com/samkeen/dc6a9771a78d1ecee7eb9ec1307f1b52) — community-maintained JSONL schema reference
-
-### Tertiary (LOW confidence / needs validation)
-- Cache token field names (`ephemeral_5m_input_tokens`, `ephemeral_1h_input_tokens`) — inferred from pricing docs, needs confirmation against real JSONL output
-- Sub-agent file structure (`todos/{sessionId}-agent-{agentId}.json`) — referenced in PITFALLS research, needs verification against real Claude Code data directory
+- [shadcn/ui Recharts v3 community gist](https://gist.github.com/noxify/92bc410cc2d01109f4160002da9a61e5) — drop-in v3-compatible chart.tsx
+- [shadcn date range picker (johnpolacek)](https://github.com/johnpolacek/date-range-picker-for-shadcn) — preset date picker
+- [Zustand + TanStack Query pattern](https://dev.to/cristiansifuentes/react-state-management-in-2025-context-api-vs-zustand-385m) — integration pattern
+- [Dark mode implementation guide 2025](https://medium.com/design-bootcamp/the-ultimate-guide-to-implementing-dark-mode-in-2025-bbf2938d2526) — prefers-color-scheme, localStorage pattern
+- Filter UX design patterns — preset + custom range, global filter positioning
 
 ---
 *Research completed: 2026-02-28*
+*Milestone: Dashboard/Visualization (Phases 4-8)*
 *Ready for roadmap: yes*
