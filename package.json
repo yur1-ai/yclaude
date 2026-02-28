@@ -8,7 +8,7 @@
     ".": "./dist/index.js"
   },
   "bin": {
-    "yclaude": "./dist/index.js"
+    "yclaude": "./dist/server/cli.js"
   },
   "scripts": {
     "build": "tsup",
