@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-02-28T15:31:00Z"
+last_updated: "2026-02-28T15:34:00Z"
 progress:
   total_phases: 8
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 7
+  completed_plans: 7
 ---
 
 # Project State
@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Give developers full visibility into their AI coding spend -- locally first, with no friction.
-**Current focus:** Phase 3: Server, CLI & App Shell — Plan 02 complete (SPA shell)
+**Current focus:** Phase 3: Server, CLI & App Shell — Plans 01 and 02 complete, 03-03 remaining
 
 ## Current Position
 
 Phase: 3 of 8 (Server, CLI & App Shell) - In Progress
-Plan: 2/3 completed (03-01 Hono server pending, 03-02 SPA shell done, 03-03 CLI pending)
-Status: 03-02 complete — Vite + React + Tailwind v4 + React Router v7 SPA shell with left sidebar and 4 placeholder pages
-Last activity: 2026-02-28 -- 03-02 complete; web-dist/ produced; typecheck and build both pass
+Plan: 2/3 completed (03-01 Hono server + CLI done, 03-02 SPA shell done, 03-03 integration pending)
+Status: 03-01 complete — Hono server factory with CSP headers, /api/v1/summary, CLI binary with flag parsing and 127.0.0.1 binding
+Last activity: 2026-02-28 -- 03-01 complete; 102 tests passing, typecheck clean
 
 Progress: [###░░░░░░░] 30%
 
@@ -42,11 +42,11 @@ Progress: [###░░░░░░░] 30%
 |-------|-------|-------|----------|
 | 01-jsonl-parser-data-pipeline | 3 | ~50min | ~16min |
 | 02-cost-engine-privacy | 2 | ~23min | ~11min |
-| 03-server-cli-app-shell | 1 (of 3) | ~2min | ~2min |
+| 03-server-cli-app-shell | 2 (of 3) | ~7min | ~3.5min |
 
 **Recent Trend:**
-- Last 5 plans: 01-03 (~45min incl. checkpoint), 02-01 (3min), 02-02 (~20min incl. checkpoint), 03-02 (~2min)
-- Trend: Phase 3 plan 2 complete (SPA scaffold — very fast, no external blockers)
+- Last 5 plans: 02-01 (3min), 02-02 (~20min incl. checkpoint), 03-02 (~2min), 03-01 (~5min)
+- Trend: Phase 3 plans 01+02 complete — backend and SPA shell both done, integration (03-03) remaining
 
 *Updated after each plan completion*
 
@@ -82,6 +82,11 @@ Recent decisions affecting current work:
 - [03-02]: createHashRouter used (not createBrowserRouter) — hash routing works with static file serving, no server catch-all needed
 - [03-02]: Tailwind v4 @import "tailwindcss" single-line pattern — no tailwind.config.js file; @tailwindcss/vite plugin auto-scans from web/
 - [03-02]: outDir ../web-dist (relative to web/) so build output lands at project root as web-dist/ for Hono server to serve
+- [03-01]: secureHeaders CSP: default-src 'none', connect-src 'self' — all external domains blocked at browser level
+- [03-01]: API routes registered before serveStatic (pitfall: static catch-all would block API if first)
+- [03-01]: dts: { entry: ['src/index.ts'] } — scopes .d.ts output to library only, avoids shebang-in-dts error
+- [03-01]: exactOptionalPropertyTypes: pass opts.dir conditionally (opts.dir !== undefined ? {dir} : {})
+- [03-01]: cli.test.ts uses standalone Commander instance, not importing cli.ts (side effects via parse())
 
 ### Pending Todos
 
@@ -95,5 +100,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 03-02-PLAN.md (Vite + React + Tailwind v4 + React Router v7 SPA shell — web/ scaffold + 4 placeholder pages)
+Stopped at: Completed 03-01-PLAN.md (Hono server factory + CLI binary + /api/v1/summary endpoint — full TDD cycle, 102 tests passing)
 Resume file: None

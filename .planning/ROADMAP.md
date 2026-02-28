@@ -68,7 +68,7 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 03-01-PLAN.md — Hono server: static file serving, /api/v1/* routes, 127.0.0.1 binding, CSP headers
+- [x] 03-01-PLAN.md — Hono server factory (createApp), /api/v1/summary endpoint, CLI binary with --dir/--port/--no-open flags, 127.0.0.1 binding, CSP headers
 - [x] 03-02-PLAN.md — Vite + React + Tailwind v4 + React Router v7 SPA shell: left sidebar layout, 4 placeholder pages, builds to web-dist/
 - [ ] 03-03-PLAN.md — CLI entrypoint: npx yclaude with --dir, --port, --no-open flags and auto-open browser
 
@@ -151,7 +151,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 |-------|----------------|--------|-----------|
 | 1. JSONL Parser & Data Pipeline | 3/3 | Complete   | 2026-02-28 |
 | 2. Cost Engine & Privacy | 2/2 | Complete   | 2026-02-28 |
-| 3. Server, CLI & App Shell | 1/3 | In progress | - |
+| 3. Server, CLI & App Shell | 2/3 | In progress | - |
 | 4. Cost Analytics Dashboard | 0/0 | Not started | - |
 | 5. Model & Project Breakdowns | 0/0 | Not started | - |
 | 6. Session Explorer | 0/0 | Not started | - |
