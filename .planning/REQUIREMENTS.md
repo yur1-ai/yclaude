@@ -105,20 +105,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CORE-02 | Phase 2: Cost Engine & Privacy | Complete |
 | CORE-03 | Phase 2: Cost Engine & Privacy | Complete |
 | CORE-04 | Phase 2 (privacy filter) + Phase 3 (server/CSP) | Complete (02-02 privacy filter + 03-01 server/CSP + 03-03 human-verified) |
+| CLI-01 | Phase 3: Server, CLI & App Shell | Complete (03-01 + 03-03) |
+| CLI-02 | Phase 3: Server, CLI & App Shell | Complete (03-01 + 03-03) |
 | ANLT-01 | Phase 4: Cost Analytics Dashboard | Pending |
 | ANLT-02 | Phase 4: Cost Analytics Dashboard | Pending |
 | ANLT-03 | Phase 4: Cost Analytics Dashboard | Pending |
+| ANLT-06 | Phase 4: Cost Analytics Dashboard | Pending |
 | ANLT-04 | Phase 5: Model & Project Breakdowns | Pending |
 | ANLT-05 | Phase 5: Model & Project Breakdowns | Pending |
-| ANLT-06 | Phase 4: Cost Analytics Dashboard | Pending |
-| ANLT-07 | Phase 7: Differentiator Features | Pending |
-| ANLT-08 | Phase 7: Differentiator Features | Pending |
 | SESS-01 | Phase 6: Session Explorer | Pending |
 | SESS-02 | Phase 6: Session Explorer | Pending |
+| ANLT-07 | Phase 7: Differentiator Features | Pending |
+| ANLT-08 | Phase 7: Differentiator Features | Pending |
 | SESS-03 | Phase 7: Differentiator Features | Pending |
 | SESS-04 | Phase 7: Differentiator Features | Pending |
-| CLI-01 | Phase 3: Server, CLI & App Shell | Complete (03-01 + 03-03) |
-| CLI-02 | Phase 3: Server, CLI & App Shell | Complete (03-01 + 03-03) |
 | CLI-03 | Phase 8: Dark Mode & Personality | Pending |
 | PRSL-01 | Phase 8: Dark Mode & Personality | Pending |
 
@@ -129,4 +129,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-28*
-*Last updated: 2026-02-28 after 03-03 execution (Phase 3 complete — CLI-01, CLI-02, CORE-04 fully satisfied)*
+*Last updated: 2026-02-28 — Roadmap confirmed for Phases 4-8; traceability table reorganized by phase order*
