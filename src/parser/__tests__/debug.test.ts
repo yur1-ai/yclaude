@@ -34,7 +34,8 @@ describe('debug module', () => {
       const spy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
       debugLog('hello world');
       expect(spy).toHaveBeenCalled();
-      const call = spy.mock.calls[0][0] as string;
+      const firstCall = spy.mock.calls[0];
+      const call = firstCall?.[0] as string;
       expect(call).toContain('[debug]');
       expect(call).toContain('hello world');
       spy.mockRestore();
