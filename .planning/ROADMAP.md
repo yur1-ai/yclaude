@@ -50,11 +50,11 @@ Plans:
   3. Server binds exclusively to 127.0.0.1 — it is not accessible from other machines on the network
   4. No conversation content (user messages, assistant responses) is ever displayed in the UI — only metadata and token counts
   5. CSP headers block all external network requests from the served pages
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md — EstimatedCost branded type + MODEL_PRICING constants + computeCosts() engine with tests
+- [ ] 02-02-PLAN.md — applyPrivacyFilter() module + src/index.ts public exports + human verification against real JSONL data
 
 ### Phase 3: Server, CLI & App Shell
 **Goal**: User can run a single command and have a working web application open in their browser
@@ -149,7 +149,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. JSONL Parser & Data Pipeline | 3/3 | Complete   | 2026-02-28 |
-| 2. Cost Engine & Privacy | 0/0 | Not started | - |
+| 2. Cost Engine & Privacy | 0/2 | Not started | - |
 | 3. Server, CLI & App Shell | 0/0 | Not started | - |
 | 4. Cost Analytics Dashboard | 0/0 | Not started | - |
 | 5. Model & Project Breakdowns | 0/0 | Not started | - |
