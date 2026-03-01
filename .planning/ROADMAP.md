@@ -30,7 +30,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 - Integer phases (5, 6, 7…): Planned milestone work
 - Decimal phases (5.1, 6.1…): Urgent insertions (marked INSERTED)
 
-- [ ] **Phase 5: Model & Project Breakdowns** - Per-model donut chart and table, per-project cost breakdown with decoded directory names
+- [x] **Phase 5: Model & Project Breakdowns** - Per-model donut chart and table, per-project cost breakdown with decoded directory names
 - [ ] **Phase 6: Session Explorer** - Browsable session list with drill-down detail view showing per-turn token breakdown
 - [ ] **Phase 7: Differentiator Features** - Cache efficiency score, activity heatmap, sidechain/subagent analysis, git branch filtering, 24h/hourly chart window
 - [ ] **Phase 8: Dark Mode & Personality** - System-aware dark mode toggle and humorous personality copy woven throughout all views
@@ -50,8 +50,8 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 
 Plans:
 - [x] 05-01-PLAN.md — Hono API routes: GET /api/v1/models and GET /api/v1/projects with aggregation and project name decoding
-- [ ] 05-02-PLAN.md — Shared SortableTable<T> component and donut color CSS variables
-- [ ] 05-03-PLAN.md — useModels/useProjects hooks and Models/Projects page implementations
+- [x] 05-02-PLAN.md — Shared SortableTable<T> component and donut color CSS variables
+- [x] 05-03-PLAN.md — useModels/useProjects hooks and Models/Projects page implementations
 
 ### Phase 6: Session Explorer
 **Goal**: User can browse their sessions and drill into individual session details to understand per-session spend
@@ -123,7 +123,7 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 2. Cost Engine & Privacy | v1.0 | 2/2 | Complete | 2026-02-28 |
 | 3. Server, CLI & App Shell | v1.0 | 3/3 | Complete | 2026-02-28 |
 | 4. Cost Analytics Dashboard | v1.0 | 3/3 | Complete | 2026-02-28 |
-| 5. Model & Project Breakdowns | v1.1 | 1/3 | In progress | - |
+| 5. Model & Project Breakdowns | v1.1 | 3/3 | Complete | 2026-03-01 |
 | 6. Session Explorer | v1.1 | 0/TBD | Not started | - |
 | 7. Differentiator Features | v1.1 | 0/TBD | Not started | - |
 | 8. Dark Mode & Personality | v1.1 | 0/TBD | Not started | - |

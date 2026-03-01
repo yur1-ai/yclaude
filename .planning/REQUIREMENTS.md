@@ -10,8 +10,8 @@ Requirements for the Analytics Completion + Distribution milestone (Phases 5–9
 
 ### Analytics
 
-- [ ] **ANLT-04**: User can view estimated cost broken down by model as a donut chart with a companion sortable table
-- [ ] **ANLT-05**: User can view per-project cost breakdown with human-readable project names derived from directory paths (not raw slugs)
+- [x] **ANLT-04**: User can view estimated cost broken down by model as a donut chart with a companion sortable table
+- [x] **ANLT-05**: User can view per-project cost breakdown with human-readable project names derived from directory paths (not raw slugs)
 - [ ] **ANLT-07**: User can see a cache efficiency score (% of input tokens from cache) with a trend indicator showing direction over time
 - [ ] **ANLT-08**: User can see a GitHub-style activity heatmap on the Overview showing daily usage intensity, with personality-copy annotations on hover
 - [ ] **ANLT-09**: User can select a 24h time window on the cost-over-time chart that renders hourly buckets with appropriately labeled x-axis ticks
@@ -67,8 +67,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ANLT-04 | Phase 5 | Pending |
-| ANLT-05 | Phase 5 | Pending |
+| ANLT-04 | Phase 5 | Complete |
+| ANLT-05 | Phase 5 | Complete |
 | SESS-01 | Phase 6 | Pending |
 | SESS-02 | Phase 6 | Pending |
 | ANLT-07 | Phase 7 | Pending |
