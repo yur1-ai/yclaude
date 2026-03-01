@@ -49,7 +49,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 **Plans**: 3 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Hono API routes: GET /api/v1/models and GET /api/v1/projects with aggregation and project name decoding
+- [x] 05-01-PLAN.md — Hono API routes: GET /api/v1/models and GET /api/v1/projects with aggregation and project name decoding
 - [ ] 05-02-PLAN.md — Shared SortableTable<T> component and donut color CSS variables
 - [ ] 05-03-PLAN.md — useModels/useProjects hooks and Models/Projects page implementations
 
@@ -123,7 +123,7 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 2. Cost Engine & Privacy | v1.0 | 2/2 | Complete | 2026-02-28 |
 | 3. Server, CLI & App Shell | v1.0 | 3/3 | Complete | 2026-02-28 |
 | 4. Cost Analytics Dashboard | v1.0 | 3/3 | Complete | 2026-02-28 |
-| 5. Model & Project Breakdowns | v1.1 | 0/3 | Not started | - |
+| 5. Model & Project Breakdowns | v1.1 | 1/3 | In progress | - |
 | 6. Session Explorer | v1.1 | 0/TBD | Not started | - |
 | 7. Differentiator Features | v1.1 | 0/TBD | Not started | - |
 | 8. Dark Mode & Personality | v1.1 | 0/TBD | Not started | - |
