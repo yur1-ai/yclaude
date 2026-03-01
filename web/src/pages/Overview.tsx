@@ -8,6 +8,8 @@ import { TrendIndicator } from '../components/TrendIndicator';
 import { TokenBreakdown } from '../components/TokenBreakdown';
 import { CostBarChart } from '../components/CostBarChart';
 import { DateRangePicker } from '../components/DateRangePicker';
+import { CacheEfficiencyCard } from '../components/CacheEfficiencyCard';
+import { ActivityHeatmap } from '../components/ActivityHeatmap';
 
 export default function Overview() {
   const [bucket, setBucket] = useState<Bucket>('day');
@@ -87,6 +89,26 @@ export default function Overview() {
           isLoading={chartPending}
         />
       </div>
+
+      {/* Cache efficiency card */}
+      <CacheEfficiencyCard />
+
+      {/* Subagent share stat card — only shown when subagent activity exists */}
+      {periodSummary &&
+        periodSummary.subagentCostUsd !== undefined &&
+        periodSummary.subagentCostUsd > 0 && (
+          <StatCard
+            label="Subagent share"
+            value={
+              periodSummary.totalCost > 0
+                ? `${((periodSummary.subagentCostUsd / periodSummary.totalCost) * 100).toFixed(1)}%`
+                : '0.0%'
+            }
+          />
+        )}
+
+      {/* Activity heatmap */}
+      <ActivityHeatmap />
     </div>
   );
 }
