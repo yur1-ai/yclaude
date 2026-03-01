@@ -8,7 +8,7 @@ progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 13
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 ## Current Position
 
 Phase: 06-session-explorer (in progress)
-Plan: 06-01 ✅ COMPLETE (2026-03-01)
-Status: Plan 01 done — ready for 06-02 (Session List UI)
-Last activity: 2026-03-01 — 06-01 complete; GET /api/v1/sessions and GET /api/v1/sessions/:id implemented with 24 tests
+Plan: 06-02 ✅ COMPLETE (2026-03-01)
+Status: Plan 02 done — ready for 06-03 (Session Detail page)
+Last activity: 2026-03-01 — 06-02 complete; Sessions list page with useSessions hook, sortable table, project filter, and pagination implemented
 
 ## Accumulated Context
 
@@ -47,6 +47,8 @@ Last activity: 2026-03-01 — 06-01 complete; GET /api/v1/sessions and GET /api/
 - durationMs for sessions: Math.max across ALL events (not just token-bearing) — system/turn_duration events may carry larger values
 - Explicit field construction in TurnRow/SessionSummary — never spread raw CostEvent to prevent prose leakage
 - SessionRow extends Record<string, unknown> — consistent with ModelRow/ProjectRow generic constraint pattern
+- ProjectLink extracted as named component — column render props cannot use hooks; must wrap in named component for useNavigate
+- setPage exposed from useSessions return value — allows Sessions.tsx useEffect to reset pagination on filter change
 
 ### Open Blockers for v1.1
 
