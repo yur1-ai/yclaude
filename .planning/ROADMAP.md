@@ -65,7 +65,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Hono API routes: GET /api/v1/sessions (paginated list) and GET /api/v1/sessions/:id (per-turn detail with cumulative cost)
+- [x] 06-01-PLAN.md — Hono API routes: GET /api/v1/sessions (paginated list) and GET /api/v1/sessions/:id (per-turn detail with cumulative cost)
 - [ ] 06-02-PLAN.md — useSessions hook and Sessions list page with project filter, pagination, and sortable table
 - [ ] 06-03-PLAN.md — useSessionDetail hook, SessionDetail page (summary header + turn table + cumulative cost chart), and App.tsx route registration
 
@@ -126,7 +126,7 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 3. Server, CLI & App Shell | v1.0 | 3/3 | Complete | 2026-02-28 |
 | 4. Cost Analytics Dashboard | v1.0 | 3/3 | Complete | 2026-02-28 |
 | 5. Model & Project Breakdowns | v1.1 | 3/3 | Complete | 2026-03-01 |
-| 6. Session Explorer | v1.1 | 0/3 | Not started | - |
+| 6. Session Explorer | v1.1 | 1/3 | In progress | - |
 | 7. Differentiator Features | v1.1 | 0/TBD | Not started | - |
 | 8. Dark Mode & Personality | v1.1 | 0/TBD | Not started | - |
 | 9. npm Distribution & CI/CD | v1.1 | 0/TBD | Not started | - |

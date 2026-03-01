@@ -69,8 +69,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | ANLT-04 | Phase 5 | Complete |
 | ANLT-05 | Phase 5 | Complete |
-| SESS-01 | Phase 6 | Pending |
-| SESS-02 | Phase 6 | Pending |
+| SESS-01 | Phase 6 | In progress (API done, UI pending) |
+| SESS-02 | Phase 6 | In progress (API done, UI pending) |
 | ANLT-07 | Phase 7 | Pending |
 | ANLT-08 | Phase 7 | Pending |
 | ANLT-09 | Phase 7 | Pending |

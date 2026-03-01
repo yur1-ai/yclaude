@@ -8,7 +8,7 @@ progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 13
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 
 ## Current Position
 
-Phase: 05-model-project-breakdowns ✅ COMPLETE (verified 2026-03-01)
-Plan: —
-Status: Ready to plan Phase 6 — `/gsd:plan-phase 6`
-Last activity: 2026-03-01 — Phase 5 complete and verified (19/19 must-haves); Models donut + Projects table live
+Phase: 06-session-explorer (in progress)
+Plan: 06-01 ✅ COMPLETE (2026-03-01)
+Status: Plan 01 done — ready for 06-02 (Session List UI)
+Last activity: 2026-03-01 — 06-01 complete; GET /api/v1/sessions and GET /api/v1/sessions/:id implemented with 24 tests
 
 ## Accumulated Context
 
@@ -43,6 +43,10 @@ Last activity: 2026-03-01 — Phase 5 complete and verified (19/19 must-haves); 
 - Row key uses array index in SortableTable — rows have no stable identity key in API shape
 - ModelRow/ProjectRow must extend Record<string, unknown> for SortableTable generic constraint — add to all future row interfaces
 - Recharts Tooltip formatter receives `number | undefined` — always guard against undefined value
+- Session aggregation: collect ALL events into Map by sessionId, then filter token-bearing at field-level for token sums/model arrays
+- durationMs for sessions: Math.max across ALL events (not just token-bearing) — system/turn_duration events may carry larger values
+- Explicit field construction in TurnRow/SessionSummary — never spread raw CostEvent to prevent prose leakage
+- SessionRow extends Record<string, unknown> — consistent with ModelRow/ProjectRow generic constraint pattern
 
 ### Open Blockers for v1.1
 
