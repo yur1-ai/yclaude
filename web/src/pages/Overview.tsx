@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSummary } from '../hooks/useSummary';
 import { useAllTimeSummary } from '../hooks/useAllTimeSummary';
 import { useCostOverTime, type Bucket } from '../hooks/useCostOverTime';
@@ -13,11 +13,18 @@ import { ActivityHeatmap } from '../components/ActivityHeatmap';
 
 export default function Overview() {
   const [bucket, setBucket] = useState<Bucket>('day');
-  const { preset } = useDateRangeStore();
+  const { preset, from, to } = useDateRangeStore();
 
   const { data: periodSummary, isPending: periodPending } = useSummary();
   const { data: allTimeSummary, isPending: allTimePending } = useAllTimeSummary();
   const { data: costOverTime, isPending: chartPending } = useCostOverTime(bucket);
+
+  // Reset hourly bucket if date range becomes too wide
+  useEffect(() => {
+    if (bucket === 'hour' && from && to && (to.getTime() - from.getTime()) > 48 * 60 * 60 * 1000) {
+      setBucket('day');
+    }
+  }, [from, to, bucket, setBucket]);
 
   // Trend: compute % change vs prior equivalent period.
   // Prior period requires a second API call with shifted date bounds — deferred to Phase 5+.
@@ -87,6 +94,8 @@ export default function Overview() {
           bucket={bucket}
           onBucketChange={setBucket}
           isLoading={chartPending}
+          from={from}
+          to={to}
         />
       </div>
 
