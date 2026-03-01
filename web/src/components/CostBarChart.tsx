@@ -56,7 +56,7 @@ const BUCKETS: BucketOption[] = [
 export function CostBarChart({ data, bucket, onBucketChange, isLoading, from, to }: CostBarChartProps) {
   if (isLoading) {
     return (
-      <div className="h-60 flex items-center justify-center text-slate-400 text-sm">
+      <div className="h-60 flex items-center justify-center text-slate-400 dark:text-[#8b949e] text-sm">
         Loading...
       </div>
     );
@@ -75,10 +75,10 @@ export function CostBarChart({ data, bucket, onBucketChange, isLoading, from, to
                 disabled={isDisabled}
                 className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
                   bucket === key && !isDisabled
-                    ? 'bg-slate-100 text-slate-900'
+                    ? 'bg-slate-100 text-slate-900 dark:bg-[#21262d] dark:text-[#e6edf3]'
                     : isDisabled
-                      ? 'text-slate-300 cursor-not-allowed'
-                      : 'text-slate-500 hover:text-slate-700'
+                      ? 'text-slate-300 dark:text-[#30363d] cursor-not-allowed'
+                      : 'text-slate-500 hover:text-slate-700 dark:text-[#8b949e] dark:hover:text-[#e6edf3]'
                 }`}
               >
                 {label}
@@ -108,14 +108,14 @@ export function CostBarChart({ data, bucket, onBucketChange, isLoading, from, to
             tickLine={false}
             axisLine={false}
             tickFormatter={makeFormatter(bucket)}
-            tick={{ fontSize: 12, fill: 'oklch(0.55 0 0)' }}
+            tick={{ fontSize: 12, fill: 'var(--color-axis-tick)' }}
           />
           <YAxis
             tickFormatter={(v: number) => `$${v.toFixed(2)}`}
             tickLine={false}
             axisLine={false}
             width={60}
-            tick={{ fontSize: 12, fill: 'oklch(0.55 0 0)' }}
+            tick={{ fontSize: 12, fill: 'var(--color-axis-tick)' }}
           />
           <Tooltip
             formatter={(value: number | undefined) => [

@@ -45,9 +45,9 @@ export function CacheEfficiencyCard() {
   ];
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-[#30363d] dark:bg-[#161b22]">
       <div className="flex items-center justify-between mb-2">
-        <p className="text-sm font-medium text-slate-500">Cache Efficiency</p>
+        <p className="text-sm font-medium text-slate-500 dark:text-[#8b949e]">Cache Efficiency</p>
         <div className="flex gap-1">
           {MODES.map(({ key, label }) => (
             <button
@@ -55,8 +55,8 @@ export function CacheEfficiencyCard() {
               onClick={() => setMode(key)}
               className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
                 mode === key
-                  ? 'bg-slate-100 text-slate-900'
-                  : 'text-slate-400 hover:text-slate-600'
+                  ? 'bg-slate-100 text-slate-900 dark:bg-[#21262d] dark:text-[#e6edf3]'
+                  : 'text-slate-400 hover:text-slate-600 dark:text-[#8b949e] dark:hover:text-[#e6edf3]'
               }`}
             >
               {label}
@@ -64,11 +64,11 @@ export function CacheEfficiencyCard() {
           ))}
         </div>
       </div>
-      <p className="text-3xl font-bold tracking-tight text-slate-900">{valueStr}</p>
+      <p className="text-3xl font-bold tracking-tight text-slate-900 dark:text-[#e6edf3]">{valueStr}</p>
       <div className="mt-2">
         <TrendIndicator percent={trendPercent} />
       </div>
-      <p className="mt-1 text-xs text-slate-400">
+      <p className="mt-1 text-xs text-slate-400 dark:text-[#8b949e]">
         {mode === 'inputCoverage'
           ? 'Cache reads \u00f7 (input + cache reads)'
           : 'Cache reads \u00f7 (cache reads + cache writes)'}

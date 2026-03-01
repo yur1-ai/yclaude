@@ -59,7 +59,7 @@ export function DateRangePicker() {
             className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
               preset === key
                 ? 'bg-slate-900 text-white'
-                : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
+                : 'border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-[#30363d] dark:text-[#8b949e] dark:hover:bg-[#21262d]'
             }`}
           >
             {label}
@@ -70,7 +70,7 @@ export function DateRangePicker() {
           className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
             preset === 'custom'
               ? 'bg-slate-900 text-white'
-              : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
+              : 'border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-[#30363d] dark:text-[#8b949e] dark:hover:bg-[#21262d]'
           }`}
         >
           {preset === 'custom' ? getActiveLabel('custom', from, to) : 'Custom'}
@@ -86,7 +86,7 @@ export function DateRangePicker() {
             onClick={() => setCalendarOpen(false)}
           />
           {/* Calendar container */}
-          <div className="absolute top-10 right-0 z-20 rounded-lg border border-slate-200 bg-white shadow-lg p-2">
+          <div className="absolute top-10 right-0 z-20 rounded-lg border border-slate-200 bg-white shadow-lg p-2 dark:border-[#30363d] dark:bg-[#161b22]">
             <DayPicker
               mode="range"
               selected={selected}
