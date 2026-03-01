@@ -8,4 +8,10 @@ export default defineConfig({
     outDir: '../web-dist',
     emptyOutDir: true,
   },
+  server: {
+    // In dev mode, proxy /api calls to the Hono server (started via `npm run dev`)
+    proxy: {
+      '/api': 'http://127.0.0.1:3000',
+    },
+  },
 });

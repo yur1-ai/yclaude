@@ -18,7 +18,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 
 **Core value:** Give developers full visibility into their AI coding spend — locally first, with no friction.
-**Current focus:** v1.1 Phase 6 — Session Explorer
+**Current focus:** v1.1 Phase 7 — Differentiator Features
 
 ## Current Position
 
@@ -51,8 +51,12 @@ Last activity: 2026-03-01 — 06-03 complete; SessionDetail page with per-turn t
 - setPage exposed from useSessions return value — allows Sessions.tsx useEffect to reset pagination on filter change
 - TurnRow extends Record<string, unknown> — consistent with ModelRow/ProjectRow/SessionRow generic constraint pattern
 - Multiple SortableTable columns can share the same `key: keyof T` value for display-only non-sortable columns; use render prop to differentiate; column React keys use index suffix to prevent duplicate-key warnings
-- Detail page layout: page-header (back + title), summary-card, table-card, chart-card with space-y-6 outer wrapper
+- Detail page layout: page-header (back + title), summary-card, chart-card, table-card (chart before table) with space-y-6 outer wrapper
 - Error state for detail pages: check error.message === 'Session not found' to distinguish 404 from other failures
+- SortableTable onRowClick: pass callback to make full row clickable; do NOT use button inside td (nested interactivity); column render for navigation should be plain text
+- SortableTable null sort: null values always sort to bottom regardless of direction (guard before numeric/string comparison)
+- Cost display: always toFixed(2) in all FE cost renders — never toFixed(4) or toFixed(6); label as "est." for API-key context
+- Donut chart: use CSS rule `.recharts-wrapper svg *:focus { outline: none }` to suppress browser focus border on click
 
 ### Open Blockers for v1.1
 
@@ -62,4 +66,7 @@ Last activity: 2026-03-01 — 06-03 complete; SessionDetail page with per-turn t
 
 ### Pending Todos
 
-(none — pre-v1.1 cleanups complete)
+- **Phase 9.1 (deferred)**: Cost accuracy for Pro/Max users — full spec in ROADMAP.md Phase 9.1
+  section. Tldr: current "est." numbers use API pay-per-token pricing and overstate spend for
+  Pro/Max subscribers. Needs investigation of JSONL fields, relabelling strategy, and
+  pricing.ts refactor (extract tier constants from model-ID map).

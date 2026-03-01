@@ -113,6 +113,64 @@ Plans:
 - [ ] 09-01: TBD
 - [ ] 09-02: TBD
 
+### Phase 9.1: Cost Accuracy & Pricing Refactor
+**Type**: INSERTED — gap closure after Phase 9
+**Goal**: Cost estimates reflect reality for Pro/Max subscribers; pricing data is maintainable and separated from engine code
+**Depends on**: Phase 9
+**Requirements**: TBD (new req IDs to be assigned during planning)
+
+#### Background
+Current cost display is labelled "est." but the estimates are based on **API pay-per-token pricing**
+(`platform.claude.com/docs/en/about-claude/pricing`). Users on Claude Pro ($20/mo) or Claude Max
+($100–$200/mo) pay a flat subscription that includes Claude Code usage — they are **not billed
+per-token**. This means the numbers shown by yclaude are accurate only for API key users, and
+significantly overstate spend for Pro/Max subscribers.
+
+User-reported symptom: "the est prices seem off"
+
+#### Core Questions to Investigate During Planning
+1. **Can we detect the user's billing model from JSONL data?**
+   - Look for a field in `~/.claude/projects/**/*.jsonl` entries that distinguishes API-key
+     sessions from Pro/Max sessions. Candidates: `plan`, `subscriptionTier`, auth metadata.
+   - Run: `cat ~/.claude/projects/**/*.jsonl | jq 'keys' | sort -u` to enumerate all fields.
+2. **What is the actual "cost" of Pro/Max usage?**
+   - Anthropic has not published per-token rates for Pro/Max plans.
+   - The only honest representation may be "token volume" with no dollar amount, OR a note
+     that cost estimates assume API pricing and may not reflect subscription reality.
+   - Options:
+     - (A) **API-equivalent mode** (current): show API price, relabel as "API equivalent" more
+       clearly — e.g. "$0.12 (API equiv.)" — so users understand it's a hypothetical
+     - (B) **Subscription awareness**: let user declare their plan (Pro/Max/API) in a config
+       file; suppress dollar amounts for non-API plans, show only token volumes
+     - (C) **Hybrid**: show token volumes always, show dollar amounts only when plan=api
+   - Recommendation: start with (A) — honest relabelling is a low-risk improvement; add (B) if
+     user demand justifies the added complexity
+3. **Unknown model IDs**: `engine.ts` silently cosets unknown models at $0. This should surface
+   as a visible warning in the UI, especially for new models not yet in `pricing.ts`.
+
+#### Pricing.ts Refactor (do in same phase)
+Current structure: prices inlined in model-ID object map — hard to audit and update.
+
+Target structure: extract to a separate `pricing-config.ts` (or `.json`) with:
+- Named constants for each price tier, e.g.:
+  ```ts
+  const OPUS_4_INPUT  = 5.00;
+  const OPUS_4_OUTPUT = 25.00;
+  ```
+  (or grouped: `CLAUDE_OPUS_4 = { inputPerMTok: 5.00, outputPerMTok: 25.00, ... }`)
+- Model ID → pricing tier mapping kept separate from the tier definitions
+- A `lastUpdated` date field so users can see when prices were last verified
+- Ideally: a CI check or script that pings the Anthropic pricing page and diffs against the
+  config — flags drift without auto-updating (prevents shipping wrong prices silently)
+
+#### Success Criteria
+1. Cost values are labelled in a way that accurately communicates what they represent for
+   both API and Pro/Max users — no silent overstatement of spend
+2. `pricing.ts` (or equivalent) is split into a config layer (tier definitions) and a lookup
+   layer (model ID → tier), with a `lastUpdated` comment
+3. Unknown model IDs produce a visible warning in the dashboard (not silent $0)
+4. All existing 137+ tests continue to pass; new tests cover the pricing config structure
+
 ## Progress
 
 **Execution Order:**
