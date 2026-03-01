@@ -13,6 +13,7 @@ program
   .option('-d, --dir <path>', 'custom data directory')
   .option('-p, --port <number>', 'port number', '3000')
   .option('--no-open', 'do not open browser automatically')
+  .option('--debug', 'enable debug logging')
   .parse();
 
 const opts = program.opts<{ dir: string | undefined; port: string; open: boolean }>();

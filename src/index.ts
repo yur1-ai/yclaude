@@ -11,6 +11,7 @@ export type { NormalizedEvent, ParseOptions } from './parser/types.js';
 export { applyPrivacyFilter } from './cost/privacy.js';
 export { computeCosts } from './cost/engine.js';
 export type { CostEvent, EstimatedCost } from './cost/types.js';
+export type { KnownModel } from './cost/pricing.js';
 // Note: toEstimatedCost is intentionally NOT re-exported — it is an internal
 // constructor used only by the cost engine.
 
