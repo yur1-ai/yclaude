@@ -3,6 +3,7 @@ import { DayPicker, type DateRange } from 'react-day-picker';
 // Import react-day-picker styles in this file only to avoid global CSS pollution
 import 'react-day-picker/style.css';
 import { useDateRangeStore, type Preset } from '../store/useDateRangeStore';
+import { useThemeStore } from '../store/useThemeStore';
 
 type PresetButton = { key: Preset; label: string };
 const PRESETS: PresetButton[] = [
@@ -34,6 +35,9 @@ function getActiveLabel(preset: Preset, from: Date | undefined, to: Date | undef
 
 export function DateRangePicker() {
   const { preset, from, to, setPreset, setCustomRange } = useDateRangeStore();
+  const { theme } = useThemeStore();
+  const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDark = theme === 'dark' || (theme === 'system' && systemDark);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selected, setSelected] = useState<DateRange | undefined>(
     from && to ? { from, to } : undefined,
@@ -86,7 +90,7 @@ export function DateRangePicker() {
             onClick={() => setCalendarOpen(false)}
           />
           {/* Calendar container */}
-          <div className="absolute top-10 right-0 z-20 rounded-lg border border-slate-200 bg-white shadow-lg p-2 dark:border-[#30363d] dark:bg-[#161b22]">
+          <div className="absolute top-10 right-0 z-20 rounded-lg border border-slate-200 bg-white shadow-lg p-2 dark:border-[#30363d] dark:bg-[#161b22] dark:text-[#e6edf3]">
             <DayPicker
               mode="range"
               selected={selected}
@@ -97,6 +101,11 @@ export function DateRangePicker() {
                   setCalendarOpen(false);
                 }
               }}
+              style={isDark ? ({
+                '--rdp-accent-background-color': 'rgba(56,139,253,0.15)',
+                '--rdp-range_middle-background-color': 'rgba(56,139,253,0.15)',
+                color: '#e6edf3',
+              } as React.CSSProperties) : undefined}
             />
           </div>
         </>

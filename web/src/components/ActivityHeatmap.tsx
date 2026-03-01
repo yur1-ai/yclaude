@@ -1,4 +1,4 @@
-import { useState, cloneElement } from 'react';
+import { useState, cloneElement, useRef } from 'react';
 import { ActivityCalendar } from 'react-activity-calendar';
 import type { Activity } from 'react-activity-calendar';
 import { useActivityData } from '../hooks/useActivityData';
@@ -16,7 +16,7 @@ const HEATMAP_THEME = {
     '#1a6b1a', // level 4: darkest green
   ],
   dark: [
-    '#161b22', // level 0: GitHub dark background
+    '#21262d', // level 0: slightly lighter than bg — visible empty cell
     '#0e4429', // level 1: very dark green
     '#006d32', // level 2: medium dark green
     '#26a641', // level 3: bright green
@@ -31,9 +31,13 @@ function computeP90(data: Activity[]): number {
   return counts[Math.max(0, idx)]!;
 }
 
+type TooltipState = { text: string; x: number; y: number };
+
 export function ActivityHeatmap() {
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
+  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
+  const tooltipRef = useRef<TooltipState | null>(null);
   const { data, isLoading } = useActivityData(year);
   const { theme } = useThemeStore();
   const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -44,7 +48,7 @@ export function ActivityHeatmap() {
   const yearOptions = [currentYear - 2, currentYear - 1, currentYear];
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-[#30363d] dark:bg-[#161b22]">
+    <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-[#30363d] dark:bg-[#161b22] dark:text-[#8b949e]">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-semibold text-slate-700 dark:text-[#e6edf3]">Activity</h2>
         <select
@@ -78,31 +82,49 @@ export function ActivityHeatmap() {
                 showWeekdayLabels
                 maxLevel={4}
                 renderBlock={(block, activity: Activity) => {
+                  if (activity.count === 0) return block;
                   const isPeak =
-                    activity.count > 0 &&
                     activity.count >= p90 &&
                     activity.count >= 2;
-                  if (isPeak) {
-                    return cloneElement(
-                      block as React.ReactElement<React.HTMLAttributes<SVGRectElement>>,
-                      {
-                        title: `${activity.date} \u2022 ${activity.count} session${activity.count === 1 ? '' : 's'}\n${pickQuip(QUIPS.heatmap_peak)}`,
+                  const lines = [
+                    `${activity.date} \u2022 ${activity.count} session${activity.count === 1 ? '' : 's'}`,
+                    ...(isPeak ? [pickQuip(QUIPS.heatmap_peak)] : []),
+                  ];
+                  const tooltipText = lines.join('\n');
+                  return cloneElement(
+                    block as React.ReactElement<React.HTMLAttributes<SVGRectElement>>,
+                    {
+                      style: { cursor: 'pointer' },
+                      onMouseEnter: (e: React.MouseEvent) => {
+                        const t = { text: tooltipText, x: e.clientX, y: e.clientY };
+                        tooltipRef.current = t;
+                        setTooltip(t);
                       },
-                    );
-                  }
-                  if (activity.count > 0) {
-                    return cloneElement(
-                      block as React.ReactElement<React.HTMLAttributes<SVGRectElement>>,
-                      {
-                        title: `${activity.date} \u2022 ${activity.count} session${activity.count === 1 ? '' : 's'}`,
+                      onMouseMove: (e: React.MouseEvent) => {
+                        if (tooltipRef.current) {
+                          const t = { text: tooltipRef.current.text, x: e.clientX, y: e.clientY };
+                          tooltipRef.current = t;
+                          setTooltip(t);
+                        }
                       },
-                    );
-                  }
-                  return block;
+                      onMouseLeave: () => {
+                        tooltipRef.current = null;
+                        setTooltip(null);
+                      },
+                    },
+                  );
                 }}
               />
             );
           })()}
+        </div>
+      )}
+      {tooltip && (
+        <div
+          className="fixed z-50 pointer-events-none text-xs rounded px-2 py-1.5 shadow-lg whitespace-pre bg-slate-900 text-white dark:bg-[#2d333b] dark:border dark:border-[#444c56]"
+          style={{ left: tooltip.x + 12, top: tooltip.y - 10 }}
+        >
+          {tooltip.text}
         </div>
       )}
 
