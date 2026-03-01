@@ -48,7 +48,4 @@ Last activity: 2026-02-28 — Milestone v1.1 initialized (13 requirements, 5 pha
 
 ### Pending Todos
 
-- Commit 3 uncommitted changes from audit (config.json newline, api.test.ts optional chaining, api.ts redundant check)
-- Lock Node.js version at project level using nvm (.nvmrc), pin to current LTS
-- Re-export `KnownModel` from `src/index.ts` (Phase 5 will need it for per-model breakdown)
-- Declare `--debug` as Commander option in `cli.ts` (no behavior change needed)
+(none — pre-v1.1 cleanups complete)
