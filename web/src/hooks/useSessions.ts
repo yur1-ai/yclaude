@@ -9,6 +9,10 @@ export interface SessionRow extends Record<string, unknown> {
   model: string;
   models: string[];
   costUsd: number;
+  mainCostUsd: number;
+  subagentCostUsd: number;
+  hasSubagents: boolean;
+  gitBranch: string | null;
   tokens: { input: number; output: number; cacheCreation: number; cacheRead: number };
   timestamp: string;
   durationMs: number | null;
@@ -21,7 +25,7 @@ export interface SessionsData {
   pageSize: number;
 }
 
-export function useSessions(projectFilter: string | null = null) {
+export function useSessions(projectFilter: string | null = null, branchFilter: string | null = null) {
   const { from, to } = useDateRangeStore();
   const [page, setPage] = useState(1);
 
@@ -29,10 +33,11 @@ export function useSessions(projectFilter: string | null = null) {
   if (from) params.set('from', from.toISOString());
   if (to) params.set('to', to.toISOString());
   if (projectFilter) params.set('project', projectFilter);
+  if (branchFilter) params.set('branch', branchFilter);
   params.set('page', String(page));
 
   const query = useQuery<SessionsData>({
-    queryKey: ['sessions', from?.toISOString(), to?.toISOString(), projectFilter, page],
+    queryKey: ['sessions', from?.toISOString(), to?.toISOString(), projectFilter, branchFilter, page],
     queryFn: async () => {
       const res = await fetch(`/api/v1/sessions?${params}`);
       if (!res.ok) throw new Error('Failed to fetch sessions');
