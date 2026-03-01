@@ -33,7 +33,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 - [x] **Phase 5: Model & Project Breakdowns** - Per-model donut chart and table, per-project cost breakdown with decoded directory names
 - [x] **Phase 6: Session Explorer** - Browsable session list with drill-down detail view showing per-turn token breakdown
 - [x] **Phase 7: Differentiator Features** - Cache efficiency score, activity heatmap, sidechain/subagent analysis, git branch filtering, 24h/hourly chart window (completed 2026-03-01)
-- [ ] **Phase 8: Dark Mode & Personality** - System-aware dark mode toggle and humorous personality copy woven throughout all views
+- [x] **Phase 8: Dark Mode & Personality** - System-aware dark mode toggle and humorous personality copy woven throughout all views (completed 2026-03-01)
 - [ ] **Phase 9: npm Distribution & CI/CD** - Manual npm publish (DIST-01) then automated GitHub Actions pipeline on tag push (DIST-02)
 
 ## Phase Details
@@ -101,7 +101,7 @@ Plans:
 Plans:
 - [x] 08-01-PLAN.md — Dark mode plumbing: useThemeStore (Zustand persist), FOUC script in index.html, CSS vars in index.css, sidebar footer toggle in Layout.tsx
 - [x] 08-02-PLAN.md — Personality copy system: quips.ts with all 14 quip keys + pickQuip/pickSpendQuip utilities; StatCard quip? prop
-- [ ] 08-03-PLAN.md — Full component sweep: dark: classes on all 10 components/pages; personality wiring (Overview spend quips, all 5 page empty states, ActivityHeatmap 90th-pct quips + dark theme)
+- [x] 08-03-PLAN.md — Full component sweep: dark: classes on all 10 components/pages; personality wiring (Overview spend quips, all 5 page empty states, ActivityHeatmap 90th-pct quips + dark theme)
 
 ### Phase 9: npm Distribution & CI/CD
 **Goal**: yclaude is published to npm and future releases ship automatically on tag push
@@ -190,5 +190,5 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 5. Model & Project Breakdowns | v1.1 | 3/3 | Complete | 2026-03-01 |
 | 6. Session Explorer | v1.1 | 3/3 | Complete | 2026-03-01 |
 | 7. Differentiator Features | 4/4 | Complete   | 2026-03-01 | - |
-| 8. Dark Mode & Personality | v1.1 | 1/3 | In Progress | - |
+| 8. Dark Mode & Personality | v1.1 | 3/3 | Complete | 2026-03-01 |
 | 9. npm Distribution & CI/CD | v1.1 | 0/TBD | Not started | - |

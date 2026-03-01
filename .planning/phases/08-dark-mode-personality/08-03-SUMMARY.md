@@ -48,6 +48,8 @@ key-decisions:
   - "Models donut center text uses var(--color-axis-tick) (same CSS var as chart axes) — avoids hardcoded #0f172a"
   - "emptyMessage on SortableTable accepts a string quip picked at render time — random per page load, no state needed"
   - "Sessions milestone quip renders below h1 heading, above filter controls — placement matches plan spec"
+  - "Token breakdown bar track uses #1e242c in dark mode — midpoint between card bg (#161b22) and raised surface (#21262d)"
+  - "Cache-read bar color changed from grey to purple in dark mode for improved contrast and visual distinction"
 
 patterns-established:
   - "Dark mode card pattern: rounded-lg border border-slate-200 bg-white ... dark:border-[#30363d] dark:bg-[#161b22]"
@@ -56,7 +58,7 @@ patterns-established:
 requirements-completed: [CLI-03, PRSL-01]
 
 # Metrics
-duration: 35min
+duration: 55min
 completed: 2026-03-01
 ---
 
@@ -66,10 +68,10 @@ completed: 2026-03-01
 
 ## Performance
 
-- **Duration:** ~35 min
+- **Duration:** ~55 min
 - **Started:** 2026-03-01T18:30:00Z
-- **Completed:** 2026-03-01T19:08:49Z
-- **Tasks:** 2 of 3 complete (Task 3 is checkpoint:human-verify — awaiting visual verification)
+- **Completed:** 2026-03-01T19:30:00Z
+- **Tasks:** 3 of 3 complete (including human visual verification)
 - **Files modified:** 10
 
 ## Accomplishments
@@ -85,8 +87,12 @@ Each task was committed atomically:
 
 1. **Task 1: Dark mode sweep — shared components** - `0c84394` (feat) — SortableTable, CostBarChart, CacheEfficiencyCard, DateRangePicker
 2. **Task 2: ActivityHeatmap dark theme + 90th-pct quips; all 5 pages** - `f240e74` (feat)
+3. **Task 3: Visual verification checkpoint** - approved by user
+4. **Post-checkpoint fix: calendar text, heatmap labels/hover, token contrast** - `ec0aebe` (fix)
+5. **Post-checkpoint fix: token bar track darkened (#1c2128)** - `c623140` (fix)
+6. **Post-checkpoint fix: token bar track midpoint; cache-read color grey→purple** - `9edab84` (fix)
 
-_Task 3 is checkpoint:human-verify — no commit yet._
+**Plan metadata:** (this commit)
 
 ## Files Created/Modified
 
@@ -109,11 +115,37 @@ _Task 3 is checkpoint:human-verify — no commit yet._
 
 ## Deviations from Plan
 
-None - plan executed exactly as written.
+### Auto-fixed Issues
+
+**1. [Rule 1 - Bug] Calendar text invisible in dark mode**
+- **Found during:** Task 3 (post-checkpoint visual review)
+- **Issue:** react-activity-calendar calendar text (month/day labels) rendered dark-on-dark
+- **Fix:** Added explicit label color overrides for dark mode via component style props
+- **Files modified:** `web/src/components/ActivityHeatmap.tsx`
+- **Committed in:** `ec0aebe`
+
+**2. [Rule 1 - Bug] Token breakdown bar track too light in dark mode**
+- **Found during:** Task 3 (post-checkpoint visual review)
+- **Issue:** Bar track background (`#21262d`) was not dark enough — insufficient contrast against card background
+- **Fix:** Iteratively darkened: first to `#1c2128`, then settled on midpoint `#1e242c`
+- **Files modified:** `web/src/pages/Overview.tsx`
+- **Committed in:** `c623140`, `9edab84`
+
+**3. [Rule 1 - Bug] Cache-read bar color near-invisible in dark mode**
+- **Found during:** Task 3 (post-checkpoint visual review)
+- **Issue:** Cache-read bars used grey which was nearly invisible on dark background
+- **Fix:** Changed cache-read color from grey to purple for dark mode
+- **Files modified:** `web/src/pages/Overview.tsx`
+- **Committed in:** `9edab84`
+
+---
+
+**Total deviations:** 3 auto-fixed (all Rule 1 bugs found during visual verification)
+**Impact on plan:** All fixes improved visual correctness in dark mode. No scope creep.
 
 ## Issues Encountered
 
-None - TypeScript compiled clean on first pass. All 10 files modified without type errors.
+None - TypeScript compiled clean on first pass. All 10 files modified without type errors. Post-checkpoint visual bugs were identified and fixed immediately.
 
 ## User Setup Required
 
@@ -121,9 +153,9 @@ None - no external service configuration required.
 
 ## Next Phase Readiness
 
-- All dark mode and personality work is complete pending human visual verification (Task 3 checkpoint)
-- Phase 9 (npm distribution) can proceed once user approves visual correctness
-- No blockers — all code committed and TypeScript clean
+- Phase 8 complete: dark mode + personality system fully shipped across all 5 pages and all components; human verified
+- Phase 9 (npm distribution) can proceed immediately
+- Blocker to note: verify `yclaude` name availability on npm before publish (carried forward from STATE.md)
 
 ---
 *Phase: 08-dark-mode-personality*

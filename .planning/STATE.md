@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Analytics Completion + Distribution
-status: unknown
-last_updated: "2026-03-01T19:08:49Z"
+status: in_progress
+last_updated: "2026-03-01T19:35:00Z"
 progress:
   total_phases: 8
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 24
-  completed_plans: 22
+  completed_plans: 23
 ---
 
 # Project State
@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 
 **Core value:** Give developers full visibility into their AI coding spend — locally first, with no friction.
-**Current focus:** v1.1 Phase 8 — Dark Mode & Personality
+**Current focus:** v1.1 Phase 9 — npm Distribution & CI/CD
 
 ## Current Position
 
-Phase: 08-dark-mode-personality 🚧 IN PROGRESS
-Plan: 08-03 ⏸ AT CHECKPOINT (2026-03-01) — awaiting human-verify (Task 3 of 3)
-Status: 08-01 ✅ 08-02 ✅ 08-03 auto-tasks complete, at checkpoint:human-verify
-Last activity: 2026-03-01 — 08-03 Tasks 1+2 complete; all 5 pages dark mode + personality quips; ActivityHeatmap computeP90 + dark theme; all axis ticks use var(--color-axis-tick)
+Phase: 09-npm-distribution (next)
+Plan: 09-01 (not yet planned)
+Status: 08-01 ✅ 08-02 ✅ 08-03 ✅ — Phase 8 complete
+Last activity: 2026-03-01 — 08-03 complete; all 5 pages dark mode + personality; post-checkpoint fixes (calendar text, token bar track, cache-read color); human verified
 
 ## Accumulated Context
 
@@ -93,6 +93,8 @@ Last activity: 2026-03-01 — 08-03 Tasks 1+2 complete; all 5 pages dark mode + 
 - computeP90 guards against false heatmap peaks: peak requires count >= p90 AND count >= 2
 - Models donut center text uses var(--color-axis-tick) (same CSS var as chart axes) — avoids hardcoded #0f172a
 - emptyMessage quip called at render time (not hoisted to module scope) — random per page load, no React state needed
+- Token breakdown bar track uses #1e242c in dark mode — midpoint between card bg (#161b22) and raised surface (#21262d) for correct depth hierarchy
+- Cache-read bar color changed from grey to purple in dark mode — improved contrast and visual distinction from other token types
 
 ### Open Blockers for v1.1
 
