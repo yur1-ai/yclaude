@@ -11,6 +11,7 @@ import {
 import { useSessionDetail, TurnRow } from '../hooks/useSessionDetail';
 import { SortableTable } from '../components/SortableTable';
 import type { Column } from '../components/SortableTable';
+import { pickQuip, QUIPS } from '../lib/quips';
 
 const columns: Column<TurnRow>[] = [
   { key: 'turn', label: '#', sortable: true },
@@ -53,17 +54,17 @@ export default function SessionDetail() {
   const { data, isLoading, isError, error } = useSessionDetail(id);
 
   if (isLoading) {
-    return <p className="text-slate-500 text-sm p-8">Loading session…</p>;
+    return <p className="text-slate-500 dark:text-[#8b949e] text-sm p-8">Loading session…</p>;
   }
 
   if (isError) {
     const is404 = error instanceof Error && error.message === 'Session not found';
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="text-xl font-semibold text-slate-900">
+      <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm dark:border-[#30363d] dark:bg-[#161b22]">
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-[#e6edf3]">
           {is404 ? 'Session Not Found' : 'Error'}
         </h1>
-        <p className="mt-2 text-sm text-slate-500">
+        <p className="mt-2 text-sm text-slate-500 dark:text-[#8b949e]">
           {is404
             ? 'This session does not exist or has no recorded events.'
             : 'Failed to load session details.'}
@@ -122,31 +123,31 @@ export default function SessionDetail() {
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => navigate(-1)}
-          className="text-sm text-slate-500 hover:text-slate-700"
+          className="text-sm text-slate-500 hover:text-slate-700 dark:text-[#8b949e] dark:hover:text-[#e6edf3]"
         >
           ← Sessions
         </button>
-        <h1 className="text-2xl font-semibold text-slate-900">
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-[#e6edf3]">
           {summary.displayName}
         </h1>
       </div>
 
       {/* Summary card */}
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Summary</h2>
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-[#30363d] dark:bg-[#161b22]">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-[#e6edf3] mb-4">Summary</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {stats.map(({ label, value }) => (
             <div key={label}>
-              <p className="text-xs text-slate-500 uppercase tracking-wide">{label}</p>
-              <p className="mt-1 text-lg font-semibold text-slate-900">{value}</p>
+              <p className="text-xs text-slate-500 dark:text-[#8b949e] uppercase tracking-wide">{label}</p>
+              <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-[#e6edf3]">{value}</p>
             </div>
           ))}
         </div>
       </div>
 
       {/* Cumulative cost chart card */}
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Cumulative Cost</h2>
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-[#30363d] dark:bg-[#161b22]">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-[#e6edf3] mb-4">Cumulative Cost</h2>
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={turns} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
             <CartesianGrid
@@ -158,7 +159,7 @@ export default function SessionDetail() {
               dataKey="turn"
               tickLine={false}
               axisLine={false}
-              tick={{ fontSize: 12, fill: 'oklch(0.55 0 0)' }}
+              tick={{ fontSize: 12, fill: 'var(--color-axis-tick)' }}
               label={{ value: 'Turn', position: 'insideBottom', offset: -2 }}
             />
             <YAxis
@@ -166,7 +167,7 @@ export default function SessionDetail() {
               tickLine={false}
               axisLine={false}
               width={68}
-              tick={{ fontSize: 12, fill: 'oklch(0.55 0 0)' }}
+              tick={{ fontSize: 12, fill: 'var(--color-axis-tick)' }}
             />
             <Tooltip
               formatter={(value: number | undefined) =>
@@ -187,13 +188,14 @@ export default function SessionDetail() {
       </div>
 
       {/* Per-turn table card */}
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Per-Turn Breakdown</h2>
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-[#30363d] dark:bg-[#161b22]">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-[#e6edf3] mb-4">Per-Turn Breakdown</h2>
         <SortableTable<TurnRow>
           columns={columns}
           rows={turns}
           defaultSortKey="turn"
           defaultSortDir="asc"
+          emptyMessage={pickQuip(QUIPS.empty_detail)}
         />
       </div>
     </div>

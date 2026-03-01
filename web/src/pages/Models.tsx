@@ -5,6 +5,7 @@ import type { ModelRow } from '../hooks/useModels';
 import { SortableTable } from '../components/SortableTable';
 import type { Column } from '../components/SortableTable';
 import { DateRangePicker } from '../components/DateRangePicker';
+import { pickQuip, QUIPS } from '../lib/quips';
 
 const DONUT_COLORS = [
   'var(--color-donut-1)',
@@ -36,7 +37,7 @@ export default function Models() {
 
   if (isLoading) {
     return (
-      <div className="h-60 flex items-center justify-center text-slate-400 text-sm">
+      <div className="h-60 flex items-center justify-center text-slate-400 dark:text-[#8b949e] text-sm">
         Loading...
       </div>
     );
@@ -57,7 +58,7 @@ export default function Models() {
     {
       key: 'model',
       label: 'Model',
-      render: (row) => <span className="font-medium text-slate-900">{row.model}</span>,
+      render: (row) => <span className="font-medium text-slate-900 dark:text-[#e6edf3]">{row.model}</span>,
     },
     {
       key: 'costUsd',
@@ -107,15 +108,15 @@ export default function Models() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-900">Models</h1>
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-[#e6edf3]">Models</h1>
         <DateRangePicker />
       </div>
 
       {/* Donut chart card */}
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-[#30363d] dark:bg-[#161b22]">
         {rows.length === 0 ? (
-          <div className="h-60 flex items-center justify-center text-slate-400 text-sm">
-            No data for this period
+          <div className="h-60 flex items-center justify-center text-slate-400 dark:text-[#8b949e] text-sm italic">
+            {pickQuip(QUIPS.empty_models)}
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={280}>
@@ -154,7 +155,7 @@ export default function Models() {
                 textAnchor="middle"
                 dominantBaseline="middle"
                 className="fill-slate-900 text-sm font-semibold"
-                style={{ fontSize: '14px', fontWeight: 600, fill: '#0f172a' }}
+                style={{ fontSize: '14px', fontWeight: 600, fill: 'var(--color-axis-tick)' }}
               >
                 {totalTokensLabel}
               </text>
@@ -164,7 +165,7 @@ export default function Models() {
       </div>
 
       {/* Table card */}
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-[#30363d] dark:bg-[#161b22]">
         <SortableTable<ModelRow>
           columns={columns}
           rows={rows}

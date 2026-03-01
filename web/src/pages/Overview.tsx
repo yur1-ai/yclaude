@@ -10,6 +10,7 @@ import { CostBarChart } from '../components/CostBarChart';
 import { DateRangePicker } from '../components/DateRangePicker';
 import { CacheEfficiencyCard } from '../components/CacheEfficiencyCard';
 import { ActivityHeatmap } from '../components/ActivityHeatmap';
+import { pickSpendQuip, pickQuip, QUIPS } from '../lib/quips';
 
 export default function Overview() {
   const [bucket, setBucket] = useState<Bucket>('day');
@@ -56,15 +57,26 @@ export default function Overview() {
       {/* Header row: title + date range picker */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Overview</h1>
-          <p className="mt-1 text-sm text-slate-500">Your estimated AI coding spend</p>
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-[#e6edf3]">Overview</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-[#8b949e]">Your estimated AI coding spend</p>
         </div>
         <DateRangePicker />
       </div>
 
+      {/* Empty state */}
+      {!allTimePending && !allTimeSummary?.totalCost && (
+        <p className="text-sm text-slate-400 dark:text-[#8b949e] italic">
+          {pickQuip(QUIPS.empty_overview)}
+        </p>
+      )}
+
       {/* Stat cards */}
       <div className="grid grid-cols-2 gap-4">
-        <StatCard label="All-time est." value={allTimeValue} />
+        <StatCard
+          label="All-time est."
+          value={allTimeValue}
+          quip={!allTimePending && allTimeSummary ? (pickSpendQuip(allTimeSummary.totalCost) ?? undefined) : undefined}
+        />
         <StatCard label={periodLabel} value={periodValue}>
           <TrendIndicator percent={trendPercent} />
         </StatCard>
@@ -72,8 +84,8 @@ export default function Overview() {
 
       {/* Token breakdown */}
       {periodSummary && (
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-sm font-semibold text-slate-700 mb-4">Token breakdown</h2>
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-[#30363d] dark:bg-[#161b22]">
+          <h2 className="text-sm font-semibold text-slate-700 dark:text-[#e6edf3] mb-4">Token breakdown</h2>
           <TokenBreakdown
             tokens={periodSummary.totalTokens}
             totalCost={periodSummary.totalCost}
@@ -81,14 +93,14 @@ export default function Overview() {
         </div>
       )}
       {periodPending && (
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm h-40 flex items-center justify-center text-slate-400 text-sm">
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm h-40 flex items-center justify-center text-slate-400 dark:text-[#8b949e] text-sm dark:border-[#30363d] dark:bg-[#161b22]">
           Loading...
         </div>
       )}
 
       {/* Cost over time chart */}
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-sm font-semibold text-slate-700 mb-4">Cost over time</h2>
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-[#30363d] dark:bg-[#161b22]">
+        <h2 className="text-sm font-semibold text-slate-700 dark:text-[#e6edf3] mb-4">Cost over time</h2>
         <CostBarChart
           data={costOverTime?.data ?? []}
           bucket={bucket}

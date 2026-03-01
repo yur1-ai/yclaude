@@ -3,6 +3,7 @@ import type { ProjectRow } from '../hooks/useProjects';
 import { SortableTable } from '../components/SortableTable';
 import type { Column } from '../components/SortableTable';
 import { DateRangePicker } from '../components/DateRangePicker';
+import { pickQuip, QUIPS } from '../lib/quips';
 
 export default function Projects() {
   const { data, isLoading } = useProjects();
@@ -12,7 +13,7 @@ export default function Projects() {
     {
       key: 'displayName',
       label: 'Project',
-      render: (row) => <span className="font-medium text-slate-900">{row.displayName}</span>,
+      render: (row) => <span className="font-medium text-slate-900 dark:text-[#e6edf3]">{row.displayName}</span>,
     },
     {
       key: 'costUsd',
@@ -62,7 +63,7 @@ export default function Projects() {
 
   if (isLoading) {
     return (
-      <div className="h-60 flex items-center justify-center text-slate-400 text-sm">
+      <div className="h-60 flex items-center justify-center text-slate-400 dark:text-[#8b949e] text-sm">
         Loading...
       </div>
     );
@@ -71,15 +72,16 @@ export default function Projects() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-900">Projects</h1>
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-[#e6edf3]">Projects</h1>
         <DateRangePicker />
       </div>
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-[#30363d] dark:bg-[#161b22]">
         <SortableTable<ProjectRow>
           columns={columns}
           rows={data?.rows ?? []}
           defaultSortKey="costUsd"
           defaultSortDir="desc"
+          emptyMessage={pickQuip(QUIPS.empty_projects)}
         />
       </div>
     </div>

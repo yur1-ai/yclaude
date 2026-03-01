@@ -6,6 +6,7 @@ import { useBranches } from '../hooks/useBranches';
 import { SubagentBadge } from '../components/SubagentBadge';
 import { SortableTable, Column } from '../components/SortableTable';
 import { DateRangePicker } from '../components/DateRangePicker';
+import { pickQuip, QUIPS } from '../lib/quips';
 
 const columns: Column<SessionRow>[] = [
   {
@@ -90,12 +91,19 @@ export default function Sessions() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-slate-900">Sessions</h1>
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-[#e6edf3]">Sessions</h1>
+          {data && data.total >= 100 && (
+            <p className="text-xs text-slate-400 dark:text-[#8b949e] italic mt-1">
+              {pickQuip(QUIPS.milestone_100_sessions)}
+            </p>
+          )}
+        </div>
         <div className="flex items-center gap-3">
           <select
             value={projectFilter ?? ''}
             onChange={(e) => setProjectFilter(e.target.value || null)}
-            className="rounded border border-slate-200 text-sm px-2 py-1.5 text-slate-600 bg-white"
+            className="rounded border border-slate-200 text-sm px-2 py-1.5 text-slate-600 bg-white dark:border-[#30363d] dark:text-[#8b949e] dark:bg-[#21262d]"
           >
             <option value="">All projects</option>
             {projectsData?.rows.map((p) => (
@@ -107,7 +115,7 @@ export default function Sessions() {
           <select
             value={branchFilter ?? ''}
             onChange={(e) => setBranchFilter(e.target.value || null)}
-            className="rounded border border-slate-200 text-sm px-2 py-1.5 text-slate-600 bg-white"
+            className="rounded border border-slate-200 text-sm px-2 py-1.5 text-slate-600 bg-white dark:border-[#30363d] dark:text-[#8b949e] dark:bg-[#21262d]"
           >
             <option value="">All branches</option>
             {branchesData?.branches.map((b) => (
@@ -120,8 +128,8 @@ export default function Sessions() {
         </div>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        {isLoading && <p className="text-slate-500 text-sm">Loading sessions…</p>}
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-[#30363d] dark:bg-[#161b22]">
+        {isLoading && <p className="text-slate-500 dark:text-[#8b949e] text-sm">Loading sessions…</p>}
         {isError && <p className="text-red-500 text-sm">Failed to load sessions.</p>}
         {!isLoading && !isError && (
           <>
@@ -130,10 +138,10 @@ export default function Sessions() {
               rows={data?.sessions ?? []}
               defaultSortKey="timestamp"
               defaultSortDir="desc"
-              emptyMessage="No sessions for this period"
+              emptyMessage={pickQuip(QUIPS.empty_sessions)}
               onRowClick={(row) => navigate(`/sessions/${row.sessionId as string}`)}
             />
-            <div className="flex items-center justify-between mt-4 text-sm text-slate-600">
+            <div className="flex items-center justify-between mt-4 text-sm text-slate-600 dark:text-[#8b949e]">
               <span>
                 {data
                   ? `Showing ${((page - 1) * (data.pageSize ?? 50)) + 1}–${Math.min(page * (data.pageSize ?? 50), data.total)} of ${data.total}`
@@ -143,14 +151,14 @@ export default function Sessions() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="px-3 py-1 rounded border border-slate-200 disabled:opacity-40 hover:bg-slate-50"
+                  className="px-3 py-1 rounded border border-slate-200 dark:border-[#30363d] disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-[#21262d]"
                 >
                   Prev
                 </button>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className="px-3 py-1 rounded border border-slate-200 disabled:opacity-40 hover:bg-slate-50"
+                  className="px-3 py-1 rounded border border-slate-200 dark:border-[#30363d] disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-[#21262d]"
                 >
                   Next
                 </button>
