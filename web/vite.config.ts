@@ -5,8 +5,9 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
-    outDir: '../web-dist',
+    outDir: '../dist/web',
     emptyOutDir: true,
+    sourcemap: false,
   },
   server: {
     // In dev mode, proxy /api calls to the Hono server (started via `npm run dev`)
