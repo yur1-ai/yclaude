@@ -56,12 +56,12 @@ export function SortableTable<T extends Record<string, unknown>>({
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-slate-200">
-            {columns.map((col) => {
+            {columns.map((col, colIdx) => {
               const isSortable = col.sortable !== false;
               const isActive = sortKey === col.key;
               return (
                 <th
-                  key={String(col.key)}
+                  key={`${String(col.key)}-${colIdx}`}
                   onClick={() => handleSort(col.key, isSortable)}
                   className={`py-2 px-3 text-left font-semibold text-slate-600 select-none ${
                     isSortable ? 'cursor-pointer hover:text-slate-900' : ''
@@ -100,8 +100,8 @@ export function SortableTable<T extends Record<string, unknown>>({
                     isHighlighted ? 'bg-slate-100' : 'hover:bg-slate-50'
                   }`}
                 >
-                  {columns.map((col) => (
-                    <td key={String(col.key)} className="py-2 px-3 text-slate-700">
+                  {columns.map((col, colIdx) => (
+                    <td key={`${String(col.key)}-${colIdx}`} className="py-2 px-3 text-slate-700">
                       {col.render ? col.render(row) : String(row[col.key] ?? '')}
                     </td>
                   ))}

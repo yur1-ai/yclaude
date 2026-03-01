@@ -5,6 +5,7 @@ import Overview from './pages/Overview';
 import Models from './pages/Models';
 import Projects from './pages/Projects';
 import Sessions from './pages/Sessions';
+import SessionDetail from './pages/SessionDetail';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,6 +26,7 @@ const router = createHashRouter([
       { path: 'models', element: <Models /> },
       { path: 'projects', element: <Projects /> },
       { path: 'sessions', element: <Sessions /> },
+      { path: 'sessions/:id', element: <SessionDetail /> },
     ],
   },
 ]);
