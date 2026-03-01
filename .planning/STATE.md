@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Analytics Completion + Distribution
 status: unknown
-last_updated: "2026-03-01T15:50:04Z"
+last_updated: "2026-03-01T19:08:49Z"
 progress:
   total_phases: 8
   completed_phases: 7
@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 ## Current Position
 
 Phase: 08-dark-mode-personality 🚧 IN PROGRESS
-Plan: 08-01 ✅ COMPLETE (2026-03-01)
-Status: 1/3 plans complete; dark mode plumbing done; personality copy system and component sweep remaining
-Last activity: 2026-03-01 — 08-01 complete; useThemeStore with Zustand persist, FOUC script in index.html, dark mode CSS vars with --color-axis-tick, sidebar footer ThemeToggle + v1.1.0 label
+Plan: 08-03 ⏸ AT CHECKPOINT (2026-03-01) — awaiting human-verify (Task 3 of 3)
+Status: 08-01 ✅ 08-02 ✅ 08-03 auto-tasks complete, at checkpoint:human-verify
+Last activity: 2026-03-01 — 08-03 Tasks 1+2 complete; all 5 pages dark mode + personality quips; ActivityHeatmap computeP90 + dark theme; all axis ticks use var(--color-axis-tick)
 
 ## Accumulated Context
 
@@ -90,6 +90,9 @@ Last activity: 2026-03-01 — 08-01 complete; useThemeStore with Zustand persist
 - StatCard dark mode tokens: border=#30363d, bg=#161b22, label text=#8b949e, value text=#e6edf3
 - QUIPS satisfies Record<string, string[]> — type-safe at compile time without losing key specificity
 - web/src/lib/ directory created in Phase 8 (did not exist before 08-02)
+- computeP90 guards against false heatmap peaks: peak requires count >= p90 AND count >= 2
+- Models donut center text uses var(--color-axis-tick) (same CSS var as chart axes) — avoids hardcoded #0f172a
+- emptyMessage quip called at render time (not hoisted to module scope) — random per page load, no React state needed
 
 ### Open Blockers for v1.1
 
