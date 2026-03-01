@@ -20,8 +20,8 @@ Requirements for the Analytics Completion + Distribution milestone (Phases 5–9
 
 - [x] **SESS-01**: User can browse a paginated session list sortable by project, model, estimated cost, timestamp, and duration — filterable by project
 - [x] **SESS-02**: User can open a session detail view showing per-turn token breakdown (input / output / cache creation / cache read) and cumulative cost timeline — no conversation text exposed
-- [ ] **SESS-03**: User can see subagent sessions flagged distinctly in the session list, with the session detail view breaking out subagent token cost separately from the main-thread cost
-- [ ] **SESS-04**: User can see each session's associated git branch in the session list and filter the list to a specific branch via a dropdown
+- [x] **SESS-03**: User can see subagent sessions flagged distinctly in the session list, with the session detail view breaking out subagent token cost separately from the main-thread cost
+- [x] **SESS-04**: User can see each session's associated git branch in the session list and filter the list to a specific branch via a dropdown
 
 ### CLI & Appearance
 
@@ -74,8 +74,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ANLT-07 | Phase 7 | Pending |
 | ANLT-08 | Phase 7 | Pending |
 | ANLT-09 | Phase 7 | Pending |
-| SESS-03 | Phase 7 | Pending |
-| SESS-04 | Phase 7 | Pending |
+| SESS-03 | Phase 7 | Complete (07-02) |
+| SESS-04 | Phase 7 | Complete (07-02) |
 | CLI-03 | Phase 8 | Pending |
 | PRSL-01 | Phase 8 | Pending |
 | DIST-01 | Phase 9 | Pending |
@@ -88,4 +88,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-28*
-*Last updated: 2026-03-01 after 07-01 execution — backend API for SESS-03, SESS-04, ANLT-08, ANLT-09 done; frontend plans 07-02/03/04 pending to complete user-facing criteria*
+*Last updated: 2026-03-01 after 07-02 execution — SESS-03 and SESS-04 fully complete; ANLT-08, ANLT-09 backend done, frontend plans 07-03/04 pending*

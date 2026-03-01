@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Analytics Completion + Distribution
 status: in-progress
-last_updated: "2026-03-01T08:30:00Z"
+last_updated: "2026-03-01T08:35:00Z"
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 21
-  completed_plans: 18
+  completed_plans: 19
 ---
 
 # Project State
@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 
 ## Current Position
 
-Phase: 07-differentiator-features (Wave 1 complete)
-Plan: 07-01 ✅ COMPLETE (2026-03-01)
-Status: Plan 1 of 4 done; Wave 2 frontend plans (07-02, 07-03, 07-04) ready to run in parallel
-Last activity: 2026-03-01 — 07-01 complete; backend API extended with subagent cost split, gitBranch, /branches, /activity, hour bucket on /cost-over-time
+Phase: 07-differentiator-features
+Plan: 07-02 ✅ COMPLETE (2026-03-01)
+Status: Plan 2 of 4 done; 07-03 (Activity Heatmap) and 07-04 (Subagent Accounting UI) remaining
+Last activity: 2026-03-01 — 07-02 complete; Sessions page updated with branch column, branch filter, SubagentBadge; SessionDetail shows Main Thread/Subagents cost split
 
 ## Accumulated Context
 
@@ -63,6 +63,9 @@ Last activity: 2026-03-01 — 07-01 complete; backend API extended with subagent
 - hour bucket in /cost-over-time does NOT gap-fill — consistent with week/month behavior; only day bucket gap-fills
 - Intl.DateTimeFormat('en-CA') locale for local date strings: produces YYYY-MM-DD guaranteed, no manual zero-padding
 - /activity counts distinct sessionIds per local date (not event count) — measures session density not API call volume
+- branchFilter lives only in Sessions.tsx local state (not Zustand) — prevents filter from leaking into Overview stats
+- SessionSummary new fields (mainCostUsd, subagentCostUsd, hasSubagents) typed as optional for backward safety
+- SubagentBadge rendered in model column render prop (not separate column) — contextually linked to model info, avoids table width creep
 
 ### Open Blockers for v1.1
 
