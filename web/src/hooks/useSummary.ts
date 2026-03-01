@@ -10,6 +10,8 @@ export interface SummaryData {
     cacheRead: number;
   };
   eventCount: number;
+  subagentCostUsd?: number;
+  mainCostUsd?: number;
 }
 
 export function useSummary() {

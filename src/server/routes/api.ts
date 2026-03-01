@@ -110,10 +110,15 @@ export function apiRoutes(state: AppState): Hono {
       { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
     );
 
+    const subagentCostUsd = costs.filter((e) => e.isSidechain === true).reduce((s, e) => s + e.costUsd, 0);
+    const mainCostUsd = totalCost - subagentCostUsd;
+
     return c.json({
       totalCost,
       totalTokens,
       eventCount: costs.length,
+      subagentCostUsd,
+      mainCostUsd,
     });
   });
 
