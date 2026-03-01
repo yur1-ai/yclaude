@@ -46,10 +46,12 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
   1. A donut chart shows estimated cost broken down by model, with a companion sortable table below it
   2. A per-project cost breakdown page displays human-readable project names derived from the `cwd` path field — not raw directory slugs
   3. Both views respond to the global date range picker: selecting a new range re-fetches and re-renders both pages without a full page reload
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 05-01: TBD
+- [ ] 05-01-PLAN.md — Hono API routes: GET /api/v1/models and GET /api/v1/projects with aggregation and project name decoding
+- [ ] 05-02-PLAN.md — Shared SortableTable<T> component and donut color CSS variables
+- [ ] 05-03-PLAN.md — useModels/useProjects hooks and Models/Projects page implementations
 
 ### Phase 6: Session Explorer
 **Goal**: User can browse their sessions and drill into individual session details to understand per-session spend
@@ -121,7 +123,7 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 2. Cost Engine & Privacy | v1.0 | 2/2 | Complete | 2026-02-28 |
 | 3. Server, CLI & App Shell | v1.0 | 3/3 | Complete | 2026-02-28 |
 | 4. Cost Analytics Dashboard | v1.0 | 3/3 | Complete | 2026-02-28 |
-| 5. Model & Project Breakdowns | v1.1 | 0/TBD | Not started | - |
+| 5. Model & Project Breakdowns | v1.1 | 0/3 | Not started | - |
 | 6. Session Explorer | v1.1 | 0/TBD | Not started | - |
 | 7. Differentiator Features | v1.1 | 0/TBD | Not started | - |
 | 8. Dark Mode & Personality | v1.1 | 0/TBD | Not started | - |
