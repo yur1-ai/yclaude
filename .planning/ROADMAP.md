@@ -32,7 +32,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 
 - [x] **Phase 5: Model & Project Breakdowns** - Per-model donut chart and table, per-project cost breakdown with decoded directory names
 - [x] **Phase 6: Session Explorer** - Browsable session list with drill-down detail view showing per-turn token breakdown
-- [ ] **Phase 7: Differentiator Features** - Cache efficiency score, activity heatmap, sidechain/subagent analysis, git branch filtering, 24h/hourly chart window
+- [x] **Phase 7: Differentiator Features** - Cache efficiency score, activity heatmap, sidechain/subagent analysis, git branch filtering, 24h/hourly chart window (completed 2026-03-01)
 - [ ] **Phase 8: Dark Mode & Personality** - System-aware dark mode toggle and humorous personality copy woven throughout all views
 - [ ] **Phase 9: npm Distribution & CI/CD** - Manual npm publish (DIST-01) then automated GitHub Actions pipeline on tag push (DIST-02)
 
@@ -187,6 +187,6 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 4. Cost Analytics Dashboard | v1.0 | 3/3 | Complete | 2026-02-28 |
 | 5. Model & Project Breakdowns | v1.1 | 3/3 | Complete | 2026-03-01 |
 | 6. Session Explorer | v1.1 | 3/3 | Complete | 2026-03-01 |
-| 7. Differentiator Features | v1.1 | 3/4 | In progress | - |
+| 7. Differentiator Features | 4/4 | Complete   | 2026-03-01 | - |
 | 8. Dark Mode & Personality | v1.1 | 0/TBD | Not started | - |
 | 9. npm Distribution & CI/CD | v1.1 | 0/TBD | Not started | - |

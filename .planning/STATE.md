@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Analytics Completion + Distribution
 status: in-progress
-last_updated: "2026-03-01T08:30:19Z"
+last_updated: "2026-03-01T08:33:44Z"
 progress:
   total_phases: 7
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 21
-  completed_plans: 20
+  completed_plans: 21
 ---
 
 # Project State
@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 
 ## Current Position
 
-Phase: 07-differentiator-features
-Plan: 07-03 ✅ COMPLETE (2026-03-01)
-Status: Plan 3 of 4 done; 07-04 (Hourly Chart) remaining
-Last activity: 2026-03-01 — 07-03 complete; Overview now has CacheEfficiencyCard (two-tab cache score + TrendIndicator), conditional SubagentStatCard, ActivityHeatmap with independent year picker
+Phase: 07-differentiator-features ✅ COMPLETE (2026-03-01)
+Plan: 07-04 ✅ COMPLETE (2026-03-01)
+Status: All 4 plans complete; Phase 7 fully done
+Last activity: 2026-03-01 — 07-04 complete; CostBarChart has Hourly bucket (4th option) with 48h range guard, CSS-only tooltip, HH:00 x-axis formatter, IANA tz forwarding, and auto-reset to 'day' when range widens
 
 ## Accumulated Context
 
@@ -73,6 +73,11 @@ Last activity: 2026-03-01 — 07-03 complete; Overview now has CacheEfficiencyCa
 - ActivityHeatmap holds local year state only — does NOT import useDateRangeStore (orthogonal to global date filter)
 - SubagentStatCard inline in Overview.tsx (no separate component); only renders when subagentCostUsd > 0 (prevents 0% confusion for non-subagent users)
 - /summary now returns subagentCostUsd and mainCostUsd; SummaryData gains optional fields for backward safety
+- HH:00 label uses dateStr.slice(11,13) not new Date(dateStr) — backend returns 'YYYY-MM-DDTHH' (non-ISO); new Date() would produce 'Invalid Date'
+- LOCAL_TZ computed once at module load (Intl.DateTimeFormat().resolvedOptions().timeZone) — not per-render
+- ?tz= always sent on all /cost-over-time requests regardless of bucket — backend ignores for non-hour buckets; simplifies client logic
+- Hourly bucket in CostBarChart disabled when from/to undefined or range > 48h; tooltip via CSS-only group-hover (no JS state)
+- from/to passed as props to CostBarChart (not imported from store) — keeps component testable and decoupled
 
 ### Open Blockers for v1.1
 
