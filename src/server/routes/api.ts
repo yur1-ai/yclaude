@@ -13,6 +13,41 @@ function parseDate(str: string | undefined): Date | null | 'invalid' {
 }
 
 /**
+ * Returns the last non-empty path segment of a cwd string.
+ * e.g. "/Users/foo/ai-projects/yclaude" → "yclaude"
+ */
+function lastSegment(cwd: string): string {
+  return cwd.split('/').filter(Boolean).at(-1) ?? cwd;
+}
+
+/**
+ * Assigns human-readable display names for all unique cwd values.
+ * If two distinct cwds share the same last segment, show parent/name for both.
+ * Null cwd (no cwd field) → "Unknown project".
+ */
+function assignProjectNames(cwds: (string | null)[]): Map<string | null, string> {
+  const freq = new Map<string, number>();
+  for (const cwd of cwds) {
+    if (!cwd) continue;
+    const last = lastSegment(cwd);
+    freq.set(last, (freq.get(last) ?? 0) + 1);
+  }
+  const result = new Map<string | null, string>();
+  for (const cwd of cwds) {
+    if (!cwd) { result.set(null, 'Unknown project'); continue; }
+    const parts = cwd.split('/').filter(Boolean);
+    const last = parts.at(-1) ?? cwd;
+    if ((freq.get(last) ?? 0) > 1) {
+      const parent = parts.at(-2);
+      result.set(cwd, parent ? `${parent}/${last}` : last);
+    } else {
+      result.set(cwd, last);
+    }
+  }
+  return result;
+}
+
+/**
  * Creates the /api/v1 sub-router with all API endpoints.
  * Route ordering: summary first, then cost-over-time, then stub routes.
  *
@@ -133,6 +168,111 @@ export function apiRoutes(state: AppState): Hono {
     }
 
     return c.json({ data: result, bucket });
+  });
+
+  // GET /api/v1/models — aggregates cost data grouped by model.
+  // Supports optional ?from=ISO and ?to=ISO date-range filtering.
+  // Events with undefined model are grouped as 'Unknown'.
+  // Rows sorted by costUsd descending.
+  app.get('/models', (c) => {
+    const fromStr = c.req.query('from');
+    const toStr = c.req.query('to');
+
+    const from = parseDate(fromStr);
+    const to = parseDate(toStr);
+
+    if (from === 'invalid') return c.json({ error: "Invalid 'from' date" }, 400);
+    if (to === 'invalid') return c.json({ error: "Invalid 'to' date" }, 400);
+
+    let costs = state.costs;
+    if (from) costs = costs.filter((e) => new Date(e.timestamp) >= from);
+    if (to) costs = costs.filter((e) => new Date(e.timestamp) <= to);
+
+    const groups = new Map<string, {
+      costUsd: number;
+      eventCount: number;
+      tokens: { input: number; output: number; cacheCreation: number; cacheRead: number };
+    }>();
+
+    for (const e of costs) {
+      const key = e.model ?? 'Unknown';
+      const existing = groups.get(key) ?? {
+        costUsd: 0, eventCount: 0,
+        tokens: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
+      };
+      existing.costUsd += e.costUsd;
+      existing.eventCount += 1;
+      if (e.tokens) {
+        existing.tokens.input += e.tokens.input;
+        existing.tokens.output += e.tokens.output;
+        existing.tokens.cacheCreation += e.tokens.cacheCreation;
+        existing.tokens.cacheRead += e.tokens.cacheRead;
+      }
+      groups.set(key, existing);
+    }
+
+    const rows = Array.from(groups.entries())
+      .map(([model, data]) => ({ model, ...data }))
+      .sort((a, b) => b.costUsd - a.costUsd);
+
+    const totalCost = rows.reduce((s, r) => s + r.costUsd, 0);
+
+    return c.json({ rows, totalCost });
+  });
+
+  // GET /api/v1/projects — aggregates cost data grouped by project (cwd).
+  // Supports optional ?from=ISO and ?to=ISO date-range filtering.
+  // Events with undefined cwd are grouped as "Unknown project" (cwd: null).
+  // Collision detection: if two distinct cwds share the same last path segment,
+  // both display as "parent/name" format.
+  // Rows sorted by costUsd descending.
+  app.get('/projects', (c) => {
+    const fromStr = c.req.query('from');
+    const toStr = c.req.query('to');
+
+    const from = parseDate(fromStr);
+    const to = parseDate(toStr);
+
+    if (from === 'invalid') return c.json({ error: "Invalid 'from' date" }, 400);
+    if (to === 'invalid') return c.json({ error: "Invalid 'to' date" }, 400);
+
+    let costs = state.costs;
+    if (from) costs = costs.filter((e) => new Date(e.timestamp) >= from);
+    if (to) costs = costs.filter((e) => new Date(e.timestamp) <= to);
+
+    const groups = new Map<string | null, {
+      costUsd: number;
+      eventCount: number;
+      tokens: { input: number; output: number; cacheCreation: number; cacheRead: number };
+    }>();
+
+    for (const e of costs) {
+      const key = e.cwd ?? null;
+      const existing = groups.get(key) ?? {
+        costUsd: 0, eventCount: 0,
+        tokens: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
+      };
+      existing.costUsd += e.costUsd;
+      existing.eventCount += 1;
+      if (e.tokens) {
+        existing.tokens.input += e.tokens.input;
+        existing.tokens.output += e.tokens.output;
+        existing.tokens.cacheCreation += e.tokens.cacheCreation;
+        existing.tokens.cacheRead += e.tokens.cacheRead;
+      }
+      groups.set(key, existing);
+    }
+
+    const uniqueCwds = Array.from(groups.keys());
+    const names = assignProjectNames(uniqueCwds);
+
+    const rows = Array.from(groups.entries())
+      .map(([cwd, data]) => ({ displayName: names.get(cwd) ?? 'Unknown project', cwd, ...data }))
+      .sort((a, b) => b.costUsd - a.costUsd);
+
+    const totalCost = rows.reduce((s, r) => s + r.costUsd, 0);
+
+    return c.json({ rows, totalCost });
   });
 
   // Stub routes — return empty shapes for Phase 4+ implementation
