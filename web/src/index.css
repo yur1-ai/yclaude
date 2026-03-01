@@ -20,6 +20,34 @@
   --color-donut-4: oklch(0.58 0.22 295);   /* violet */
   --color-donut-5: oklch(0.65 0.20 140);   /* green */
   --color-donut-other: oklch(0.80 0.00 0); /* neutral grey for "Other" bucket */
+
+  /* Axis tick color for charts */
+  --color-axis-tick: oklch(0.55 0 0);
+}
+
+@layer base {
+  .dark {
+    /* Bar and grid overrides for dark backgrounds */
+    --color-bar: oklch(0.65 0.28 200);
+    --color-grid: oklch(0.25 0 0);
+
+    /* Donut colors — boosted chroma for dark backgrounds */
+    --color-donut-1: oklch(0.68 0.28 190);
+    --color-donut-2: oklch(0.78 0.24 60);
+    --color-donut-3: oklch(0.66 0.28 15);
+    --color-donut-4: oklch(0.64 0.28 295);
+    --color-donut-5: oklch(0.71 0.26 140);
+    --color-donut-other: oklch(0.45 0.00 0);
+
+    /* Token colors — bumped lightness for dark backgrounds */
+    --color-token-input: oklch(0.70 0.18 250);
+    --color-token-output: oklch(0.70 0.18 160);
+    --color-token-cache-write: oklch(0.73 0.18 70);
+    --color-token-cache-read: oklch(0.63 0.04 240);
+
+    /* Axis tick — lighter on dark background */
+    --color-axis-tick: oklch(0.70 0 0);
+  }
 }
 
 /* Remove browser focus outline on Recharts SVG elements when clicked */
