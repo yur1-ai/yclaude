@@ -280,7 +280,7 @@ export function apiRoutes(state: AppState): Hono {
 
   // GET /api/v1/sessions — paginated session list.
   // Groups state.costs by sessionId. Sessions with no token-bearing events are excluded.
-  // Supports ?from=ISO, ?to=ISO date filtering, ?project=cwd filter, ?page=N pagination.
+  // Supports ?from=ISO, ?to=ISO date filtering, ?project=cwd filter, ?branch=name filter, ?page=N pagination.
   app.get('/sessions', (c) => {
     interface SessionRow extends Record<string, unknown> {
       sessionId: string;
@@ -292,6 +292,10 @@ export function apiRoutes(state: AppState): Hono {
       tokens: { input: number; output: number; cacheCreation: number; cacheRead: number };
       timestamp: string;
       durationMs: number | null;
+      gitBranch: string | null;
+      hasSubagents: boolean;
+      mainCostUsd: number;
+      subagentCostUsd: number;
     }
 
     const PAGE_SIZE = 50;
@@ -299,6 +303,7 @@ export function apiRoutes(state: AppState): Hono {
     const fromStr = c.req.query('from');
     const toStr = c.req.query('to');
     const projectFilter = c.req.query('project') ?? null;
+    const branchFilter = c.req.query('branch') ?? null;
     const pageParam = parseInt(c.req.query('page') ?? '1', 10);
     const page = Math.max(1, isNaN(pageParam) ? 1 : pageParam);
 
@@ -316,6 +321,11 @@ export function apiRoutes(state: AppState): Hono {
     // Filter by project (cwd)
     if (projectFilter !== null) {
       costs = costs.filter((e) => (e.cwd ?? null) === projectFilter);
+    }
+
+    // Filter by branch (gitBranch)
+    if (branchFilter !== null) {
+      costs = costs.filter((e) => (e.gitBranch ?? null) === branchFilter);
     }
 
     // Group ALL events by sessionId (not just token-bearing)
@@ -354,8 +364,14 @@ export function apiRoutes(state: AppState): Hono {
         }
       }
 
-      // costUsd: sum across ALL events
-      const costUsd = sorted.reduce((sum, e) => sum + e.costUsd, 0);
+      // costUsd: sum across ALL events (mainCostUsd + subagentCostUsd === costUsd)
+      const mainEvents = sorted.filter((e) => !e.isSidechain);
+      const sideEvents = sorted.filter((e) => e.isSidechain === true);
+      const mainCostUsd = mainEvents.reduce((s, e) => s + e.costUsd, 0);
+      const subagentCostUsd = sideEvents.reduce((s, e) => s + e.costUsd, 0);
+      const costUsd = mainCostUsd + subagentCostUsd;
+      const hasSubagents = sideEvents.length > 0;
+      const gitBranch = sorted.find((e) => e.gitBranch)?.gitBranch ?? null;
 
       // tokens: sum across token-bearing events only
       const tokens = tokenEvents.reduce(
@@ -372,7 +388,7 @@ export function apiRoutes(state: AppState): Hono {
       const models = [...new Set(tokenEvents.map((e) => e.model ?? 'Unknown'))];
       const model = models.length === 1 ? models[0]! : 'Mixed';
 
-      allSessions.push({ sessionId, displayName: '', cwd, model, models, costUsd, tokens, timestamp, durationMs });
+      allSessions.push({ sessionId, displayName: '', cwd, model, models, costUsd, tokens, timestamp, durationMs, gitBranch, hasSubagents, mainCostUsd, subagentCostUsd });
     }
 
     // Assign display names for all unique cwds
@@ -414,6 +430,9 @@ export function apiRoutes(state: AppState): Hono {
       timestamp: string;
       durationMs: number | null;
       gitBranch: string | null;
+      mainCostUsd: number;
+      subagentCostUsd: number;
+      hasSubagents: boolean;
     }
 
     const sessionId = c.req.param('id');
@@ -461,7 +480,10 @@ export function apiRoutes(state: AppState): Hono {
     }
 
     const gitBranch = sorted.find((e) => e.gitBranch)?.gitBranch ?? null;
-    const totalCost = sorted.reduce((sum, e) => sum + e.costUsd, 0);
+    const mainCostUsd = sorted.filter((e) => !e.isSidechain).reduce((s, e) => s + e.costUsd, 0);
+    const subagentCostUsd = sorted.filter((e) => e.isSidechain === true).reduce((s, e) => s + e.costUsd, 0);
+    const hasSubagents = sorted.some((e) => e.isSidechain === true);
+    const totalCost = mainCostUsd + subagentCostUsd;
 
     const models = [...new Set(tokenEvents.map((e) => e.model ?? 'Unknown'))];
     const model = models.length === 1 ? models[0]! : 'Mixed';
@@ -489,6 +511,9 @@ export function apiRoutes(state: AppState): Hono {
       timestamp,
       durationMs,
       gitBranch,
+      mainCostUsd,
+      subagentCostUsd,
+      hasSubagents,
     };
 
     return c.json({ summary, turns });
