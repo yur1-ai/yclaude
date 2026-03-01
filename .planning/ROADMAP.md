@@ -85,7 +85,7 @@ Plans:
 - [x] 07-01-PLAN.md — Backend API extensions: subagent fields on /sessions, /branches endpoint, /activity endpoint, hour bucket on /cost-over-time
 - [x] 07-02-PLAN.md — Sessions page upgrades: subagent badge, git branch column, branch filter dropdown, SessionDetail cost split
 - [x] 07-03-PLAN.md — Overview additions: CacheEfficiencyCard with trend, SubagentStatCard, ActivityHeatmap with react-activity-calendar
-- [ ] 07-04-PLAN.md — Hourly chart: CostBarChart Hourly button with disabled guard, HH:00 formatter, auto-reset logic
+- [x] 07-04-PLAN.md — Hourly chart: CostBarChart Hourly button with disabled guard, HH:00 formatter, auto-reset logic
 
 ### Phase 8: Dark Mode & Personality
 **Goal**: The application feels distinctive, polished, and on-brand with the "Why, Claude?!" personality throughout every screen
@@ -96,10 +96,12 @@ Plans:
   2. A toggle in the navigation bar lets the user manually switch between light and dark mode; the preference persists across browser sessions via localStorage
   3. Humorous, personality-driven copy appears in stat callouts, empty states, loading states, milestone labels, and high-spend moments — at least 5 rotating quips per context
   4. Personality copy never replaces data labels — humor appears adjacent to data, not in place of it
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 08-01: TBD
+- [ ] 08-01-PLAN.md — Dark mode plumbing: useThemeStore (Zustand persist), FOUC script in index.html, CSS vars in index.css, sidebar footer toggle in Layout.tsx
+- [ ] 08-02-PLAN.md — Personality copy system: quips.ts with all 14 quip keys + pickQuip/pickSpendQuip utilities; StatCard quip? prop
+- [ ] 08-03-PLAN.md — Full component sweep: dark: classes on all 10 components/pages; personality wiring (Overview spend quips, all 5 page empty states, ActivityHeatmap 90th-pct quips + dark theme)
 
 ### Phase 9: npm Distribution & CI/CD
 **Goal**: yclaude is published to npm and future releases ship automatically on tag push
@@ -188,5 +190,5 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 5. Model & Project Breakdowns | v1.1 | 3/3 | Complete | 2026-03-01 |
 | 6. Session Explorer | v1.1 | 3/3 | Complete | 2026-03-01 |
 | 7. Differentiator Features | 4/4 | Complete   | 2026-03-01 | - |
-| 8. Dark Mode & Personality | v1.1 | 0/TBD | Not started | - |
+| 8. Dark Mode & Personality | v1.1 | 0/3 | Not started | - |
 | 9. npm Distribution & CI/CD | v1.1 | 0/TBD | Not started | - |
