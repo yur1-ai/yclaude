@@ -6,7 +6,7 @@ status: ready
 last_updated: "2026-03-01"
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 13
   completed_plans: 3
 ---
@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 
 **Core value:** Give developers full visibility into their AI coding spend — locally first, with no friction.
-**Current focus:** v1.1 Phase 5 — Model & Project Breakdowns
+**Current focus:** v1.1 Phase 6 — Session Explorer
 
 ## Current Position
 
-Phase: 05-model-project-breakdowns (ALL PLANS COMPLETE)
-Plan: 05-03 complete — Models page (donut + table) and Projects page (table only)
-Status: Phase 5 complete — all 3 plans done; ready for Phase 6 (Session Explorer)
-Last activity: 2026-03-01 — Completed 05-03 (useModels/useProjects hooks, Models donut page, Projects table page)
+Phase: 05-model-project-breakdowns ✅ COMPLETE (verified 2026-03-01)
+Plan: —
+Status: Ready to plan Phase 6 — `/gsd:plan-phase 6`
+Last activity: 2026-03-01 — Phase 5 complete and verified (19/19 must-haves); Models donut + Projects table live
 
 ## Accumulated Context
 
