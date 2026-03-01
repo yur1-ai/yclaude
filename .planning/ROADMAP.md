@@ -79,11 +79,13 @@ Plans:
   3. Sessions using subagents are flagged with a distinct badge in the session list, and the session detail view breaks out subagent token cost separately from the main-thread session cost
   4. Each session row in the session list displays its associated git branch, and a branch filter dropdown lets users narrow the session list to a specific branch
   5. A 24h time window option on the cost-over-time chart renders hourly buckets with adjusted x-axis tick labels
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 07-01: TBD
-- [ ] 07-02: TBD
+- [ ] 07-01-PLAN.md — Backend API extensions: subagent fields on /sessions, /branches endpoint, /activity endpoint, hour bucket on /cost-over-time
+- [ ] 07-02-PLAN.md — Sessions page upgrades: subagent badge, git branch column, branch filter dropdown, SessionDetail cost split
+- [ ] 07-03-PLAN.md — Overview additions: CacheEfficiencyCard with trend, SubagentStatCard, ActivityHeatmap with react-activity-calendar
+- [ ] 07-04-PLAN.md — Hourly chart: CostBarChart Hourly button with disabled guard, HH:00 formatter, auto-reset logic
 
 ### Phase 8: Dark Mode & Personality
 **Goal**: The application feels distinctive, polished, and on-brand with the "Why, Claude?!" personality throughout every screen
@@ -185,6 +187,6 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 4. Cost Analytics Dashboard | v1.0 | 3/3 | Complete | 2026-02-28 |
 | 5. Model & Project Breakdowns | v1.1 | 3/3 | Complete | 2026-03-01 |
 | 6. Session Explorer | v1.1 | 3/3 | Complete | 2026-03-01 |
-| 7. Differentiator Features | v1.1 | 0/TBD | Not started | - |
+| 7. Differentiator Features | v1.1 | 0/4 | Not started | - |
 | 8. Dark Mode & Personality | v1.1 | 0/TBD | Not started | - |
 | 9. npm Distribution & CI/CD | v1.1 | 0/TBD | Not started | - |
