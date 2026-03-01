@@ -12,4 +12,12 @@
   /* Chart colors — consumed by CostBarChart in 04-03 */
   --color-bar: oklch(0.58 0.20 200);
   --color-grid: oklch(0.92 0 0);
+
+  /* Donut chart — model slices (top 5 colors) + other bucket */
+  --color-donut-1: oklch(0.58 0.20 200);   /* teal — matches --color-bar */
+  --color-donut-2: oklch(0.60 0.18 250);   /* blue */
+  --color-donut-3: oklch(0.60 0.18 160);   /* green */
+  --color-donut-4: oklch(0.65 0.18 70);    /* amber */
+  --color-donut-5: oklch(0.60 0.18 330);   /* purple */
+  --color-donut-other: oklch(0.80 0.00 0); /* neutral grey for "Other" bucket */
 }
