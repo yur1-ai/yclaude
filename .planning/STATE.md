@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Analytics Completion + Distribution
 status: in-progress
-last_updated: "2026-03-01T08:35:00Z"
+last_updated: "2026-03-01T08:30:19Z"
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 21
-  completed_plans: 19
+  completed_plans: 20
 ---
 
 # Project State
@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 ## Current Position
 
 Phase: 07-differentiator-features
-Plan: 07-02 ✅ COMPLETE (2026-03-01)
-Status: Plan 2 of 4 done; 07-03 (Activity Heatmap) and 07-04 (Subagent Accounting UI) remaining
-Last activity: 2026-03-01 — 07-02 complete; Sessions page updated with branch column, branch filter, SubagentBadge; SessionDetail shows Main Thread/Subagents cost split
+Plan: 07-03 ✅ COMPLETE (2026-03-01)
+Status: Plan 3 of 4 done; 07-04 (Hourly Chart) remaining
+Last activity: 2026-03-01 — 07-03 complete; Overview now has CacheEfficiencyCard (two-tab cache score + TrendIndicator), conditional SubagentStatCard, ActivityHeatmap with independent year picker
 
 ## Accumulated Context
 
@@ -66,11 +66,16 @@ Last activity: 2026-03-01 — 07-02 complete; Sessions page updated with branch 
 - branchFilter lives only in Sessions.tsx local state (not Zustand) — prevents filter from leaking into Overview stats
 - SessionSummary new fields (mainCostUsd, subagentCostUsd, hasSubagents) typed as optional for backward safety
 - SubagentBadge rendered in model column render prop (not separate column) — contextually linked to model info, avoids table width creep
+- react-activity-calendar v3: named import only { ActivityCalendar }; default export removed; hex-only colors in theme prop (CSS vars not supported)
+- Heatmap tooltip: browser-native title attribute via cloneElement — no third-party tooltip library needed
+- usePriorSummary: enabled=false when from/to undefined; prior period = [from - duration, from]; queryKey uses ISO strings
+- CacheEfficiencyCard local mode state (inputCoverage|cacheHitRate) — does NOT affect global date range store
+- ActivityHeatmap holds local year state only — does NOT import useDateRangeStore (orthogonal to global date filter)
+- SubagentStatCard inline in Overview.tsx (no separate component); only renders when subagentCostUsd > 0 (prevents 0% confusion for non-subagent users)
+- /summary now returns subagentCostUsd and mainCostUsd; SummaryData gains optional fields for backward safety
 
 ### Open Blockers for v1.1
 
-- **Phase 7**: `react-activity-calendar` + Tailwind v4 CSS vars — `getComputedStyle` pattern needs proof-of-concept before Phase 7 heatmap implementation
-- **Phase 7**: `react-activity-calendar` + Tailwind v4 CSS vars — `getComputedStyle` pattern needs proof-of-concept before Phase 7 heatmap implementation
 - **Phase 9**: Verify `yclaude` name availability on npm before Phase 9 publish
 
 ### Pending Todos

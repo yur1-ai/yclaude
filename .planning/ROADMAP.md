@@ -84,7 +84,7 @@ Plans:
 Plans:
 - [x] 07-01-PLAN.md — Backend API extensions: subagent fields on /sessions, /branches endpoint, /activity endpoint, hour bucket on /cost-over-time
 - [x] 07-02-PLAN.md — Sessions page upgrades: subagent badge, git branch column, branch filter dropdown, SessionDetail cost split
-- [ ] 07-03-PLAN.md — Overview additions: CacheEfficiencyCard with trend, SubagentStatCard, ActivityHeatmap with react-activity-calendar
+- [x] 07-03-PLAN.md — Overview additions: CacheEfficiencyCard with trend, SubagentStatCard, ActivityHeatmap with react-activity-calendar
 - [ ] 07-04-PLAN.md — Hourly chart: CostBarChart Hourly button with disabled guard, HH:00 formatter, auto-reset logic
 
 ### Phase 8: Dark Mode & Personality
@@ -187,6 +187,6 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 4. Cost Analytics Dashboard | v1.0 | 3/3 | Complete | 2026-02-28 |
 | 5. Model & Project Breakdowns | v1.1 | 3/3 | Complete | 2026-03-01 |
 | 6. Session Explorer | v1.1 | 3/3 | Complete | 2026-03-01 |
-| 7. Differentiator Features | v1.1 | 2/4 | In progress | - |
+| 7. Differentiator Features | v1.1 | 3/4 | In progress | - |
 | 8. Dark Mode & Personality | v1.1 | 0/TBD | Not started | - |
 | 9. npm Distribution & CI/CD | v1.1 | 0/TBD | Not started | - |
