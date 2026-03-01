@@ -58,7 +58,7 @@ export function TokenBreakdown({ tokens, totalCost }: TokenBreakdownProps) {
                 {count.toLocaleString()}
               </td>
               <td className="py-2 pl-2 text-right text-slate-600 tabular-nums">
-                ~${typeCost.toFixed(4)} est.
+                ~${typeCost.toFixed(2)} est.
               </td>
             </tr>
           );
@@ -69,7 +69,7 @@ export function TokenBreakdown({ tokens, totalCost }: TokenBreakdownProps) {
           <td className="pt-3 pr-4">—</td>
           <td className="pt-3 pl-2 text-right tabular-nums">100%</td>
           <td className="pt-3 pl-2 text-right tabular-nums">{totalTokens.toLocaleString()}</td>
-          <td className="pt-3 pl-2 text-right tabular-nums">${totalCost.toFixed(4)} est.</td>
+          <td className="pt-3 pl-2 text-right tabular-nums">${totalCost.toFixed(2)} est.</td>
         </tr>
       </tbody>
     </table>

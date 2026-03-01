@@ -62,7 +62,7 @@ export default function Models() {
     {
       key: 'costUsd',
       label: 'Cost',
-      render: (row) => <span>${row.costUsd.toFixed(4)} est.</span>,
+      render: (row) => <span>${row.costUsd.toFixed(2)} est.</span>,
     },
     {
       key: 'costUsd',
@@ -144,8 +144,8 @@ export default function Models() {
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value: number | undefined) =>
-                  value !== undefined ? [`$${value.toFixed(4)} est.`, 'Cost'] : ['', 'Cost']
+                formatter={(value: number | undefined, name: string | undefined) =>
+                  value !== undefined ? [`$${value.toFixed(2)} est.`, name ?? ''] : ['', name ?? '']
                 }
               />
               <text

@@ -10,7 +10,6 @@ const columns: Column<SessionRow>[] = [
     key: 'displayName',
     label: 'Project',
     sortable: true,
-    render: (row) => <ProjectLink row={row} />,
   },
   {
     key: 'model',
@@ -33,7 +32,7 @@ const columns: Column<SessionRow>[] = [
     key: 'costUsd',
     label: 'Cost',
     sortable: true,
-    render: (row) => <span>${(row.costUsd as number).toFixed(6)}</span>,
+    render: (row) => <span>${(row.costUsd as number).toFixed(2)}</span>,
   },
   {
     key: 'timestamp',
@@ -54,19 +53,8 @@ const columns: Column<SessionRow>[] = [
   },
 ];
 
-function ProjectLink({ row }: { row: SessionRow }) {
-  const navigate = useNavigate();
-  return (
-    <button
-      onClick={() => navigate(`/sessions/${row.sessionId}`)}
-      className="text-left text-slate-700 hover:text-slate-900 hover:underline"
-    >
-      {row.displayName}
-    </button>
-  );
-}
-
 export default function Sessions() {
+  const navigate = useNavigate();
   const [projectFilter, setProjectFilter] = useState<string | null>(null);
   const { data, isLoading, isError, page, setPage } = useSessions(projectFilter);
   const { data: projectsData } = useProjects();
@@ -109,6 +97,7 @@ export default function Sessions() {
               defaultSortKey="timestamp"
               defaultSortDir="desc"
               emptyMessage="No sessions for this period"
+              onRowClick={(row) => navigate(`/sessions/${row.sessionId as string}`)}
             />
             <div className="flex items-center justify-between mt-4 text-sm text-slate-600">
               <span>

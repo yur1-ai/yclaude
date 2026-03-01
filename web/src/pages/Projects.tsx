@@ -17,7 +17,7 @@ export default function Projects() {
     {
       key: 'costUsd',
       label: 'Cost',
-      render: (row) => <span>${row.costUsd.toFixed(4)} est.</span>,
+      render: (row) => <span>${row.costUsd.toFixed(2)} est.</span>,
     },
     {
       // Use displayName key with sortable: false so the sort key is unused

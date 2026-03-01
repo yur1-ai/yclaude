@@ -86,7 +86,7 @@ export function CostBarChart({ data, bucket, onBucketChange, isLoading }: CostBa
           />
           <Tooltip
             formatter={(value: number | undefined) => [
-              value != null ? `$${value.toFixed(4)} est.` : '—',
+              value != null ? `$${value.toFixed(2)} est.` : '—',
               'Cost',
             ]}
             cursor={{ fill: 'var(--color-grid)' }}

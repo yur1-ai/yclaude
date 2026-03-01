@@ -43,7 +43,7 @@ const columns: Column<TurnRow>[] = [
     key: 'costUsd',
     label: 'Cost',
     sortable: true,
-    render: (row) => `$${row.costUsd.toFixed(6)}`,
+    render: (row) => `$${row.costUsd.toFixed(2)}`,
   },
 ];
 
@@ -83,7 +83,7 @@ export default function SessionDetail() {
   const { summary, turns } = data;
 
   const stats: { label: string; value: string }[] = [
-    { label: 'Total Cost', value: `$${summary.totalCost.toFixed(6)} est.` },
+    { label: 'Total Cost', value: `$${summary.totalCost.toFixed(2)} est.` },
     {
       label: 'Model',
       value:
@@ -138,17 +138,6 @@ export default function SessionDetail() {
         </div>
       </div>
 
-      {/* Per-turn table card */}
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Per-Turn Breakdown</h2>
-        <SortableTable<TurnRow>
-          columns={columns}
-          rows={turns}
-          defaultSortKey="turn"
-          defaultSortDir="asc"
-        />
-      </div>
-
       {/* Cumulative cost chart card */}
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900 mb-4">Cumulative Cost</h2>
@@ -167,7 +156,7 @@ export default function SessionDetail() {
               label={{ value: 'Turn', position: 'insideBottom', offset: -2 }}
             />
             <YAxis
-              tickFormatter={(v: number) => `$${v.toFixed(4)}`}
+              tickFormatter={(v: number) => `$${v.toFixed(2)}`}
               tickLine={false}
               axisLine={false}
               width={68}
@@ -176,7 +165,7 @@ export default function SessionDetail() {
             <Tooltip
               formatter={(value: number | undefined) =>
                 value != null
-                  ? [`$${value.toFixed(6)} est.`, 'Cumulative cost']
+                  ? [`$${value.toFixed(2)} est.`, 'Cumulative cost']
                   : ['—', 'Cumulative cost']
               }
             />
@@ -189,6 +178,17 @@ export default function SessionDetail() {
             />
           </LineChart>
         </ResponsiveContainer>
+      </div>
+
+      {/* Per-turn table card */}
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">Per-Turn Breakdown</h2>
+        <SortableTable<TurnRow>
+          columns={columns}
+          rows={turns}
+          defaultSortKey="turn"
+          defaultSortDir="asc"
+        />
       </div>
     </div>
   );

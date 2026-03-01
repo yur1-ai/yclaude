@@ -17,6 +17,7 @@ interface SortableTableProps<T extends Record<string, unknown>> {
   highlightKey?: keyof T;
   highlightValue?: string | null;
   emptyMessage?: string;
+  onRowClick?: (row: T) => void;
 }
 
 export function SortableTable<T extends Record<string, unknown>>({
@@ -27,6 +28,7 @@ export function SortableTable<T extends Record<string, unknown>>({
   highlightKey,
   highlightValue,
   emptyMessage = 'No data for this period',
+  onRowClick,
 }: SortableTableProps<T>) {
   const [sortKey, setSortKey] = useState<keyof T>(defaultSortKey);
   const [sortDir, setSortDir] = useState<SortDir>(defaultSortDir);
@@ -44,6 +46,10 @@ export function SortableTable<T extends Record<string, unknown>>({
   const sorted = [...rows].sort((a, b) => {
     const av = a[sortKey];
     const bv = b[sortKey];
+    // Nulls always sort to bottom regardless of direction
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
     const cmp =
       typeof av === 'number' && typeof bv === 'number'
         ? av - bv
@@ -96,9 +102,10 @@ export function SortableTable<T extends Record<string, unknown>>({
               return (
                 <tr
                   key={i}
+                  onClick={() => onRowClick?.(row)}
                   className={`border-b border-slate-100 transition-colors ${
                     isHighlighted ? 'bg-slate-100' : 'hover:bg-slate-50'
-                  }`}
+                  } ${onRowClick ? 'cursor-pointer' : ''}`}
                 >
                   {columns.map((col, colIdx) => (
                     <td key={`${String(col.key)}-${colIdx}`} className="py-2 px-3 text-slate-700">

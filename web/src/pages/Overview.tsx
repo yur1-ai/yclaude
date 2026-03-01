@@ -37,10 +37,10 @@ export default function Overview() {
         : `Last ${preset} est.`;
   const periodValue = periodPending
     ? '...'
-    : `$${(periodSummary?.totalCost ?? 0).toFixed(4)} est.`;
+    : `$${(periodSummary?.totalCost ?? 0).toFixed(2)} est.`;
   const allTimeValue = allTimePending
     ? '...'
-    : `$${(allTimeSummary?.totalCost ?? 0).toFixed(4)} est.`;
+    : `$${(allTimeSummary?.totalCost ?? 0).toFixed(2)} est.`;
 
   return (
     <div className="space-y-6">
