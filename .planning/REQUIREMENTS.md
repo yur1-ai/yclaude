@@ -25,7 +25,7 @@ Requirements for the Analytics Completion + Distribution milestone (Phases 5–9
 
 ### CLI & Appearance
 
-- [ ] **CLI-03**: User can toggle dark mode manually via a nav bar control; the app also respects system dark mode preference by default; preference persists via localStorage across sessions
+- [x] **CLI-03**: User can toggle dark mode manually via a nav bar control; the app also respects system dark mode preference by default; preference persists via localStorage across sessions
 
 ### Personality
 
@@ -76,7 +76,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ANLT-09 | Phase 7 | Complete |
 | SESS-03 | Phase 7 | Complete (07-02) |
 | SESS-04 | Phase 7 | Complete (07-02) |
-| CLI-03 | Phase 8 | Pending |
+| CLI-03 | Phase 8 | Complete (08-01) |
 | PRSL-01 | Phase 8 | Pending |
 | DIST-01 | Phase 9 | Pending |
 | DIST-02 | Phase 9 | Pending |

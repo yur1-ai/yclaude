@@ -8,7 +8,7 @@ progress:
   total_phases: 8
   completed_phases: 7
   total_plans: 24
-  completed_plans: 23
+  completed_plans: 22
 ---
 
 # Project State
@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 ## Current Position
 
 Phase: 08-dark-mode-personality 🚧 IN PROGRESS
-Plan: 08-02 ✅ COMPLETE (2026-03-01)
-Status: 2/3 plans complete; dark mode plumbing + personality copy system done; component sweep remaining
-Last activity: 2026-03-01 — 08-02 complete; quips.ts with 14 QUIPS keys × 5 entries, pickQuip/pickSpendQuip utilities; StatCard extended with quip? prop and dark mode classes
+Plan: 08-01 ✅ COMPLETE (2026-03-01)
+Status: 1/3 plans complete; dark mode plumbing done; personality copy system and component sweep remaining
+Last activity: 2026-03-01 — 08-01 complete; useThemeStore with Zustand persist, FOUC script in index.html, dark mode CSS vars with --color-axis-tick, sidebar footer ThemeToggle + v1.1.0 label
 
 ## Accumulated Context
 
@@ -78,6 +78,12 @@ Last activity: 2026-03-01 — 08-02 complete; quips.ts with 14 QUIPS keys × 5 e
 - ?tz= always sent on all /cost-over-time requests regardless of bucket — backend ignores for non-hour buckets; simplifies client logic
 - Hourly bucket in CostBarChart disabled when from/to undefined or range > 48h; tooltip via CSS-only group-hover (no JS state)
 - from/to passed as props to CostBarChart (not imported from store) — keeps component testable and decoupled
+- localStorage key 'yclaude-theme' matches Zustand persist name field exactly — mismatch causes FOUC on reload
+- FOUC script reads { state: { theme }, version } Zustand persist wrapper shape, not raw string
+- OS preference listener at module level (not per-render) re-calls applyTheme only when stored theme is 'system'
+- ThemeToggle cycles between 'light' and 'dark' only — 'system' is initial default, cannot be toggled back via button
+- --color-axis-tick added to @theme block with .dark override — available for chart axis label theming in Plan 03
+- @layer base .dark block for CSS var overrides — consistent with Tailwind v4 @custom-variant dark pattern
 - quip renders AFTER children in StatCard (commentary reads last, after trend indicators)
 - pickSpendQuip returns null for exact zero — no quip shown for blank/zero-spend state
 - spend_any catches fractional spend (0 < x < $1) to avoid gap before first dollar milestone
