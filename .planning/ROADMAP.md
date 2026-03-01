@@ -108,14 +108,16 @@ Plans:
 **Depends on**: Phase 8
 **Requirements**: DIST-01, DIST-02
 **Success Criteria** (what must be TRUE):
-  1. `npm publish` from local produces a working tarball: pre-built web assets bundled, no source maps, correct `main`/`bin`/`files` fields, `.npmignore` excluding dev artifacts, `yclaude` name confirmed available
-  2. A polished README with install instructions, feature screenshots, and badge is live on npmjs.com
+  1. `npm publish` from local produces a working tarball: pre-built web assets bundled, no source maps, correct `main`/`bin`/`files` fields, `yclaude` name confirmed available
+  2. A polished README with install instructions, feature screenshots, and badges is live on npmjs.com
   3. A GitHub Actions workflow runs lint, typecheck, tests, build, and `npm publish` automatically on git tag push — no manual steps required for future releases
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 09-01: TBD
-- [ ] 09-02: TBD
+- [ ] 09-01-PLAN.md — Build restructure: migrate web-dist/ to dist/web/, tsup.config.prod.ts with noExternal, Biome setup, package.json fields (files/engines/prepublishOnly), dynamic CLI version
+- [ ] 09-02-PLAN.md — GitHub Actions workflows: ci.yml (PR quality gate) + publish.yml (v* tag triggered publish + GitHub Release)
+- [ ] 09-03-PLAN.md — README.md: badges, hero screenshot, feature tour for all 7 pages, install instructions, CLI options
+- [ ] 09-04-PLAN.md — Publish checkpoint: npm name verification, granular token creation, GitHub secret setup, first manual npm publish
 
 ### Phase 9.1: Cost Accuracy & Pricing Refactor
 **Type**: INSERTED — gap closure after Phase 9
@@ -191,4 +193,4 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 6. Session Explorer | v1.1 | 3/3 | Complete | 2026-03-01 |
 | 7. Differentiator Features | 4/4 | Complete   | 2026-03-01 | - |
 | 8. Dark Mode & Personality | v1.1 | 3/3 | Complete | 2026-03-01 |
-| 9. npm Distribution & CI/CD | v1.1 | 0/TBD | Not started | - |
+| 9. npm Distribution & CI/CD | v1.1 | 0/4 | Not started | - |
