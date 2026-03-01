@@ -48,6 +48,25 @@ function assignProjectNames(cwds: (string | null)[]): Map<string | null, string>
 }
 
 /**
+ * Extracts local-timezone hour key 'YYYY-MM-DDTHH' from an ISO timestamp.
+ * Uses Intl.DateTimeFormat with the given IANA timezone string.
+ */
+function getLocalHourKey(timestamp: string, tz: string): string {
+  const d = new Date(timestamp);
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    hour12: false,
+  });
+  const parts = Object.fromEntries(fmt.formatToParts(d).map((p) => [p.type, p.value]));
+  const hour = parts.hour === '24' ? '00' : (parts.hour ?? '00');
+  return `${parts.year}-${parts.month}-${parts.day}T${hour}`;
+}
+
+/**
  * Creates the /api/v1 sub-router with all API endpoints.
  * Route ordering: summary first, then cost-over-time, then stub routes.
  *
@@ -106,6 +125,7 @@ export function apiRoutes(state: AppState): Hono {
     const fromStr = c.req.query('from');
     const toStr = c.req.query('to');
     const bucket = c.req.query('bucket') ?? 'day';
+    const tz = c.req.query('tz') ?? 'UTC';
 
     const from = parseDate(fromStr);
     const to = parseDate(toStr);
@@ -135,6 +155,8 @@ export function apiRoutes(state: AppState): Hono {
         key = d.toISOString().slice(0, 10);
       } else if (bucket === 'month') {
         key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+      } else if (bucket === 'hour') {
+        key = getLocalHourKey(e.timestamp, tz);
       } else {
         // Default: day bucket
         key = d.toISOString().slice(0, 10);
@@ -277,6 +299,62 @@ export function apiRoutes(state: AppState): Hono {
 
   // Stub routes — return empty shapes for Phase 4+ implementation
   app.get('/events', (c) => c.json({ events: [] }));
+
+  // GET /api/v1/branches — returns sorted unique non-null gitBranch values from all events.
+  app.get('/branches', (c) => {
+    const branches = [
+      ...new Set(
+        state.costs
+          .map((e) => e.gitBranch)
+          .filter((b): b is string => typeof b === 'string' && b.length > 0),
+      ),
+    ].sort();
+    return c.json({ branches });
+  });
+
+  // GET /api/v1/activity?year=YYYY&tz=IANA_TZ
+  // Returns { data: Activity[], year } where Activity = { date: string; count: number; level: number }
+  // data is gap-filled: ALL days in the year are present (count=0, level=0 for days with no sessions).
+  // level 0 = no sessions, 1-4 = quartile of session count relative to max day.
+  // Counts DISTINCT sessionIds per local date (not event count).
+  app.get('/activity', (c) => {
+    const year = parseInt(c.req.query('year') ?? String(new Date().getFullYear()), 10);
+    const tz = c.req.query('tz') ?? 'UTC';
+
+    // Group by local date, counting distinct sessionIds
+    const daySessions = new Map<string, Set<string>>();
+    for (const e of state.costs) {
+      const d = new Date(e.timestamp);
+      const localDate = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(d);
+      if (!localDate.startsWith(String(year))) continue;
+      const set = daySessions.get(localDate) ?? new Set<string>();
+      set.add(e.sessionId);
+      daySessions.set(localDate, set);
+    }
+
+    const counts = new Map<string, number>();
+    for (const [date, sessions] of daySessions) {
+      counts.set(date, sessions.size);
+    }
+
+    const max = Math.max(...(counts.size > 0 ? [...counts.values()] : [1]), 1);
+
+    // Gap-fill all days of the year (up to 366 to handle leap years)
+    const result: Array<{ date: string; count: number; level: number }> = [];
+    const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
+    for (let i = 0; i < 366; i++) {
+      const d = new Date(startDate);
+      d.setUTCDate(d.getUTCDate() + i);
+      const dateStr = d.toISOString().slice(0, 10);
+      // Stop when we cross into the next year
+      if (!dateStr.startsWith(String(year))) break;
+      const count = counts.get(dateStr) ?? 0;
+      const level = count === 0 ? 0 : Math.min(4, Math.ceil((count / max) * 4));
+      result.push({ date: dateStr, count, level });
+    }
+
+    return c.json({ data: result, year });
+  });
 
   // GET /api/v1/sessions — paginated session list.
   // Groups state.costs by sessionId. Sessions with no token-bearing events are excluded.
