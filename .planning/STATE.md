@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Analytics Completion + Distribution
 status: ready
-last_updated: "2026-02-28"
+last_updated: "2026-03-01"
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 13
+  completed_plans: 2
 ---
 
 # Project State
@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 
 ## Current Position
 
-Phase: Not started (requirements defined, roadmap approved)
-Plan: —
-Status: Ready to execute — start with `/gsd:plan-phase 5`
-Last activity: 2026-02-28 — Milestone v1.1 initialized (13 requirements, 5 phases)
+Phase: 05-model-project-breakdowns (Wave 1 complete)
+Plan: 05-02 complete — SortableTable component + donut CSS vars
+Status: Executing — Wave 1 done (05-01 API routes, 05-02 shared components); Wave 2 (05-03 Models + Projects pages) ready
+Last activity: 2026-03-01 — Completed 05-02 (SortableTable<T> generic component, 6 donut CSS vars)
 
 ## Accumulated Context
 
@@ -39,6 +39,8 @@ Last activity: 2026-02-28 — Milestone v1.1 initialized (13 requirements, 5 pha
 - `queryKey` must use serialized store values, not `new Date()` — prevents infinite refetch loops
 - All chart colors use `var(--color-*)` CSS vars — never hardcode hex in Recharts components
 - All aggregation is server-side — frontend never receives raw `CostEvent[]` arrays
+- Token tooltip (CSS-only hover) lives in consuming page render prop, not inside SortableTable — keeps component generic
+- Row key uses array index in SortableTable — rows have no stable identity key in API shape
 
 ### Open Blockers for v1.1
 
