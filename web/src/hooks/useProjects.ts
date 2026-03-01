@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useDateRangeStore } from '../store/useDateRangeStore';
 
-export interface ProjectRow {
+export interface ProjectRow extends Record<string, unknown> {
   displayName: string;
   cwd: string | null;
   costUsd: number;

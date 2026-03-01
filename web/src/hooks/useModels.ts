@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useDateRangeStore } from '../store/useDateRangeStore';
 
-export interface ModelRow {
+export interface ModelRow extends Record<string, unknown> {
   model: string;
   costUsd: number;
   eventCount: number;
