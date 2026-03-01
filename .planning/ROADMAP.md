@@ -62,10 +62,12 @@ Plans:
   2. Clicking a session opens a detail view showing full token breakdown per conversation turn (input / output / cache creation / cache read) and a cumulative cost timeline
   3. No conversation text appears anywhere in the session list or detail views — only metadata, token counts, and cost estimates
   4. Session list uses server-side pagination (50 sessions per page) so the UI stays responsive for users with 500+ sessions
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 06-01: TBD
+- [ ] 06-01-PLAN.md — Hono API routes: GET /api/v1/sessions (paginated list) and GET /api/v1/sessions/:id (per-turn detail with cumulative cost)
+- [ ] 06-02-PLAN.md — useSessions hook and Sessions list page with project filter, pagination, and sortable table
+- [ ] 06-03-PLAN.md — useSessionDetail hook, SessionDetail page (summary header + turn table + cumulative cost chart), and App.tsx route registration
 
 ### Phase 7: Differentiator Features
 **Goal**: User gets insights no competing tool provides — cache efficiency scoring, activity patterns, subagent analysis, git branch context, and intraday spend visibility
@@ -124,7 +126,7 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 3. Server, CLI & App Shell | v1.0 | 3/3 | Complete | 2026-02-28 |
 | 4. Cost Analytics Dashboard | v1.0 | 3/3 | Complete | 2026-02-28 |
 | 5. Model & Project Breakdowns | v1.1 | 3/3 | Complete | 2026-03-01 |
-| 6. Session Explorer | v1.1 | 0/TBD | Not started | - |
+| 6. Session Explorer | v1.1 | 0/3 | Not started | - |
 | 7. Differentiator Features | v1.1 | 0/TBD | Not started | - |
 | 8. Dark Mode & Personality | v1.1 | 0/TBD | Not started | - |
 | 9. npm Distribution & CI/CD | v1.1 | 0/TBD | Not started | - |
