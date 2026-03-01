@@ -111,7 +111,8 @@ export function apiRoutes(state: AppState): Hono {
     let result: Array<{ date: string; cost: number }>;
 
     // Zero-cost gap-fill: only for day bucket when both bounds are explicit
-    if (fromStr && toStr && bucket === 'day' && from && from !== 'invalid' && to && to !== 'invalid') {
+    // Note: 'invalid' was already filtered by early returns above; from/to here are Date | null
+    if (fromStr && toStr && bucket === 'day' && from && to) {
       result = [];
       const cursor = new Date(from);
       // Normalize cursor to midnight UTC

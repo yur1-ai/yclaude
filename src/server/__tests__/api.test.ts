@@ -179,8 +179,8 @@ describe('/api/v1/cost-over-time', () => {
     const res = await app.request('/api/v1/cost-over-time');
     const body = (await res.json()) as CostOverTimeBody;
     expect(body.data).toHaveLength(1);
-    expect(body.data[0].date).toBe('2024-01-05');
-    expect(body.data[0].cost).toBeCloseTo(0.003, 6);
+    expect(body.data[0]?.date).toBe('2024-01-05');
+    expect(body.data[0]?.cost).toBeCloseTo(0.003, 6);
   });
 
   it('events on days 1 and 3 with ?from=day1&to=day3 → 3 entries, day 2 has cost 0', async () => {
@@ -195,8 +195,8 @@ describe('/api/v1/cost-over-time', () => {
     expect(body.data).toHaveLength(3);
     expect(body.data[0]).toEqual({ date: '2024-01-01', cost: 0.001 });
     expect(body.data[1]).toEqual({ date: '2024-01-02', cost: 0 });
-    expect(body.data[2].date).toBe('2024-01-03');
-    expect(body.data[2].cost).toBeCloseTo(0.003, 6);
+    expect(body.data[2]?.date).toBe('2024-01-03');
+    expect(body.data[2]?.cost).toBeCloseTo(0.003, 6);
     expect(body.bucket).toBe('day');
   });
 
