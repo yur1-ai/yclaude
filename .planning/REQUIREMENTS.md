@@ -33,7 +33,7 @@ Requirements for the Analytics Completion + Distribution milestone (Phases 5–9
 
 ### Distribution
 
-- [ ] **DIST-01**: User (developer) can publish yclaude to npm manually: pre-built web assets bundled, no source maps, correct `main`/`bin`/`files` fields, `.npmignore` excluding dev artifacts, `yclaude` name confirmed available, polished README with install instructions and feature screenshots live on npmjs.com
+- [x] **DIST-01**: User (developer) can publish yclaude to npm manually: pre-built web assets bundled, no source maps, correct `main`/`bin`/`files` fields, `.npmignore` excluding dev artifacts, `yclaude` name confirmed available, polished README with install instructions and feature screenshots live on npmjs.com
 - [ ] **DIST-02**: Developer can push a git tag and have GitHub Actions automatically run lint, typecheck, tests, build, and `npm publish` — no manual publish steps required for future releases
 
 ## v2 Requirements
@@ -78,7 +78,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SESS-04 | Phase 7 | Complete (07-02) |
 | CLI-03 | Phase 8 | Complete (08-01) |
 | PRSL-01 | Phase 8 | Pending |
-| DIST-01 | Phase 9 | Pending |
+| DIST-01 | Phase 9 | Complete |
 | DIST-02 | Phase 9 | Pending |
 
 **Coverage:**

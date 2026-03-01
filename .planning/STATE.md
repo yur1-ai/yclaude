@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Analytics Completion + Distribution
-status: unknown
-last_updated: "2026-03-01T20:43:14.881Z"
+status: in_progress
+last_updated: "2026-03-01T22:57:00Z"
 progress:
-  total_phases: 8
+  total_phases: 9
   completed_phases: 8
-  total_plans: 24
-  completed_plans: 24
+  total_plans: 25
+  completed_plans: 25
 ---
 
 # Project State
@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 
 ## Current Position
 
-Phase: 09-npm-distribution (next)
-Plan: 09-01 (not yet planned)
-Status: 08-01 ✅ 08-02 ✅ 08-03 ✅ — Phase 8 complete
-Last activity: 2026-03-01 — 08-03 complete; all 5 pages dark mode + personality; post-checkpoint fixes (calendar text, token bar track, cache-read color); human verified
+Phase: 09-npm-distribution-ci-cd
+Plan: 09-01 ✅ — complete
+Status: 09-01 ✅ — Phase 9 Plan 1 complete
+Last activity: 2026-03-01 — 09-01 complete; unified dist/ output, prod tsup bundle, Biome at exit 0, package.json publish-ready
 
 ## Accumulated Context
 
@@ -95,6 +95,10 @@ Last activity: 2026-03-01 — 08-03 complete; all 5 pages dark mode + personalit
 - emptyMessage quip called at render time (not hoisted to module scope) — random per page load, no React state needed
 - Token breakdown bar track uses #1e242c in dark mode — midpoint between card bg (#161b22) and raised surface (#21262d) for correct depth hierarchy
 - Cache-read bar color changed from grey to purple in dark mode — improved contrast and visual distinction from other token types
+- tsup prod config uses banner require injection (not external list) to fix dynamic require() inside CJS packages bundled with noExternal in ESM output — createRequire from node:module overrides the broken __require shim
+- noArrayIndexKey rule disabled globally in biome.json — rows have no stable identity key (existing SortableTable decision); inline biome-ignore ineffective for JSX attribute-level rules in Biome 1.9.0
+- dist/ is unified build output directory — web-dist/ is obsolete; dist/web/ for frontend assets, dist/server/ for server JS
+- Dynamic CLI version: createRequire('../../package.json') reads version field at runtime from bundled package.json path
 
 ### Open Blockers for v1.1
 
