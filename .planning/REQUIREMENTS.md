@@ -19,7 +19,7 @@ Requirements for the Analytics Completion + Distribution milestone (Phases 5–9
 ### Sessions
 
 - [x] **SESS-01**: User can browse a paginated session list sortable by project, model, estimated cost, timestamp, and duration — filterable by project
-- [ ] **SESS-02**: User can open a session detail view showing per-turn token breakdown (input / output / cache creation / cache read) and cumulative cost timeline — no conversation text exposed
+- [x] **SESS-02**: User can open a session detail view showing per-turn token breakdown (input / output / cache creation / cache read) and cumulative cost timeline — no conversation text exposed
 - [ ] **SESS-03**: User can see subagent sessions flagged distinctly in the session list, with the session detail view breaking out subagent token cost separately from the main-thread cost
 - [ ] **SESS-04**: User can see each session's associated git branch in the session list and filter the list to a specific branch via a dropdown
 
@@ -70,7 +70,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ANLT-04 | Phase 5 | Complete |
 | ANLT-05 | Phase 5 | Complete |
 | SESS-01 | Phase 6 | Complete |
-| SESS-02 | Phase 6 | In progress (API done, UI pending) |
+| SESS-02 | Phase 6 | Complete |
 | ANLT-07 | Phase 7 | Pending |
 | ANLT-08 | Phase 7 | Pending |
 | ANLT-09 | Phase 7 | Pending |
@@ -88,4 +88,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-28*
-*Last updated: 2026-02-28 after initial v1.1 definition*
+*Last updated: 2026-03-01 after 06-03 execution — SESS-02 complete*

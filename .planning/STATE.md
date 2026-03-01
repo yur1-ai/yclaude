@@ -8,7 +8,7 @@ progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 13
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 
 ## Current Position
 
-Phase: 06-session-explorer (in progress)
-Plan: 06-02 ✅ COMPLETE (2026-03-01)
-Status: Plan 02 done — ready for 06-03 (Session Detail page)
-Last activity: 2026-03-01 — 06-02 complete; Sessions list page with useSessions hook, sortable table, project filter, and pagination implemented
+Phase: 06-session-explorer ✅ COMPLETE (2026-03-01)
+Plan: 06-03 ✅ COMPLETE (2026-03-01)
+Status: Phase 6 complete — all 3 plans done; ready for Phase 7 (Subagent Accounting)
+Last activity: 2026-03-01 — 06-03 complete; SessionDetail page with per-turn token table and cumulative cost Recharts line chart implemented
 
 ## Accumulated Context
 
@@ -49,6 +49,10 @@ Last activity: 2026-03-01 — 06-02 complete; Sessions list page with useSession
 - SessionRow extends Record<string, unknown> — consistent with ModelRow/ProjectRow generic constraint pattern
 - ProjectLink extracted as named component — column render props cannot use hooks; must wrap in named component for useNavigate
 - setPage exposed from useSessions return value — allows Sessions.tsx useEffect to reset pagination on filter change
+- TurnRow extends Record<string, unknown> — consistent with ModelRow/ProjectRow/SessionRow generic constraint pattern
+- Multiple SortableTable columns can share the same `key: keyof T` value for display-only non-sortable columns; use render prop to differentiate; column React keys use index suffix to prevent duplicate-key warnings
+- Detail page layout: page-header (back + title), summary-card, table-card, chart-card with space-y-6 outer wrapper
+- Error state for detail pages: check error.message === 'Session not found' to distinguish 404 from other failures
 
 ### Open Blockers for v1.1
 

@@ -31,7 +31,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 - Decimal phases (5.1, 6.1…): Urgent insertions (marked INSERTED)
 
 - [x] **Phase 5: Model & Project Breakdowns** - Per-model donut chart and table, per-project cost breakdown with decoded directory names
-- [ ] **Phase 6: Session Explorer** - Browsable session list with drill-down detail view showing per-turn token breakdown
+- [x] **Phase 6: Session Explorer** - Browsable session list with drill-down detail view showing per-turn token breakdown
 - [ ] **Phase 7: Differentiator Features** - Cache efficiency score, activity heatmap, sidechain/subagent analysis, git branch filtering, 24h/hourly chart window
 - [ ] **Phase 8: Dark Mode & Personality** - System-aware dark mode toggle and humorous personality copy woven throughout all views
 - [ ] **Phase 9: npm Distribution & CI/CD** - Manual npm publish (DIST-01) then automated GitHub Actions pipeline on tag push (DIST-02)
@@ -67,7 +67,7 @@ Plans:
 Plans:
 - [x] 06-01-PLAN.md — Hono API routes: GET /api/v1/sessions (paginated list) and GET /api/v1/sessions/:id (per-turn detail with cumulative cost)
 - [x] 06-02-PLAN.md — useSessions hook and Sessions list page with project filter, pagination, and sortable table
-- [ ] 06-03-PLAN.md — useSessionDetail hook, SessionDetail page (summary header + turn table + cumulative cost chart), and App.tsx route registration
+- [x] 06-03-PLAN.md — useSessionDetail hook, SessionDetail page (summary header + turn table + cumulative cost chart), and App.tsx route registration
 
 ### Phase 7: Differentiator Features
 **Goal**: User gets insights no competing tool provides — cache efficiency scoring, activity patterns, subagent analysis, git branch context, and intraday spend visibility
@@ -126,7 +126,7 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 3. Server, CLI & App Shell | v1.0 | 3/3 | Complete | 2026-02-28 |
 | 4. Cost Analytics Dashboard | v1.0 | 3/3 | Complete | 2026-02-28 |
 | 5. Model & Project Breakdowns | v1.1 | 3/3 | Complete | 2026-03-01 |
-| 6. Session Explorer | v1.1 | 2/3 | In progress | - |
+| 6. Session Explorer | v1.1 | 3/3 | Complete | 2026-03-01 |
 | 7. Differentiator Features | v1.1 | 0/TBD | Not started | - |
 | 8. Dark Mode & Personality | v1.1 | 0/TBD | Not started | - |
 | 9. npm Distribution & CI/CD | v1.1 | 0/TBD | Not started | - |

@@ -41,7 +41,7 @@ Give developers and teams full visibility into their AI coding spend — locally
 - [ ] Per-model cost breakdown as donut chart + sortable table (ANLT-04) — Phase 5
 - [ ] Per-project cost breakdown with decoded human-readable names (ANLT-05) — Phase 5
 - [ ] Session list — sortable/filterable, project/model/cost/timestamp/duration (SESS-01) — Phase 6
-- [ ] Session detail view — per-turn token breakdown and cost timeline, metadata only (SESS-02) — Phase 6
+- [x] Session detail view — per-turn token breakdown and cost timeline, metadata only (SESS-02) — Phase 6
 - [ ] Cache efficiency score with trend indicator (ANLT-07) — Phase 7
 - [ ] GitHub-style activity heatmap with personality-copy annotations (ANLT-08) — Phase 7
 - [ ] 24h time window on cost chart with hourly buckets (ANLT-09) — Phase 7
