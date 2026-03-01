@@ -1,41 +1,42 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { MODEL_PRICING } from '../pricing.js';
 
 describe('MODEL_PRICING constants', () => {
   it('has an entry for claude-opus-4-6 with correct pricing', () => {
     const p = MODEL_PRICING['claude-opus-4-6'];
     expect(p).toBeDefined();
-    expect(p!.inputPerMTok).toBe(5.00);
-    expect(p!.outputPerMTok).toBe(25.00);
+    expect(p?.inputPerMTok).toBe(5.0);
+    expect(p?.outputPerMTok).toBe(25.0);
   });
 
   it('has an entry for claude-sonnet-4-6 with correct pricing', () => {
     const p = MODEL_PRICING['claude-sonnet-4-6'];
     expect(p).toBeDefined();
-    expect(p!.inputPerMTok).toBe(3.00);
-    expect(p!.outputPerMTok).toBe(15.00);
+    expect(p?.inputPerMTok).toBe(3.0);
+    expect(p?.outputPerMTok).toBe(15.0);
   });
 
   it('has an entry for claude-3-5-haiku-20241022 with correct pricing', () => {
     const p = MODEL_PRICING['claude-3-5-haiku-20241022'];
     expect(p).toBeDefined();
-    expect(p!.inputPerMTok).toBe(0.80);
+    expect(p?.inputPerMTok).toBe(0.8);
   });
 
   it('has an entry for claude-haiku-4-5-20251001 with correct pricing', () => {
     const p = MODEL_PRICING['claude-haiku-4-5-20251001'];
     expect(p).toBeDefined();
-    expect(p!.inputPerMTok).toBe(1.00);
+    expect(p?.inputPerMTok).toBe(1.0);
   });
 
   it('cache multipliers: 5m write = 1.25x input, 1h write = 2.0x input, read = 0.1x input (verified on claude-sonnet-4-6)', () => {
+    // biome-ignore lint/style/noNonNullAssertion: test-only assertion; entry is verified above
     const p = MODEL_PRICING['claude-sonnet-4-6']!;
     // 5m = 1.25x input: 3.00 * 1.25 = 3.75
     expect(p.cacheWrite5mPerMTok).toBeCloseTo(3.75, 5);
     // 1h = 2.0x input: 3.00 * 2.00 = 6.00
-    expect(p.cacheWrite1hPerMTok).toBeCloseTo(6.00, 5);
+    expect(p.cacheWrite1hPerMTok).toBeCloseTo(6.0, 5);
     // read = 0.1x input: 3.00 * 0.10 = 0.30
-    expect(p.cacheReadPerMTok).toBeCloseTo(0.30, 5);
+    expect(p.cacheReadPerMTok).toBeCloseTo(0.3, 5);
   });
 
   it('includes all required model entries', () => {
@@ -62,7 +63,10 @@ describe('MODEL_PRICING constants', () => {
     ];
 
     for (const model of requiredModels) {
-      expect((MODEL_PRICING as Record<string, unknown>)[model], `Missing model: ${model}`).toBeDefined();
+      expect(
+        (MODEL_PRICING as Record<string, unknown>)[model],
+        `Missing model: ${model}`,
+      ).toBeDefined();
     }
   });
 });

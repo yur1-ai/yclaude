@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useDateRangeStore } from '../store/useDateRangeStore';
 
 export interface SessionRow extends Record<string, unknown> {
@@ -25,7 +25,10 @@ export interface SessionsData {
   pageSize: number;
 }
 
-export function useSessions(projectFilter: string | null = null, branchFilter: string | null = null) {
+export function useSessions(
+  projectFilter: string | null = null,
+  branchFilter: string | null = null,
+) {
   const { from, to } = useDateRangeStore();
   const [page, setPage] = useState(1);
 
@@ -37,7 +40,14 @@ export function useSessions(projectFilter: string | null = null, branchFilter: s
   params.set('page', String(page));
 
   const query = useQuery<SessionsData>({
-    queryKey: ['sessions', from?.toISOString(), to?.toISOString(), projectFilter, branchFilter, page],
+    queryKey: [
+      'sessions',
+      from?.toISOString(),
+      to?.toISOString(),
+      projectFilter,
+      branchFilter,
+      page,
+    ],
     queryFn: async () => {
       const res = await fetch(`/api/v1/sessions?${params}`);
       if (!res.ok) throw new Error('Failed to fetch sessions');

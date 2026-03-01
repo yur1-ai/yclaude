@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import type { CostEvent } from '../../cost/types.js';
+import { toEstimatedCost } from '../../cost/types.js';
+import type { NormalizedEvent } from '../../parser/types.js';
 import { createApp } from '../server.js';
 import type { AppState } from '../server.js';
-import type { CostEvent } from '../../cost/types.js';
-import type { NormalizedEvent } from '../../parser/types.js';
-import { toEstimatedCost } from '../../cost/types.js';
 
 type SummaryBody = {
   totalCost: number;
@@ -18,7 +18,7 @@ type CostOverTimeBody = {
 
 function makeEvent(overrides: Partial<NormalizedEvent> = {}): NormalizedEvent {
   return {
-    uuid: 'test-uuid-' + Math.random(),
+    uuid: `test-uuid-${Math.random()}`,
     type: 'assistant',
     timestamp: '2024-01-01T00:00:00Z',
     sessionId: 'session-1',
@@ -134,7 +134,9 @@ describe('/api/v1/summary date filtering', () => {
     ];
     const state: AppState = { events: [], costs };
     const app = createApp(state);
-    const res = await app.request('/api/v1/summary?from=2024-01-04T00:00:00Z&to=2024-01-06T00:00:00Z');
+    const res = await app.request(
+      '/api/v1/summary?from=2024-01-04T00:00:00Z&to=2024-01-06T00:00:00Z',
+    );
     const body = (await res.json()) as SummaryBody;
     expect(body.eventCount).toBe(1);
     expect(body.totalCost).toBeCloseTo(0.002, 6);
@@ -190,7 +192,9 @@ describe('/api/v1/cost-over-time', () => {
     ];
     const state: AppState = { events: [], costs };
     const app = createApp(state);
-    const res = await app.request('/api/v1/cost-over-time?from=2024-01-01T00:00:00Z&to=2024-01-03T23:59:59Z');
+    const res = await app.request(
+      '/api/v1/cost-over-time?from=2024-01-01T00:00:00Z&to=2024-01-03T23:59:59Z',
+    );
     const body = (await res.json()) as CostOverTimeBody;
     expect(body.data).toHaveLength(3);
     expect(body.data[0]).toEqual({ date: '2024-01-01', cost: 0.001 });
@@ -216,9 +220,9 @@ describe('/api/v1/cost-over-time', () => {
     const week1 = body.data.find((d) => d.date === '2024-01-01');
     const week2 = body.data.find((d) => d.date === '2024-01-08');
     expect(week1).toBeDefined();
-    expect(week1!.cost).toBeCloseTo(0.003, 6);
+    expect(week1?.cost).toBeCloseTo(0.003, 6);
     expect(week2).toBeDefined();
-    expect(week2!.cost).toBeCloseTo(0.004, 6);
+    expect(week2?.cost).toBeCloseTo(0.004, 6);
   });
 
   it('bucket=month groups events by YYYY-MM key', async () => {
@@ -236,9 +240,9 @@ describe('/api/v1/cost-over-time', () => {
     const jan = body.data.find((d) => d.date === '2024-01');
     const feb = body.data.find((d) => d.date === '2024-02');
     expect(jan).toBeDefined();
-    expect(jan!.cost).toBeCloseTo(0.003, 6);
+    expect(jan?.cost).toBeCloseTo(0.003, 6);
     expect(feb).toBeDefined();
-    expect(feb!.cost).toBeCloseTo(0.005, 6);
+    expect(feb?.cost).toBeCloseTo(0.005, 6);
   });
 
   it('?from= with invalid date returns HTTP 400', async () => {

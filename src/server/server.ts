@@ -1,11 +1,11 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
 import { secureHeaders } from 'hono/secure-headers';
-import { serveStatic } from '@hono/node-server/serve-static';
-import { fileURLToPath } from 'node:url';
-import path from 'node:path';
-import { apiRoutes } from './routes/api.js';
-import type { NormalizedEvent } from '../parser/types.js';
 import type { CostEvent } from '../cost/types.js';
+import type { NormalizedEvent } from '../parser/types.js';
+import { apiRoutes } from './routes/api.js';
 
 // Compute absolute path to dist/web/ relative to this file's location.
 // src/server/server.ts compiles to dist/server/server.js via tsup.
@@ -46,7 +46,7 @@ export function createApp(state: AppState): Hono {
         defaultSrc: ["'none'"],
         scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:"],
+        imgSrc: ["'self'", 'data:'],
         connectSrc: ["'self'"],
         fontSrc: ["'self'"],
         objectSrc: ["'none'"],

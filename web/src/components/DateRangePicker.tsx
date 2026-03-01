@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { DayPicker, type DateRange } from 'react-day-picker';
+import { type DateRange, DayPicker } from 'react-day-picker';
 // Import react-day-picker styles in this file only to avoid global CSS pollution
 import 'react-day-picker/style.css';
-import { useDateRangeStore, type Preset } from '../store/useDateRangeStore';
+import { type Preset, useDateRangeStore } from '../store/useDateRangeStore';
 import { useThemeStore } from '../store/useThemeStore';
 
 type PresetButton = { key: Preset; label: string };
@@ -59,6 +59,7 @@ export function DateRangePicker() {
         {PRESETS.map(({ key, label }) => (
           <button
             key={key}
+            type="button"
             onClick={() => handlePresetClick(key)}
             className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
               preset === key
@@ -70,6 +71,7 @@ export function DateRangePicker() {
           </button>
         ))}
         <button
+          type="button"
           onClick={handleCustomClick}
           className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
             preset === 'custom'
@@ -85,10 +87,8 @@ export function DateRangePicker() {
       {calendarOpen && (
         <>
           {/* Click-outside overlay */}
-          <div
-            className="fixed inset-0 z-10"
-            onClick={() => setCalendarOpen(false)}
-          />
+          {/* biome-ignore lint/a11y/useKeyWithClickEvents: overlay div for click-outside detection only; not interactive for keyboard users */}
+          <div className="fixed inset-0 z-10" onClick={() => setCalendarOpen(false)} />
           {/* Calendar container */}
           <div className="absolute top-10 right-0 z-20 rounded-lg border border-slate-200 bg-white shadow-lg p-2 dark:border-[#30363d] dark:bg-[#161b22] dark:text-[#e6edf3]">
             <DayPicker
@@ -101,11 +101,15 @@ export function DateRangePicker() {
                   setCalendarOpen(false);
                 }
               }}
-              style={isDark ? ({
-                '--rdp-accent-background-color': 'rgba(56,139,253,0.15)',
-                '--rdp-range_middle-background-color': 'rgba(56,139,253,0.15)',
-                color: '#e6edf3',
-              } as React.CSSProperties) : undefined}
+              style={
+                isDark
+                  ? ({
+                      '--rdp-accent-background-color': 'rgba(56,139,253,0.15)',
+                      '--rdp-range_middle-background-color': 'rgba(56,139,253,0.15)',
+                      color: '#e6edf3',
+                    } as React.CSSProperties)
+                  : undefined
+              }
             />
           </div>
         </>

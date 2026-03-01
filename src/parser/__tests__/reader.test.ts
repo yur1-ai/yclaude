@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtemp, writeFile, mkdir, rm } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { discoverJSONLFiles, streamJSONLFile } from '../reader.js';
 
 let tmpDir: string;
@@ -12,7 +12,7 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await rm(tmpDir, { recursive: true, force: true });
-  delete process.env['CLAUDE_CONFIG_DIR'];
+  process.env.CLAUDE_CONFIG_DIR = undefined;
 });
 
 describe('discoverJSONLFiles()', () => {
@@ -31,7 +31,7 @@ describe('discoverJSONLFiles()', () => {
     await mkdir(projectsDir, { recursive: true });
     await writeFile(join(projectsDir, 'events.jsonl'), '{"type":"assistant"}');
 
-    process.env['CLAUDE_CONFIG_DIR'] = tmpDir;
+    process.env.CLAUDE_CONFIG_DIR = tmpDir;
     const files = await discoverJSONLFiles();
     expect(files.length).toBeGreaterThanOrEqual(1);
     expect(files.some((f) => f.endsWith('.jsonl'))).toBe(true);
@@ -41,7 +41,7 @@ describe('discoverJSONLFiles()', () => {
     // Make CLAUDE_CONFIG_DIR point to an empty dir
     const emptyDir = join(tmpDir, 'empty');
     await mkdir(emptyDir, { recursive: true });
-    process.env['CLAUDE_CONFIG_DIR'] = emptyDir;
+    process.env.CLAUDE_CONFIG_DIR = emptyDir;
 
     // Put a file in overrideDir
     const overrideDir = join(tmpDir, 'override');
@@ -79,10 +79,10 @@ describe('discoverJSONLFiles()', () => {
 describe('streamJSONLFile()', () => {
   it('yields parsed JSON objects for valid lines', async () => {
     const filePath = join(tmpDir, 'test.jsonl');
-    await writeFile(filePath, [
-      '{"type":"assistant","uuid":"abc-1"}',
-      '{"type":"user","uuid":"abc-2"}',
-    ].join('\n'));
+    await writeFile(
+      filePath,
+      ['{"type":"assistant","uuid":"abc-1"}', '{"type":"user","uuid":"abc-2"}'].join('\n'),
+    );
 
     const results: unknown[] = [];
     for await (const obj of streamJSONLFile(filePath)) {
@@ -95,12 +95,12 @@ describe('streamJSONLFile()', () => {
 
   it('skips blank and whitespace-only lines silently', async () => {
     const filePath = join(tmpDir, 'blanks.jsonl');
-    await writeFile(filePath, [
-      '{"type":"assistant","uuid":"abc-1"}',
-      '',
-      '   ',
-      '{"type":"user","uuid":"abc-2"}',
-    ].join('\n'));
+    await writeFile(
+      filePath,
+      ['{"type":"assistant","uuid":"abc-1"}', '', '   ', '{"type":"user","uuid":"abc-2"}'].join(
+        '\n',
+      ),
+    );
 
     const results: unknown[] = [];
     for await (const obj of streamJSONLFile(filePath)) {
@@ -111,11 +111,14 @@ describe('streamJSONLFile()', () => {
 
   it('skips malformed JSON lines without throwing', async () => {
     const filePath = join(tmpDir, 'malformed.jsonl');
-    await writeFile(filePath, [
-      '{"type":"assistant","uuid":"abc-1"}',
-      'NOT VALID JSON {{{',
-      '{"type":"user","uuid":"abc-2"}',
-    ].join('\n'));
+    await writeFile(
+      filePath,
+      [
+        '{"type":"assistant","uuid":"abc-1"}',
+        'NOT VALID JSON {{{',
+        '{"type":"user","uuid":"abc-2"}',
+      ].join('\n'),
+    );
 
     const results: unknown[] = [];
     // Must not throw
@@ -127,11 +130,7 @@ describe('streamJSONLFile()', () => {
 
   it('never throws — completes normally even on all-malformed file', async () => {
     const filePath = join(tmpDir, 'all-bad.jsonl');
-    await writeFile(filePath, [
-      'not json',
-      'also not json',
-      '{{{}}}',
-    ].join('\n'));
+    await writeFile(filePath, ['not json', 'also not json', '{{{}}}'].join('\n'));
 
     const results: unknown[] = [];
     for await (const obj of streamJSONLFile(filePath)) {

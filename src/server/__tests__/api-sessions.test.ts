@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import type { CostEvent } from '../../cost/types.js';
+import { toEstimatedCost } from '../../cost/types.js';
+import type { NormalizedEvent } from '../../parser/types.js';
 import { createApp } from '../server.js';
 import type { AppState } from '../server.js';
-import type { CostEvent } from '../../cost/types.js';
-import type { NormalizedEvent } from '../../parser/types.js';
-import { toEstimatedCost } from '../../cost/types.js';
 
 // -------------------------
 // Test helpers
@@ -12,7 +12,7 @@ import { toEstimatedCost } from '../../cost/types.js';
 let _eventIdx = 0;
 function makeEvent(overrides: Partial<NormalizedEvent> = {}): NormalizedEvent {
   return {
-    uuid: 'uuid-' + _eventIdx++,
+    uuid: `uuid-${_eventIdx++}`,
     type: 'assistant',
     timestamp: '2024-01-01T00:00:00Z',
     sessionId: 'session-1',
@@ -20,9 +20,7 @@ function makeEvent(overrides: Partial<NormalizedEvent> = {}): NormalizedEvent {
   };
 }
 
-function makeCostEvent(
-  overrides: Partial<NormalizedEvent> & { costUsd?: number } = {},
-): CostEvent {
+function makeCostEvent(overrides: Partial<NormalizedEvent> & { costUsd?: number } = {}): CostEvent {
   const { costUsd = 0.001, ...rest } = overrides;
   const base = makeEvent({
     tokens: {
@@ -38,7 +36,9 @@ function makeCostEvent(
   return { ...base, costUsd: toEstimatedCost(costUsd) };
 }
 
-function makeNonTokenEvent(overrides: Partial<NormalizedEvent> & { costUsd?: number } = {}): CostEvent {
+function makeNonTokenEvent(
+  overrides: Partial<NormalizedEvent> & { costUsd?: number } = {},
+): CostEvent {
   const { costUsd = 0, ...rest } = overrides;
   const { tokens: _, ...base } = makeEvent(rest);
   return { ...base, costUsd: toEstimatedCost(costUsd) };
@@ -54,7 +54,7 @@ describe('GET /api/v1/sessions — session list', () => {
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions');
     expect(res.status).toBe(200);
-    const body = await res.json() as Record<string, unknown>;
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body).toHaveProperty('sessions');
     expect(body).toHaveProperty('total');
     expect(body).toHaveProperty('page');
@@ -74,7 +74,7 @@ describe('GET /api/v1/sessions — session list', () => {
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions');
-    const body = await res.json() as { sessions: unknown[]; total: number };
+    const body = (await res.json()) as { sessions: unknown[]; total: number };
     expect(body.sessions).toHaveLength(2);
     expect(body.total).toBe(2);
   });
@@ -88,7 +88,7 @@ describe('GET /api/v1/sessions — session list', () => {
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions');
-    const body = await res.json() as { sessions: Array<Record<string, unknown>>; total: number };
+    const body = (await res.json()) as { sessions: Array<Record<string, unknown>>; total: number };
     expect(body.total).toBe(1);
     expect(body.sessions[0]?.sessionId).toBe('has-tokens');
   });
@@ -102,7 +102,7 @@ describe('GET /api/v1/sessions — session list', () => {
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions');
-    const body = await res.json() as { sessions: Array<Record<string, unknown>> };
+    const body = (await res.json()) as { sessions: Array<Record<string, unknown>> };
     expect(body.sessions[0]?.sessionId).toBe('new');
     expect(body.sessions[1]?.sessionId).toBe('mid');
     expect(body.sessions[2]?.sessionId).toBe('old');
@@ -113,19 +113,19 @@ describe('GET /api/v1/sessions — session list', () => {
     const costs: CostEvent[] = Array.from({ length: 55 }, (_, i) =>
       makeCostEvent({
         sessionId: `sess-${String(i).padStart(3, '0')}`,
-        timestamp: `2024-01-${String(i % 28 + 1).padStart(2, '0')}T${String(i % 24).padStart(2, '0')}:00:00Z`,
-      })
+        timestamp: `2024-01-${String((i % 28) + 1).padStart(2, '0')}T${String(i % 24).padStart(2, '0')}:00:00Z`,
+      }),
     );
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res1 = await app.request('/api/v1/sessions?page=1');
-    const body1 = await res1.json() as { sessions: unknown[]; total: number; page: number };
+    const body1 = (await res1.json()) as { sessions: unknown[]; total: number; page: number };
     expect(body1.sessions).toHaveLength(50);
     expect(body1.total).toBe(55);
     expect(body1.page).toBe(1);
 
     const res2 = await app.request('/api/v1/sessions?page=2');
-    const body2 = await res2.json() as { sessions: unknown[]; total: number; page: number };
+    const body2 = (await res2.json()) as { sessions: unknown[]; total: number; page: number };
     expect(body2.sessions).toHaveLength(5);
     expect(body2.total).toBe(55);
     expect(body2.page).toBe(2);
@@ -133,14 +133,26 @@ describe('GET /api/v1/sessions — session list', () => {
 
   it('?project= filters sessions by cwd', async () => {
     const costs: CostEvent[] = [
-      makeCostEvent({ sessionId: 'match-1', cwd: '/home/user/project-a', timestamp: '2024-01-01T00:00:00Z' }),
-      makeCostEvent({ sessionId: 'match-2', cwd: '/home/user/project-a', timestamp: '2024-01-02T00:00:00Z' }),
-      makeCostEvent({ sessionId: 'other', cwd: '/home/user/project-b', timestamp: '2024-01-03T00:00:00Z' }),
+      makeCostEvent({
+        sessionId: 'match-1',
+        cwd: '/home/user/project-a',
+        timestamp: '2024-01-01T00:00:00Z',
+      }),
+      makeCostEvent({
+        sessionId: 'match-2',
+        cwd: '/home/user/project-a',
+        timestamp: '2024-01-02T00:00:00Z',
+      }),
+      makeCostEvent({
+        sessionId: 'other',
+        cwd: '/home/user/project-b',
+        timestamp: '2024-01-03T00:00:00Z',
+      }),
     ];
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions?project=/home/user/project-a');
-    const body = await res.json() as { sessions: Array<Record<string, unknown>>; total: number };
+    const body = (await res.json()) as { sessions: Array<Record<string, unknown>>; total: number };
     expect(body.total).toBe(2);
     expect(body.sessions.every((s) => s.cwd === '/home/user/project-a')).toBe(true);
   });
@@ -153,8 +165,10 @@ describe('GET /api/v1/sessions — session list', () => {
     ];
     const state: AppState = { events: [], costs };
     const app = createApp(state);
-    const res = await app.request('/api/v1/sessions?from=2024-01-10T00:00:00Z&to=2024-01-20T00:00:00Z');
-    const body = await res.json() as { sessions: Array<Record<string, unknown>>; total: number };
+    const res = await app.request(
+      '/api/v1/sessions?from=2024-01-10T00:00:00Z&to=2024-01-20T00:00:00Z',
+    );
+    const body = (await res.json()) as { sessions: Array<Record<string, unknown>>; total: number };
     expect(body.total).toBe(1);
     expect(body.sessions[0]?.sessionId).toBe('in-window');
   });
@@ -164,7 +178,7 @@ describe('GET /api/v1/sessions — session list', () => {
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions?from=not-a-date');
     expect(res.status).toBe(400);
-    const body = await res.json() as { error: string };
+    const body = (await res.json()) as { error: string };
     expect(body).toHaveProperty('error');
   });
 
@@ -173,7 +187,7 @@ describe('GET /api/v1/sessions — session list', () => {
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions?to=bad');
     expect(res.status).toBe(400);
-    const body = await res.json() as { error: string };
+    const body = (await res.json()) as { error: string };
     expect(body).toHaveProperty('error');
   });
 
@@ -181,12 +195,16 @@ describe('GET /api/v1/sessions — session list', () => {
     const costs: CostEvent[] = [
       makeCostEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T00:00:00Z', durationMs: 1000 }),
       // non-token event with larger durationMs
-      makeNonTokenEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T00:01:00Z', durationMs: 5000 }),
+      makeNonTokenEvent({
+        sessionId: 'sess-1',
+        timestamp: '2024-01-01T00:01:00Z',
+        durationMs: 5000,
+      }),
     ];
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions');
-    const body = await res.json() as { sessions: Array<Record<string, unknown>> };
+    const body = (await res.json()) as { sessions: Array<Record<string, unknown>> };
     expect(body.sessions[0]?.durationMs).toBe(5000);
   });
 
@@ -197,19 +215,27 @@ describe('GET /api/v1/sessions — session list', () => {
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions');
-    const body = await res.json() as { sessions: Array<Record<string, unknown>> };
+    const body = (await res.json()) as { sessions: Array<Record<string, unknown>> };
     expect(body.sessions[0]?.durationMs).toBeNull();
   });
 
   it('model is "Mixed" when session uses more than one distinct model', async () => {
     const costs: CostEvent[] = [
-      makeCostEvent({ sessionId: 'sess-1', model: 'claude-3-opus', timestamp: '2024-01-01T00:00:00Z' }),
-      makeCostEvent({ sessionId: 'sess-1', model: 'claude-3-sonnet', timestamp: '2024-01-01T01:00:00Z' }),
+      makeCostEvent({
+        sessionId: 'sess-1',
+        model: 'claude-3-opus',
+        timestamp: '2024-01-01T00:00:00Z',
+      }),
+      makeCostEvent({
+        sessionId: 'sess-1',
+        model: 'claude-3-sonnet',
+        timestamp: '2024-01-01T01:00:00Z',
+      }),
     ];
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions');
-    const body = await res.json() as { sessions: Array<Record<string, unknown>> };
+    const body = (await res.json()) as { sessions: Array<Record<string, unknown>> };
     expect(body.sessions[0]?.model).toBe('Mixed');
     const models = body.sessions[0]?.models as string[];
     expect(models).toContain('claude-3-opus');
@@ -218,13 +244,21 @@ describe('GET /api/v1/sessions — session list', () => {
 
   it('model is the single model name when all events use the same model', async () => {
     const costs: CostEvent[] = [
-      makeCostEvent({ sessionId: 'sess-1', model: 'claude-3-opus', timestamp: '2024-01-01T00:00:00Z' }),
-      makeCostEvent({ sessionId: 'sess-1', model: 'claude-3-opus', timestamp: '2024-01-01T01:00:00Z' }),
+      makeCostEvent({
+        sessionId: 'sess-1',
+        model: 'claude-3-opus',
+        timestamp: '2024-01-01T00:00:00Z',
+      }),
+      makeCostEvent({
+        sessionId: 'sess-1',
+        model: 'claude-3-opus',
+        timestamp: '2024-01-01T01:00:00Z',
+      }),
     ];
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions');
-    const body = await res.json() as { sessions: Array<Record<string, unknown>> };
+    const body = (await res.json()) as { sessions: Array<Record<string, unknown>> };
     expect(body.sessions[0]?.model).toBe('claude-3-opus');
   });
 
@@ -237,18 +271,16 @@ describe('GET /api/v1/sessions — session list', () => {
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions');
-    const body = await res.json() as { sessions: Array<Record<string, unknown>> };
+    const body = (await res.json()) as { sessions: Array<Record<string, unknown>> };
     expect(body.sessions[0]?.timestamp).toBe('2024-01-01T02:00:00Z');
   });
 
   it('no message/content/prose text fields appear in response', async () => {
-    const costs: CostEvent[] = [
-      makeCostEvent({ sessionId: 'sess-1' }),
-    ];
+    const costs: CostEvent[] = [makeCostEvent({ sessionId: 'sess-1' })];
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions');
-    const body = await res.json() as { sessions: Array<Record<string, unknown>> };
+    const body = (await res.json()) as { sessions: Array<Record<string, unknown>> };
     const session = body.sessions[0] ?? {};
     expect(session).not.toHaveProperty('message');
     expect(session).not.toHaveProperty('content');
@@ -265,20 +297,30 @@ describe('GET /api/v1/sessions/:id — session detail', () => {
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions/nonexistent-id');
     expect(res.status).toBe(404);
-    const body = await res.json() as { error: string };
+    const body = (await res.json()) as { error: string };
     expect(body).toEqual({ error: 'Session not found' });
   });
 
   it('returns { summary, turns } for a valid sessionId', async () => {
     const costs: CostEvent[] = [
-      makeCostEvent({ sessionId: 'sess-abc', model: 'claude-opus', timestamp: '2024-01-01T00:00:00Z', costUsd: 0.01 }),
-      makeCostEvent({ sessionId: 'sess-abc', model: 'claude-opus', timestamp: '2024-01-01T01:00:00Z', costUsd: 0.02 }),
+      makeCostEvent({
+        sessionId: 'sess-abc',
+        model: 'claude-opus',
+        timestamp: '2024-01-01T00:00:00Z',
+        costUsd: 0.01,
+      }),
+      makeCostEvent({
+        sessionId: 'sess-abc',
+        model: 'claude-opus',
+        timestamp: '2024-01-01T01:00:00Z',
+        costUsd: 0.02,
+      }),
     ];
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions/sess-abc');
     expect(res.status).toBe(200);
-    const body = await res.json() as Record<string, unknown>;
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body).toHaveProperty('summary');
     expect(body).toHaveProperty('turns');
   });
@@ -292,7 +334,7 @@ describe('GET /api/v1/sessions/:id — session detail', () => {
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions/sess-1');
-    const body = await res.json() as { turns: Array<Record<string, unknown>> };
+    const body = (await res.json()) as { turns: Array<Record<string, unknown>> };
     expect(body.turns[0]?.timestamp).toBe('2024-01-01T02:00:00Z');
     expect(body.turns[1]?.timestamp).toBe('2024-01-01T04:00:00Z');
     expect(body.turns[2]?.timestamp).toBe('2024-01-01T06:00:00Z');
@@ -307,7 +349,7 @@ describe('GET /api/v1/sessions/:id — session detail', () => {
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions/sess-1');
-    const body = await res.json() as { turns: Array<Record<string, unknown>> };
+    const body = (await res.json()) as { turns: Array<Record<string, unknown>> };
     expect(body.turns[0]?.turn).toBe(1);
     expect(body.turns[1]?.turn).toBe(2);
     expect(body.turns[2]?.turn).toBe(3);
@@ -322,7 +364,7 @@ describe('GET /api/v1/sessions/:id — session detail', () => {
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions/sess-1');
-    const body = await res.json() as { turns: Array<Record<string, unknown>> };
+    const body = (await res.json()) as { turns: Array<Record<string, unknown>> };
     expect(body.turns[0]?.cumulativeCost).toBeCloseTo(0.01, 6);
     expect(body.turns[1]?.cumulativeCost).toBeCloseTo(0.03, 6);
     expect(body.turns[2]?.cumulativeCost).toBeCloseTo(0.06, 6);
@@ -343,7 +385,7 @@ describe('GET /api/v1/sessions/:id — session detail', () => {
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions/sess-detail');
-    const body = await res.json() as { summary: Record<string, unknown> };
+    const body = (await res.json()) as { summary: Record<string, unknown> };
     const s = body.summary;
     expect(s.sessionId).toBe('sess-detail');
     expect(typeof s.displayName).toBe('string');
@@ -360,12 +402,16 @@ describe('GET /api/v1/sessions/:id — session detail', () => {
   it('summary.durationMs is sourced from ALL events including non-token events', async () => {
     const costs: CostEvent[] = [
       makeCostEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T00:00:00Z', durationMs: 100 }),
-      makeNonTokenEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T00:01:00Z', durationMs: 9999 }),
+      makeNonTokenEvent({
+        sessionId: 'sess-1',
+        timestamp: '2024-01-01T00:01:00Z',
+        durationMs: 9999,
+      }),
     ];
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions/sess-1');
-    const body = await res.json() as { summary: Record<string, unknown> };
+    const body = (await res.json()) as { summary: Record<string, unknown> };
     expect(body.summary.durationMs).toBe(9999);
   });
 
@@ -376,18 +422,19 @@ describe('GET /api/v1/sessions/:id — session detail', () => {
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions/sess-1');
-    const body = await res.json() as { summary: Record<string, unknown> };
+    const body = (await res.json()) as { summary: Record<string, unknown> };
     expect(body.summary.gitBranch).toBeNull();
   });
 
   it('no message/content/prose fields in any response (summary or turns)', async () => {
-    const costs: CostEvent[] = [
-      makeCostEvent({ sessionId: 'sess-1' }),
-    ];
+    const costs: CostEvent[] = [makeCostEvent({ sessionId: 'sess-1' })];
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions/sess-1');
-    const body = await res.json() as { summary: Record<string, unknown>; turns: Array<Record<string, unknown>> };
+    const body = (await res.json()) as {
+      summary: Record<string, unknown>;
+      turns: Array<Record<string, unknown>>;
+    };
     expect(body.summary).not.toHaveProperty('message');
     expect(body.summary).not.toHaveProperty('content');
     for (const turn of body.turns) {

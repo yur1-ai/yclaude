@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useSessions, SessionRow } from '../hooks/useSessions';
-import { useProjects } from '../hooks/useProjects';
-import { useBranches } from '../hooks/useBranches';
-import { SubagentBadge } from '../components/SubagentBadge';
-import { SortableTable, Column } from '../components/SortableTable';
 import { DateRangePicker } from '../components/DateRangePicker';
-import { pickQuip, QUIPS } from '../lib/quips';
+import { type Column, SortableTable } from '../components/SortableTable';
+import { SubagentBadge } from '../components/SubagentBadge';
+import { useBranches } from '../hooks/useBranches';
+import { useProjects } from '../hooks/useProjects';
+import { type SessionRow, useSessions } from '../hooks/useSessions';
+import { QUIPS, pickQuip } from '../lib/quips';
 
 const columns: Column<SessionRow>[] = [
   {
@@ -82,9 +82,10 @@ export default function Sessions() {
   const { data: projectsData } = useProjects();
   const { data: branchesData } = useBranches();
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: setPage is stable (Zustand setter); intentionally omitted from deps array
   useEffect(() => {
     setPage(1);
-  }, [projectFilter, branchFilter, setPage]);
+  }, [projectFilter, branchFilter]);
 
   const totalPages = Math.ceil((data?.total ?? 0) / (data?.pageSize ?? 50));
 
@@ -129,7 +130,9 @@ export default function Sessions() {
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-[#30363d] dark:bg-[#161b22]">
-        {isLoading && <p className="text-slate-500 dark:text-[#8b949e] text-sm">Loading sessions…</p>}
+        {isLoading && (
+          <p className="text-slate-500 dark:text-[#8b949e] text-sm">Loading sessions…</p>
+        )}
         {isError && <p className="text-red-500 text-sm">Failed to load sessions.</p>}
         {!isLoading && !isError && (
           <>
@@ -144,11 +147,12 @@ export default function Sessions() {
             <div className="flex items-center justify-between mt-4 text-sm text-slate-600 dark:text-[#8b949e]">
               <span>
                 {data
-                  ? `Showing ${((page - 1) * (data.pageSize ?? 50)) + 1}–${Math.min(page * (data.pageSize ?? 50), data.total)} of ${data.total}`
+                  ? `Showing ${(page - 1) * (data.pageSize ?? 50) + 1}–${Math.min(page * (data.pageSize ?? 50), data.total)} of ${data.total}`
                   : ''}
               </span>
               <div className="flex gap-2">
                 <button
+                  type="button"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
                   className="px-3 py-1 rounded border border-slate-200 dark:border-[#30363d] disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-[#21262d]"
@@ -156,6 +160,7 @@ export default function Sessions() {
                   Prev
                 </button>
                 <button
+                  type="button"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
                   className="px-3 py-1 rounded border border-slate-200 dark:border-[#30363d] disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-[#21262d]"

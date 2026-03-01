@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-import { useModels } from '../hooks/useModels';
-import type { ModelRow } from '../hooks/useModels';
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { DateRangePicker } from '../components/DateRangePicker';
 import { SortableTable } from '../components/SortableTable';
 import type { Column } from '../components/SortableTable';
-import { DateRangePicker } from '../components/DateRangePicker';
-import { pickQuip, QUIPS } from '../lib/quips';
+import { useModels } from '../hooks/useModels';
+import type { ModelRow } from '../hooks/useModels';
+import { QUIPS, pickQuip } from '../lib/quips';
 
 const DONUT_COLORS = [
   'var(--color-donut-1)',
@@ -58,7 +58,9 @@ export default function Models() {
     {
       key: 'model',
       label: 'Model',
-      render: (row) => <span className="font-medium text-slate-900 dark:text-[#e6edf3]">{row.model}</span>,
+      render: (row) => (
+        <span className="font-medium text-slate-900 dark:text-[#e6edf3]">{row.model}</span>
+      ),
     },
     {
       key: 'costUsd',
@@ -138,9 +140,7 @@ export default function Models() {
                   <Cell
                     key={entry.model}
                     fill={DONUT_COLORS[index] ?? DONUT_COLORS[DONUT_COLORS.length - 1]}
-                    opacity={
-                      selectedModel === null || entry.model === selectedModel ? 1 : 0.4
-                    }
+                    opacity={selectedModel === null || entry.model === selectedModel ? 1 : 0.4}
                   />
                 ))}
               </Pie>

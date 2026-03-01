@@ -9,7 +9,7 @@ import type { AppState } from '../server.js';
 function parseDate(str: string | undefined): Date | null | 'invalid' {
   if (!str) return null;
   const d = new Date(str);
-  return isNaN(d.getTime()) ? 'invalid' : d;
+  return Number.isNaN(d.getTime()) ? 'invalid' : d;
 }
 
 /**
@@ -34,7 +34,10 @@ function assignProjectNames(cwds: (string | null)[]): Map<string | null, string>
   }
   const result = new Map<string | null, string>();
   for (const cwd of cwds) {
-    if (!cwd) { result.set(null, 'Unknown project'); continue; }
+    if (!cwd) {
+      result.set(null, 'Unknown project');
+      continue;
+    }
     const parts = cwd.split('/').filter(Boolean);
     const last = parts.at(-1) ?? cwd;
     if ((freq.get(last) ?? 0) > 1) {
@@ -110,7 +113,9 @@ export function apiRoutes(state: AppState): Hono {
       { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
     );
 
-    const subagentCostUsd = costs.filter((e) => e.isSidechain === true).reduce((s, e) => s + e.costUsd, 0);
+    const subagentCostUsd = costs
+      .filter((e) => e.isSidechain === true)
+      .reduce((s, e) => s + e.costUsd, 0);
     const mainCostUsd = totalCost - subagentCostUsd;
 
     return c.json({
@@ -215,16 +220,20 @@ export function apiRoutes(state: AppState): Hono {
     if (from) costs = costs.filter((e) => new Date(e.timestamp) >= from);
     if (to) costs = costs.filter((e) => new Date(e.timestamp) <= to);
 
-    const groups = new Map<string, {
-      costUsd: number;
-      eventCount: number;
-      tokens: { input: number; output: number; cacheCreation: number; cacheRead: number };
-    }>();
+    const groups = new Map<
+      string,
+      {
+        costUsd: number;
+        eventCount: number;
+        tokens: { input: number; output: number; cacheCreation: number; cacheRead: number };
+      }
+    >();
 
     for (const e of costs) {
       const key = e.model ?? 'Unknown';
       const existing = groups.get(key) ?? {
-        costUsd: 0, eventCount: 0,
+        costUsd: 0,
+        eventCount: 0,
         tokens: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
       };
       existing.costUsd += e.costUsd;
@@ -267,16 +276,20 @@ export function apiRoutes(state: AppState): Hono {
     if (from) costs = costs.filter((e) => new Date(e.timestamp) >= from);
     if (to) costs = costs.filter((e) => new Date(e.timestamp) <= to);
 
-    const groups = new Map<string | null, {
-      costUsd: number;
-      eventCount: number;
-      tokens: { input: number; output: number; cacheCreation: number; cacheRead: number };
-    }>();
+    const groups = new Map<
+      string | null,
+      {
+        costUsd: number;
+        eventCount: number;
+        tokens: { input: number; output: number; cacheCreation: number; cacheRead: number };
+      }
+    >();
 
     for (const e of costs) {
       const key = e.cwd ?? null;
       const existing = groups.get(key) ?? {
-        costUsd: 0, eventCount: 0,
+        costUsd: 0,
+        eventCount: 0,
         tokens: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
       };
       existing.costUsd += e.costUsd;
@@ -323,7 +336,7 @@ export function apiRoutes(state: AppState): Hono {
   // level 0 = no sessions, 1-4 = quartile of session count relative to max day.
   // Counts DISTINCT sessionIds per local date (not event count).
   app.get('/activity', (c) => {
-    const year = parseInt(c.req.query('year') ?? String(new Date().getFullYear()), 10);
+    const year = Number.parseInt(c.req.query('year') ?? String(new Date().getFullYear()), 10);
     const tz = c.req.query('tz') ?? 'UTC';
 
     // Group by local date, counting distinct sessionIds
@@ -387,8 +400,8 @@ export function apiRoutes(state: AppState): Hono {
     const toStr = c.req.query('to');
     const projectFilter = c.req.query('project') ?? null;
     const branchFilter = c.req.query('branch') ?? null;
-    const pageParam = parseInt(c.req.query('page') ?? '1', 10);
-    const page = Math.max(1, isNaN(pageParam) ? 1 : pageParam);
+    const pageParam = Number.parseInt(c.req.query('page') ?? '1', 10);
+    const page = Math.max(1, Number.isNaN(pageParam) ? 1 : pageParam);
 
     const from = parseDate(fromStr);
     const to = parseDate(toStr);
@@ -436,8 +449,8 @@ export function apiRoutes(state: AppState): Hono {
       // Skip sessions with zero token-bearing events
       if (tokenEvents.length === 0) continue;
 
-      const timestamp = sorted[0]!.timestamp;
-      const cwd = sorted[0]!.cwd ?? null;
+      const timestamp = sorted[0]?.timestamp;
+      const cwd = sorted[0]?.cwd ?? null;
 
       // durationMs: max across ALL events (not just token-bearing), null if none have it
       let durationMs: number | null = null;
@@ -459,19 +472,34 @@ export function apiRoutes(state: AppState): Hono {
       // tokens: sum across token-bearing events only
       const tokens = tokenEvents.reduce(
         (acc, e) => ({
-          input: acc.input + (e.tokens!.input),
-          output: acc.output + (e.tokens!.output),
-          cacheCreation: acc.cacheCreation + (e.tokens!.cacheCreation),
-          cacheRead: acc.cacheRead + (e.tokens!.cacheRead),
+          input: acc.input + e.tokens?.input,
+          output: acc.output + e.tokens?.output,
+          cacheCreation: acc.cacheCreation + e.tokens?.cacheCreation,
+          cacheRead: acc.cacheRead + e.tokens?.cacheRead,
         }),
         { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
       );
 
       // models: distinct model names from token-bearing events
       const models = [...new Set(tokenEvents.map((e) => e.model ?? 'Unknown'))];
+      // biome-ignore lint/style/noNonNullAssertion: models[0] is defined when models.length === 1
       const model = models.length === 1 ? models[0]! : 'Mixed';
 
-      allSessions.push({ sessionId, displayName: '', cwd, model, models, costUsd, tokens, timestamp, durationMs, gitBranch, hasSubagents, mainCostUsd, subagentCostUsd });
+      allSessions.push({
+        sessionId,
+        displayName: '',
+        cwd,
+        model,
+        models,
+        costUsd,
+        tokens,
+        timestamp,
+        durationMs,
+        gitBranch,
+        hasSubagents,
+        mainCostUsd,
+        subagentCostUsd,
+      });
     }
 
     // Assign display names for all unique cwds
@@ -540,10 +568,10 @@ export function apiRoutes(state: AppState): Hono {
         turn: i + 1,
         model: e.model ?? 'Unknown',
         tokens: {
-          input: e.tokens!.input,
-          output: e.tokens!.output,
-          cacheCreation: e.tokens!.cacheCreation,
-          cacheRead: e.tokens!.cacheRead,
+          input: e.tokens?.input,
+          output: e.tokens?.output,
+          cacheCreation: e.tokens?.cacheCreation,
+          cacheRead: e.tokens?.cacheRead,
         },
         costUsd: e.costUsd,
         cumulativeCost: cumulative,
@@ -552,8 +580,8 @@ export function apiRoutes(state: AppState): Hono {
     });
 
     // Build summary from all events
-    const cwd = sorted[0]!.cwd ?? null;
-    const timestamp = sorted[0]!.timestamp;
+    const cwd = sorted[0]?.cwd ?? null;
+    const timestamp = sorted[0]?.timestamp;
 
     let durationMs: number | null = null;
     for (const e of sorted) {
@@ -564,19 +592,22 @@ export function apiRoutes(state: AppState): Hono {
 
     const gitBranch = sorted.find((e) => e.gitBranch)?.gitBranch ?? null;
     const mainCostUsd = sorted.filter((e) => !e.isSidechain).reduce((s, e) => s + e.costUsd, 0);
-    const subagentCostUsd = sorted.filter((e) => e.isSidechain === true).reduce((s, e) => s + e.costUsd, 0);
+    const subagentCostUsd = sorted
+      .filter((e) => e.isSidechain === true)
+      .reduce((s, e) => s + e.costUsd, 0);
     const hasSubagents = sorted.some((e) => e.isSidechain === true);
     const totalCost = mainCostUsd + subagentCostUsd;
 
     const models = [...new Set(tokenEvents.map((e) => e.model ?? 'Unknown'))];
+    // biome-ignore lint/style/noNonNullAssertion: models[0] is defined when models.length === 1
     const model = models.length === 1 ? models[0]! : 'Mixed';
 
     const totalTokens = tokenEvents.reduce(
       (acc, e) => ({
-        input: acc.input + e.tokens!.input,
-        output: acc.output + e.tokens!.output,
-        cacheCreation: acc.cacheCreation + e.tokens!.cacheCreation,
-        cacheRead: acc.cacheRead + e.tokens!.cacheRead,
+        input: acc.input + e.tokens?.input,
+        output: acc.output + e.tokens?.output,
+        cacheCreation: acc.cacheCreation + e.tokens?.cacheCreation,
+        cacheRead: acc.cacheRead + e.tokens?.cacheRead,
       }),
       { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
     );

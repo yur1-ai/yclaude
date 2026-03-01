@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { applyPrivacyFilter } from '../privacy.js';
+import { describe, expect, it } from 'vitest';
 import type { NormalizedEvent } from '../../parser/types.js';
+import { applyPrivacyFilter } from '../privacy.js';
 
 // Minimal safe NormalizedEvent — no content fields
 const safeEvent: NormalizedEvent = {
@@ -38,6 +38,7 @@ describe('applyPrivacyFilter', () => {
 
     const result = applyPrivacyFilter([eventWithMessage]);
     expect(result).toHaveLength(1);
+    // biome-ignore lint/style/noNonNullAssertion: test-only; length asserted above
     const filtered = result[0]!;
     expect('message' in filtered).toBe(false);
     // All safe fields still present
@@ -57,6 +58,7 @@ describe('applyPrivacyFilter', () => {
 
     const result = applyPrivacyFilter([eventWithContent]);
     expect(result).toHaveLength(1);
+    // biome-ignore lint/style/noNonNullAssertion: test-only; length asserted above
     const filtered = result[0]!;
     expect('content' in filtered).toBe(false);
     expect(filtered.uuid).toBe(safeEvent.uuid);
@@ -71,6 +73,7 @@ describe('applyPrivacyFilter', () => {
 
     const result = applyPrivacyFilter([eventWithText]);
     expect(result).toHaveLength(1);
+    // biome-ignore lint/style/noNonNullAssertion: test-only; length asserted above
     const filtered = result[0]!;
     expect('text' in filtered).toBe(false);
     expect(filtered.uuid).toBe(safeEvent.uuid);
@@ -86,6 +89,7 @@ describe('applyPrivacyFilter', () => {
 
     const result = applyPrivacyFilter([eventWithBoth]);
     expect(result).toHaveLength(1);
+    // biome-ignore lint/style/noNonNullAssertion: test-only; length asserted above
     const filtered = result[0]!;
     expect('message' in filtered).toBe(false);
     expect('content' in filtered).toBe(false);
@@ -95,6 +99,7 @@ describe('applyPrivacyFilter', () => {
 
   it('does NOT strip the tokens object (contains counts, not conversation text)', () => {
     const result = applyPrivacyFilter([safeEvent]);
+    // biome-ignore lint/style/noNonNullAssertion: test-only; input has exactly 1 event
     const filtered = result[0]!;
     expect(filtered.tokens).toEqual(safeEvent.tokens);
     expect(filtered.tokens?.input).toBe(100);

@@ -1,17 +1,17 @@
-import { useParams, useNavigate } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import {
-  LineChart,
+  CartesianGrid,
   Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  Tooltip,
-  CartesianGrid,
-  ResponsiveContainer,
 } from 'recharts';
-import { useSessionDetail, TurnRow } from '../hooks/useSessionDetail';
 import { SortableTable } from '../components/SortableTable';
 import type { Column } from '../components/SortableTable';
-import { pickQuip, QUIPS } from '../lib/quips';
+import { type TurnRow, useSessionDetail } from '../hooks/useSessionDetail';
+import { QUIPS, pickQuip } from '../lib/quips';
 
 const columns: Column<TurnRow>[] = [
   { key: 'turn', label: '#', sortable: true },
@@ -70,6 +70,7 @@ export default function SessionDetail() {
             : 'Failed to load session details.'}
         </p>
         <button
+          type="button"
           onClick={() => navigate(-1)}
           className="mt-4 text-sm text-blue-600 hover:underline"
         >
@@ -93,18 +94,12 @@ export default function SessionDetail() {
       : [{ label: 'Total Cost', value: `$${summary.totalCost.toFixed(2)} est.` }]),
     {
       label: 'Model',
-      value:
-        summary.model === 'Mixed'
-          ? `Mixed (${summary.models.join(', ')})`
-          : summary.model,
+      value: summary.model === 'Mixed' ? `Mixed (${summary.models.join(', ')})` : summary.model,
     },
     { label: 'Project', value: summary.displayName },
     {
       label: 'Duration',
-      value:
-        summary.durationMs != null
-          ? `${(summary.durationMs / 1000).toFixed(1)}s`
-          : '—',
+      value: summary.durationMs != null ? `${(summary.durationMs / 1000).toFixed(1)}s` : '—',
     },
     { label: 'Started', value: new Date(summary.timestamp).toLocaleString() },
     { label: 'Git Branch', value: summary.gitBranch ?? '—' },
@@ -122,6 +117,7 @@ export default function SessionDetail() {
       {/* Page header */}
       <div className="flex items-center gap-3 mb-6">
         <button
+          type="button"
           onClick={() => navigate(-1)}
           className="text-sm text-slate-500 hover:text-slate-700 dark:text-[#8b949e] dark:hover:text-[#e6edf3]"
         >
@@ -138,8 +134,12 @@ export default function SessionDetail() {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {stats.map(({ label, value }) => (
             <div key={label}>
-              <p className="text-xs text-slate-500 dark:text-[#8b949e] uppercase tracking-wide">{label}</p>
-              <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-[#e6edf3]">{value}</p>
+              <p className="text-xs text-slate-500 dark:text-[#8b949e] uppercase tracking-wide">
+                {label}
+              </p>
+              <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-[#e6edf3]">
+                {value}
+              </p>
             </div>
           ))}
         </div>
@@ -147,14 +147,12 @@ export default function SessionDetail() {
 
       {/* Cumulative cost chart card */}
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-[#30363d] dark:bg-[#161b22]">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-[#e6edf3] mb-4">Cumulative Cost</h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-[#e6edf3] mb-4">
+          Cumulative Cost
+        </h2>
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={turns} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="var(--color-grid)"
-              vertical={false}
-            />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-grid)" vertical={false} />
             <XAxis
               dataKey="turn"
               tickLine={false}
@@ -189,7 +187,9 @@ export default function SessionDetail() {
 
       {/* Per-turn table card */}
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-[#30363d] dark:bg-[#161b22]">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-[#e6edf3] mb-4">Per-Turn Breakdown</h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-[#e6edf3] mb-4">
+          Per-Turn Breakdown
+        </h2>
         <SortableTable<TurnRow>
           columns={columns}
           rows={turns}

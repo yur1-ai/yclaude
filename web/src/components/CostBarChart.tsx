@@ -1,12 +1,4 @@
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  ResponsiveContainer,
-} from 'recharts';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { Bucket } from '../hooks/useCostOverTime';
 
 interface CostBarChartProps {
@@ -14,8 +6,8 @@ interface CostBarChartProps {
   bucket: Bucket;
   onBucketChange: (b: Bucket) => void;
   isLoading: boolean;
-  from?: Date;   // for Hourly disabled guard
-  to?: Date;     // for Hourly disabled guard
+  from?: Date; // for Hourly disabled guard
+  to?: Date; // for Hourly disabled guard
 }
 
 // XAxis label formatter based on bucket
@@ -48,12 +40,19 @@ const BUCKETS: BucketOption[] = [
     label: 'Hourly',
     disabledWhen: (from, to) => {
       if (!from || !to) return true; // no range = disabled
-      return (to.getTime() - from.getTime()) > 48 * 60 * 60 * 1000;
+      return to.getTime() - from.getTime() > 48 * 60 * 60 * 1000;
     },
   },
 ];
 
-export function CostBarChart({ data, bucket, onBucketChange, isLoading, from, to }: CostBarChartProps) {
+export function CostBarChart({
+  data,
+  bucket,
+  onBucketChange,
+  isLoading,
+  from,
+  to,
+}: CostBarChartProps) {
   if (isLoading) {
     return (
       <div className="h-60 flex items-center justify-center text-slate-400 dark:text-[#8b949e] text-sm">
@@ -71,6 +70,7 @@ export function CostBarChart({ data, bucket, onBucketChange, isLoading, from, to
           return (
             <div key={key} className="relative group">
               <button
+                type="button"
                 onClick={() => !isDisabled && onBucketChange(key)}
                 disabled={isDisabled}
                 className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
@@ -96,11 +96,7 @@ export function CostBarChart({ data, bucket, onBucketChange, isLoading, from, to
       {/* Bar chart */}
       <ResponsiveContainer width="100%" height={240}>
         <BarChart data={data} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
-          <CartesianGrid
-            strokeDasharray="3 3"
-            stroke="var(--color-grid)"
-            vertical={false}
-          />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-grid)" vertical={false} />
           <XAxis
             dataKey="date"
             interval="preserveStartEnd"
@@ -124,11 +120,7 @@ export function CostBarChart({ data, bucket, onBucketChange, isLoading, from, to
             ]}
             cursor={{ fill: 'var(--color-grid)' }}
           />
-          <Bar
-            dataKey="cost"
-            fill="var(--color-bar)"
-            radius={[3, 3, 0, 0]}
-          />
+          <Bar dataKey="cost" fill="var(--color-bar)" radius={[3, 3, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

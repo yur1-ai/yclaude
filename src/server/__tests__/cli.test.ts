@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
 import { Command } from 'commander';
+import { describe, expect, it } from 'vitest';
 
 /**
  * Parse CLI args using a standalone Commander instance that mirrors cli.ts options.

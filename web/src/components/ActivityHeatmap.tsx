@@ -1,9 +1,9 @@
-import { useState, cloneElement, useRef } from 'react';
+import { cloneElement, useRef, useState } from 'react';
 import { ActivityCalendar } from 'react-activity-calendar';
 import type { Activity } from 'react-activity-calendar';
 import { useActivityData } from '../hooks/useActivityData';
+import { QUIPS, pickQuip } from '../lib/quips';
 import { useThemeStore } from '../store/useThemeStore';
-import { pickQuip, QUIPS } from '../lib/quips';
 
 // Green color scale: level 0 = visible light gray, levels 1-4 = progressively darker green
 // MUST use hex values — CSS variables (var(--color-*)) are NOT supported in react-activity-calendar theme prop
@@ -25,9 +25,13 @@ const HEATMAP_THEME = {
 };
 
 function computeP90(data: Activity[]): number {
-  const counts = data.filter(d => d.count > 0).map(d => d.count).sort((a, b) => a - b);
-  if (counts.length === 0) return Infinity;
+  const counts = data
+    .filter((d) => d.count > 0)
+    .map((d) => d.count)
+    .sort((a, b) => a - b);
+  if (counts.length === 0) return Number.POSITIVE_INFINITY;
   const idx = Math.ceil(0.9 * counts.length) - 1;
+  // biome-ignore lint/style/noNonNullAssertion: idx is bounded to [0, counts.length-1] by Math.max(0,…)
   return counts[Math.max(0, idx)]!;
 }
 
@@ -83,9 +87,7 @@ export function ActivityHeatmap() {
                 maxLevel={4}
                 renderBlock={(block, activity: Activity) => {
                   if (activity.count === 0) return block;
-                  const isPeak =
-                    activity.count >= p90 &&
-                    activity.count >= 2;
+                  const isPeak = activity.count >= p90 && activity.count >= 2;
                   const lines = [
                     `${activity.date} \u2022 ${activity.count} session${activity.count === 1 ? '' : 's'}`,
                     ...(isPeak ? [pickQuip(QUIPS.heatmap_peak)] : []),

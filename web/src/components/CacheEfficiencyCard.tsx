@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useSummary } from '../hooks/useSummary';
 import { usePriorSummary } from '../hooks/usePriorSummary';
+import { useSummary } from '../hooks/useSummary';
 import { useDateRangeStore } from '../store/useDateRangeStore';
 import { TrendIndicator } from './TrendIndicator';
 
@@ -12,18 +12,13 @@ export function CacheEfficiencyCard() {
   const { data: current } = useSummary();
   const { data: prior } = usePriorSummary(from, to);
 
-  function computeScore(
-    data: ReturnType<typeof useSummary>['data'],
-    m: CacheMode,
-  ): number | null {
+  function computeScore(data: ReturnType<typeof useSummary>['data'], m: CacheMode): number | null {
     if (!data) return null;
     const { input, cacheCreation, cacheRead } = data.totalTokens;
     if (m === 'inputCoverage') {
       return input + cacheRead > 0 ? (cacheRead / (input + cacheRead)) * 100 : null;
     }
-    return cacheCreation + cacheRead > 0
-      ? (cacheRead / (cacheCreation + cacheRead)) * 100
-      : null;
+    return cacheCreation + cacheRead > 0 ? (cacheRead / (cacheCreation + cacheRead)) * 100 : null;
   }
 
   const currentScore = computeScore(current, mode);
@@ -52,6 +47,7 @@ export function CacheEfficiencyCard() {
           {MODES.map(({ key, label }) => (
             <button
               key={key}
+              type="button"
               onClick={() => setMode(key)}
               className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
                 mode === key
@@ -64,7 +60,9 @@ export function CacheEfficiencyCard() {
           ))}
         </div>
       </div>
-      <p className="text-3xl font-bold tracking-tight text-slate-900 dark:text-[#e6edf3]">{valueStr}</p>
+      <p className="text-3xl font-bold tracking-tight text-slate-900 dark:text-[#e6edf3]">
+        {valueStr}
+      </p>
       <div className="mt-2">
         <TrendIndicator percent={trendPercent} />
       </div>

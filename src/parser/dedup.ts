@@ -1,5 +1,5 @@
-import type { NormalizedEvent } from './types.js';
 import { debugLog } from '../shared/debug.js';
+import type { NormalizedEvent } from './types.js';
 
 // Streaming deduplication accumulator.
 // First-seen event wins; subsequent events with the same uuid are silently dropped.

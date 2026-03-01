@@ -1,11 +1,11 @@
-import { createHashRouter, RouterProvider } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { RouterProvider, createHashRouter } from 'react-router';
 import Layout from './components/Layout';
-import Overview from './pages/Overview';
 import Models from './pages/Models';
+import Overview from './pages/Overview';
 import Projects from './pages/Projects';
-import Sessions from './pages/Sessions';
 import SessionDetail from './pages/SessionDetail';
+import Sessions from './pages/Sessions';
 
 const queryClient = new QueryClient({
   defaultOptions: {

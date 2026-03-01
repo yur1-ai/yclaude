@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import type { NormalizedEvent } from '../../parser/types.js';
 import { computeCosts } from '../engine.js';
 import { toEstimatedCost } from '../types.js';
-import type { NormalizedEvent } from '../../parser/types.js';
 
 // Baseline event for tests — no tokens, no model
 const baseEvent: NormalizedEvent = {
@@ -20,33 +20,51 @@ describe('computeCosts()', () => {
     const events: NormalizedEvent[] = [{ ...baseEvent }];
     const result = computeCosts(events);
     expect(result).toHaveLength(1);
-    expect(result[0]!.costUsd).toBe(toEstimatedCost(0));
-    expect(result[0]!.unknownModel).toBeUndefined();
+    expect(result[0]?.costUsd).toBe(toEstimatedCost(0));
+    expect(result[0]?.unknownModel).toBeUndefined();
   });
 
   it('event with no model returns costUsd=0, no unknownModel', () => {
-    const events: NormalizedEvent[] = [{
-      ...baseEvent,
-      tokens: { input: 100, output: 50, cacheCreation: 0, cacheRead: 0, cacheCreation5m: 0, cacheCreation1h: 0 },
-      // model intentionally absent
-    }];
+    const events: NormalizedEvent[] = [
+      {
+        ...baseEvent,
+        tokens: {
+          input: 100,
+          output: 50,
+          cacheCreation: 0,
+          cacheRead: 0,
+          cacheCreation5m: 0,
+          cacheCreation1h: 0,
+        },
+        // model intentionally absent
+      },
+    ];
     const result = computeCosts(events);
-    expect(result[0]!.costUsd).toBe(toEstimatedCost(0));
-    expect(result[0]!.unknownModel).toBeUndefined();
+    expect(result[0]?.costUsd).toBe(toEstimatedCost(0));
+    expect(result[0]?.unknownModel).toBeUndefined();
   });
 
   it('event with recognized model and pure input tokens (no cache)', () => {
     // claude-sonnet-4-6: inputPerMTok=3.00, outputPerMTok=15.00
     // input=1000, output=0, no cache
     // cost = (1000 * 3.00) / 1_000_000 = 0.003
-    const events: NormalizedEvent[] = [{
-      ...baseEvent,
-      model: 'claude-sonnet-4-6',
-      tokens: { input: 1000, output: 0, cacheCreation: 0, cacheRead: 0, cacheCreation5m: 0, cacheCreation1h: 0 },
-    }];
+    const events: NormalizedEvent[] = [
+      {
+        ...baseEvent,
+        model: 'claude-sonnet-4-6',
+        tokens: {
+          input: 1000,
+          output: 0,
+          cacheCreation: 0,
+          cacheRead: 0,
+          cacheCreation5m: 0,
+          cacheCreation1h: 0,
+        },
+      },
+    ];
     const result = computeCosts(events);
-    expect(result[0]!.costUsd).toBeCloseTo(0.003, 8);
-    expect(result[0]!.unknownModel).toBeUndefined();
+    expect(result[0]?.costUsd).toBeCloseTo(0.003, 8);
+    expect(result[0]?.unknownModel).toBeUndefined();
   });
 
   it('cache math: no double-counting with split cache tiers', () => {
@@ -59,46 +77,67 @@ describe('computeCosts()', () => {
     //      = (210 + 0 + 562.5 + 300 + 9) / 1_000_000
     //      = 1081.5 / 1_000_000
     //      = 0.0010815
-    const events: NormalizedEvent[] = [{
-      ...baseEvent,
-      model: 'claude-sonnet-4-6',
-      tokens: {
-        input: 300,
-        output: 0,
-        cacheCreation: 200,      // sum of 5m + 1h
-        cacheRead: 30,
-        cacheCreation5m: 150,
-        cacheCreation1h: 50,
+    const events: NormalizedEvent[] = [
+      {
+        ...baseEvent,
+        model: 'claude-sonnet-4-6',
+        tokens: {
+          input: 300,
+          output: 0,
+          cacheCreation: 200, // sum of 5m + 1h
+          cacheRead: 30,
+          cacheCreation5m: 150,
+          cacheCreation1h: 50,
+        },
       },
-    }];
+    ];
     const result = computeCosts(events);
-    expect(result[0]!.costUsd).toBeCloseTo(0.0010815, 8);
+    expect(result[0]?.costUsd).toBeCloseTo(0.0010815, 8);
   });
 
   it('event with unrecognized model: costUsd=0, unknownModel=true', () => {
-    const events: NormalizedEvent[] = [{
-      ...baseEvent,
-      model: 'claude-future-model-9999',
-      tokens: { input: 100, output: 50, cacheCreation: 0, cacheRead: 0, cacheCreation5m: 0, cacheCreation1h: 0 },
-    }];
+    const events: NormalizedEvent[] = [
+      {
+        ...baseEvent,
+        model: 'claude-future-model-9999',
+        tokens: {
+          input: 100,
+          output: 50,
+          cacheCreation: 0,
+          cacheRead: 0,
+          cacheCreation5m: 0,
+          cacheCreation1h: 0,
+        },
+      },
+    ];
     const result = computeCosts(events);
-    expect(result[0]!.costUsd).toBe(toEstimatedCost(0));
-    expect(result[0]!.unknownModel).toBe(true);
+    expect(result[0]?.costUsd).toBe(toEstimatedCost(0));
+    expect(result[0]?.unknownModel).toBe(true);
   });
 
   it('preserves all NormalizedEvent fields on CostEvent (spread, not stripped)', () => {
-    const events: NormalizedEvent[] = [{
-      ...baseEvent,
-      model: 'claude-sonnet-4-6',
-      tokens: { input: 100, output: 50, cacheCreation: 0, cacheRead: 0, cacheCreation5m: 0, cacheCreation1h: 0 },
-      requestId: 'req-123',
-      isSidechain: true,
-      agentId: 'agent-1',
-      gitBranch: 'main',
-      cwd: '/home/user/project',
-      durationMs: 1500,
-    }];
+    const events: NormalizedEvent[] = [
+      {
+        ...baseEvent,
+        model: 'claude-sonnet-4-6',
+        tokens: {
+          input: 100,
+          output: 50,
+          cacheCreation: 0,
+          cacheRead: 0,
+          cacheCreation5m: 0,
+          cacheCreation1h: 0,
+        },
+        requestId: 'req-123',
+        isSidechain: true,
+        agentId: 'agent-1',
+        gitBranch: 'main',
+        cwd: '/home/user/project',
+        durationMs: 1500,
+      },
+    ];
     const result = computeCosts(events);
+    // biome-ignore lint/style/noNonNullAssertion: test-only; input has exactly 1 event
     const event = result[0]!;
     expect(event.uuid).toBe('test-uuid');
     expect(event.type).toBe('assistant');
@@ -115,7 +154,19 @@ describe('computeCosts()', () => {
   it('returns CostEvent[] — every element has costUsd as a number', () => {
     const events: NormalizedEvent[] = [
       { ...baseEvent, uuid: 'a' },
-      { ...baseEvent, uuid: 'b', model: 'claude-opus-4-6', tokens: { input: 100, output: 50, cacheCreation: 0, cacheRead: 0, cacheCreation5m: 0, cacheCreation1h: 0 } },
+      {
+        ...baseEvent,
+        uuid: 'b',
+        model: 'claude-opus-4-6',
+        tokens: {
+          input: 100,
+          output: 50,
+          cacheCreation: 0,
+          cacheRead: 0,
+          cacheCreation5m: 0,
+          cacheCreation1h: 0,
+        },
+      },
     ];
     const result = computeCosts(events);
     for (const e of result) {

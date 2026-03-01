@@ -1,16 +1,16 @@
-import { useState, useEffect } from 'react';
-import { useSummary } from '../hooks/useSummary';
-import { useAllTimeSummary } from '../hooks/useAllTimeSummary';
-import { useCostOverTime, type Bucket } from '../hooks/useCostOverTime';
-import { useDateRangeStore } from '../store/useDateRangeStore';
-import { StatCard } from '../components/StatCard';
-import { TrendIndicator } from '../components/TrendIndicator';
-import { TokenBreakdown } from '../components/TokenBreakdown';
+import { useEffect, useState } from 'react';
+import { ActivityHeatmap } from '../components/ActivityHeatmap';
+import { CacheEfficiencyCard } from '../components/CacheEfficiencyCard';
 import { CostBarChart } from '../components/CostBarChart';
 import { DateRangePicker } from '../components/DateRangePicker';
-import { CacheEfficiencyCard } from '../components/CacheEfficiencyCard';
-import { ActivityHeatmap } from '../components/ActivityHeatmap';
-import { pickSpendQuip, pickQuip, QUIPS } from '../lib/quips';
+import { StatCard } from '../components/StatCard';
+import { TokenBreakdown } from '../components/TokenBreakdown';
+import { TrendIndicator } from '../components/TrendIndicator';
+import { useAllTimeSummary } from '../hooks/useAllTimeSummary';
+import { type Bucket, useCostOverTime } from '../hooks/useCostOverTime';
+import { useSummary } from '../hooks/useSummary';
+import { QUIPS, pickQuip, pickSpendQuip } from '../lib/quips';
+import { useDateRangeStore } from '../store/useDateRangeStore';
 
 export default function Overview() {
   const [bucket, setBucket] = useState<Bucket>('day');
@@ -22,10 +22,11 @@ export default function Overview() {
 
   // Reset hourly bucket if date range becomes too wide
   useEffect(() => {
-    if (bucket === 'hour' && from && to && (to.getTime() - from.getTime()) > 48 * 60 * 60 * 1000) {
+    if (bucket === 'hour' && from && to && to.getTime() - from.getTime() > 48 * 60 * 60 * 1000) {
       setBucket('day');
     }
-  }, [from, to, bucket, setBucket]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setBucket is a stable Zustand setter
+  }, [from, to, bucket]);
 
   // Trend: compute % change vs prior equivalent period.
   // Prior period requires a second API call with shifted date bounds — deferred to Phase 5+.
@@ -45,9 +46,7 @@ export default function Overview() {
       : preset === 'custom'
         ? 'Selected period est.'
         : `Last ${preset} est.`;
-  const periodValue = periodPending
-    ? '...'
-    : `$${(periodSummary?.totalCost ?? 0).toFixed(2)} est.`;
+  const periodValue = periodPending ? '...' : `$${(periodSummary?.totalCost ?? 0).toFixed(2)} est.`;
   const allTimeValue = allTimePending
     ? '...'
     : `$${(allTimeSummary?.totalCost ?? 0).toFixed(2)} est.`;
@@ -58,7 +57,9 @@ export default function Overview() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-xl font-semibold text-slate-900 dark:text-[#e6edf3]">Overview</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-[#8b949e]">Your estimated AI coding spend</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-[#8b949e]">
+            Your estimated AI coding spend
+          </p>
         </div>
         <DateRangePicker />
       </div>
@@ -75,7 +76,11 @@ export default function Overview() {
         <StatCard
           label="All-time est."
           value={allTimeValue}
-          quip={!allTimePending && allTimeSummary ? (pickSpendQuip(allTimeSummary.totalCost) ?? undefined) : undefined}
+          quip={
+            !allTimePending && allTimeSummary
+              ? (pickSpendQuip(allTimeSummary.totalCost) ?? undefined)
+              : undefined
+          }
         />
         <StatCard label={periodLabel} value={periodValue}>
           <TrendIndicator percent={trendPercent} />
@@ -85,11 +90,10 @@ export default function Overview() {
       {/* Token breakdown */}
       {periodSummary && (
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-[#30363d] dark:bg-[#161b22]">
-          <h2 className="text-sm font-semibold text-slate-700 dark:text-[#e6edf3] mb-4">Token breakdown</h2>
-          <TokenBreakdown
-            tokens={periodSummary.totalTokens}
-            totalCost={periodSummary.totalCost}
-          />
+          <h2 className="text-sm font-semibold text-slate-700 dark:text-[#e6edf3] mb-4">
+            Token breakdown
+          </h2>
+          <TokenBreakdown tokens={periodSummary.totalTokens} totalCost={periodSummary.totalCost} />
         </div>
       )}
       {periodPending && (
@@ -100,7 +104,9 @@ export default function Overview() {
 
       {/* Cost over time chart */}
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-[#30363d] dark:bg-[#161b22]">
-        <h2 className="text-sm font-semibold text-slate-700 dark:text-[#e6edf3] mb-4">Cost over time</h2>
+        <h2 className="text-sm font-semibold text-slate-700 dark:text-[#e6edf3] mb-4">
+          Cost over time
+        </h2>
         <CostBarChart
           data={costOverTime?.data ?? []}
           bucket={bucket}

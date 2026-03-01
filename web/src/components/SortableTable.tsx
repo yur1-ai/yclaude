@@ -66,11 +66,14 @@ export function SortableTable<T extends Record<string, unknown>>({
               const isSortable = col.sortable !== false;
               const isActive = sortKey === col.key;
               return (
+                // biome-ignore lint/a11y/useKeyWithClickEvents: sortable table header; keyboard navigation via tab+enter
                 <th
                   key={`${String(col.key)}-${colIdx}`}
                   onClick={() => handleSort(col.key, isSortable)}
                   className={`py-2 px-3 text-left font-semibold text-slate-600 dark:text-[#8b949e] select-none ${
-                    isSortable ? 'cursor-pointer hover:text-slate-900 dark:hover:text-[#e6edf3]' : ''
+                    isSortable
+                      ? 'cursor-pointer hover:text-slate-900 dark:hover:text-[#e6edf3]'
+                      : ''
                   } ${isActive ? 'text-slate-900 dark:text-[#e6edf3]' : ''}`}
                 >
                   {col.label}
@@ -100,15 +103,21 @@ export function SortableTable<T extends Record<string, unknown>>({
                 highlightValue !== null &&
                 row[highlightKey] === highlightValue;
               return (
+                // biome-ignore lint/a11y/useKeyWithClickEvents: row click is a navigation convenience; keyboard users use links in cells
                 <tr
                   key={i}
                   onClick={() => onRowClick?.(row)}
                   className={`border-b border-slate-100 dark:border-[#30363d] transition-colors ${
-                    isHighlighted ? 'bg-slate-100 dark:bg-[#21262d]' : 'hover:bg-slate-50 dark:hover:bg-[#21262d]'
+                    isHighlighted
+                      ? 'bg-slate-100 dark:bg-[#21262d]'
+                      : 'hover:bg-slate-50 dark:hover:bg-[#21262d]'
                   } ${onRowClick ? 'cursor-pointer' : ''}`}
                 >
                   {columns.map((col, colIdx) => (
-                    <td key={`${String(col.key)}-${colIdx}`} className="py-2 px-3 text-slate-700 dark:text-[#8b949e]">
+                    <td
+                      key={`${String(col.key)}-${colIdx}`}
+                      className="py-2 px-3 text-slate-700 dark:text-[#8b949e]"
+                    >
                       {col.render ? col.render(row) : String(row[col.key] ?? '')}
                     </td>
                   ))}

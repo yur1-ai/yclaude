@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { normalizeEvent } from '../normalizer.js';
 
 describe('normalizeEvent()', () => {
@@ -161,7 +161,9 @@ describe('normalizeEvent()', () => {
       sessionId: 'session-123',
       timestamp: '2024-01-01T00:00:00Z',
       message: {
-        content: [{ type: 'tool_result', content: '<persisted-output>\nsome content\n</persisted-output>' }],
+        content: [
+          { type: 'tool_result', content: '<persisted-output>\nsome content\n</persisted-output>' },
+        ],
       },
     });
 

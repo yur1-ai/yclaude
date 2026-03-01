@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { DedupAccumulator } from '../dedup.js';
 import type { NormalizedEvent } from '../types.js';
 
@@ -27,7 +27,7 @@ describe('DedupAccumulator', () => {
     const dedup = new DedupAccumulator();
     dedup.add(makeEvent('uuid-1'));
     dedup.add(makeEvent('uuid-2'));
-    dedup.add(makeEvent('uuid-1'));  // duplicate
+    dedup.add(makeEvent('uuid-1')); // duplicate
     dedup.add(makeEvent('uuid-3'));
 
     const results = dedup.results();
@@ -41,7 +41,7 @@ describe('DedupAccumulator', () => {
     const dedup = new DedupAccumulator();
     dedup.add(makeEvent('uuid-1'));
     dedup.add(makeEvent('uuid-2'));
-    dedup.add(makeEvent('uuid-1'));  // duplicate
+    dedup.add(makeEvent('uuid-1')); // duplicate
 
     expect(dedup.size).toBe(2);
   });
@@ -49,8 +49,8 @@ describe('DedupAccumulator', () => {
   it('duplicates getter tracks count of dropped events', () => {
     const dedup = new DedupAccumulator();
     dedup.add(makeEvent('uuid-1'));
-    dedup.add(makeEvent('uuid-1'));  // dup 1
-    dedup.add(makeEvent('uuid-1'));  // dup 2
+    dedup.add(makeEvent('uuid-1')); // dup 1
+    dedup.add(makeEvent('uuid-1')); // dup 2
 
     expect(dedup.duplicates).toBe(2);
   });

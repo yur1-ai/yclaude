@@ -1,13 +1,13 @@
 import { createReadStream } from 'node:fs';
 import { glob } from 'node:fs/promises';
-import { createInterface } from 'node:readline';
 import os from 'node:os';
 import path from 'node:path';
+import { createInterface } from 'node:readline';
 import { debugLog } from '../shared/debug.js';
 
 export async function discoverJSONLFiles(overrideDir?: string): Promise<string[]> {
   const home = os.homedir();
-  const claudeConfigDir = process.env['CLAUDE_CONFIG_DIR'];
+  const claudeConfigDir = process.env.CLAUDE_CONFIG_DIR;
 
   // Determine base directories — exclusivity hierarchy: overrideDir > CLAUDE_CONFIG_DIR > defaults
   let baseDirs: string[];
@@ -23,10 +23,7 @@ export async function discoverJSONLFiles(overrideDir?: string): Promise<string[]
     useProjectsSubdir = true;
     debugLog(`File discovery: using CLAUDE_CONFIG_DIR override: ${path.resolve(claudeConfigDir)}`);
   } else {
-    baseDirs = [
-      path.join(home, '.claude'),
-      path.join(home, '.config', 'claude'),
-    ];
+    baseDirs = [path.join(home, '.claude'), path.join(home, '.config', 'claude')];
     useProjectsSubdir = true;
     debugLog(`File discovery: using default paths (${baseDirs.join(', ')})`);
   }
@@ -56,14 +53,14 @@ export async function discoverJSONLFiles(overrideDir?: string): Promise<string[]
 export async function* streamJSONLFile(filePath: string): AsyncGenerator<unknown> {
   const rl = createInterface({
     input: createReadStream(filePath),
-    crlfDelay: Infinity,  // Handle Windows-style \r\n
+    crlfDelay: Number.POSITIVE_INFINITY, // Handle Windows-style \r\n
   });
 
   let lineNum = 0;
   for await (const line of rl) {
     lineNum++;
     const trimmed = line.trim();
-    if (!trimmed) continue;  // Skip blank lines silently
+    if (!trimmed) continue; // Skip blank lines silently
     try {
       yield JSON.parse(trimmed);
     } catch (err) {

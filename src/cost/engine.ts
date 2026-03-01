@@ -1,9 +1,9 @@
 import type { NormalizedEvent } from '../parser/types.js';
+import { debugLog } from '../shared/debug.js';
 import { MODEL_PRICING } from './pricing.js';
 import type { ModelPricing } from './pricing.js';
 import { toEstimatedCost } from './types.js';
 import type { CostEvent } from './types.js';
-import { debugLog } from '../shared/debug.js';
 
 const PER_MILLION = 1_000_000;
 
@@ -45,11 +45,11 @@ function computeEventCost(event: NormalizedEvent): CostEvent {
   const baseInput = Math.max(0, tokens.input - tokens.cacheCreation - tokens.cacheRead);
 
   const cost =
-    (baseInput               * pricing.inputPerMTok       ) / PER_MILLION +
-    (tokens.output           * pricing.outputPerMTok      ) / PER_MILLION +
-    (tokens.cacheCreation5m  * pricing.cacheWrite5mPerMTok) / PER_MILLION +
-    (tokens.cacheCreation1h  * pricing.cacheWrite1hPerMTok) / PER_MILLION +
-    (tokens.cacheRead        * pricing.cacheReadPerMTok   ) / PER_MILLION;
+    (baseInput * pricing.inputPerMTok) / PER_MILLION +
+    (tokens.output * pricing.outputPerMTok) / PER_MILLION +
+    (tokens.cacheCreation5m * pricing.cacheWrite5mPerMTok) / PER_MILLION +
+    (tokens.cacheCreation1h * pricing.cacheWrite1hPerMTok) / PER_MILLION +
+    (tokens.cacheRead * pricing.cacheReadPerMTok) / PER_MILLION;
 
   return { ...event, costUsd: toEstimatedCost(cost) };
 }

@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router';
-import { useThemeStore, type Theme } from '../store/useThemeStore';
+import { type Theme, useThemeStore } from '../store/useThemeStore';
 
 const navItems = [
   { to: '/', label: 'Overview', end: true },
@@ -26,6 +26,7 @@ function ThemeToggle() {
 
   return (
     <button
+      type="button"
       onClick={handleToggle}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       className="text-slate-400 dark:text-[#8b949e] hover:text-slate-600 dark:hover:text-[#e6edf3] p-1 rounded transition-colors"
@@ -40,7 +41,9 @@ export default function Layout() {
     <div className="flex h-screen bg-slate-50 dark:bg-[#0d1117]">
       <aside className="w-60 shrink-0 bg-white dark:bg-[#161b22] border-r border-slate-200 dark:border-[#30363d] flex flex-col">
         <div className="px-6 py-5 border-b border-slate-200 dark:border-[#30363d]">
-          <span className="text-lg font-semibold tracking-tight text-slate-900 dark:text-[#e6edf3]">yclaude</span>
+          <span className="text-lg font-semibold tracking-tight text-slate-900 dark:text-[#e6edf3]">
+            yclaude
+          </span>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1">
           {navItems.map(({ to, label, end }) => (

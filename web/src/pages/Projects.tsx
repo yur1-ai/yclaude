@@ -1,9 +1,9 @@
-import { useProjects } from '../hooks/useProjects';
-import type { ProjectRow } from '../hooks/useProjects';
+import { DateRangePicker } from '../components/DateRangePicker';
 import { SortableTable } from '../components/SortableTable';
 import type { Column } from '../components/SortableTable';
-import { DateRangePicker } from '../components/DateRangePicker';
-import { pickQuip, QUIPS } from '../lib/quips';
+import { useProjects } from '../hooks/useProjects';
+import type { ProjectRow } from '../hooks/useProjects';
+import { QUIPS, pickQuip } from '../lib/quips';
 
 export default function Projects() {
   const { data, isLoading } = useProjects();
@@ -13,7 +13,9 @@ export default function Projects() {
     {
       key: 'displayName',
       label: 'Project',
-      render: (row) => <span className="font-medium text-slate-900 dark:text-[#e6edf3]">{row.displayName}</span>,
+      render: (row) => (
+        <span className="font-medium text-slate-900 dark:text-[#e6edf3]">{row.displayName}</span>
+      ),
     },
     {
       key: 'costUsd',

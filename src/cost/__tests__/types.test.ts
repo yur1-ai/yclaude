@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { toEstimatedCost } from '../types.js';
-import type { EstimatedCost, CostEvent } from '../types.js';
+import { describe, expect, it } from 'vitest';
 import type { NormalizedEvent } from '../../parser/types.js';
+import { toEstimatedCost } from '../types.js';
+import type { CostEvent, EstimatedCost } from '../types.js';
 
 describe('EstimatedCost branded type', () => {
   it('toEstimatedCost wraps a number into EstimatedCost', () => {
