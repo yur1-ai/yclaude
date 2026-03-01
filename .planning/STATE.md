@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Analytics Completion + Distribution
 status: unknown
-last_updated: "2026-03-01T08:40:15.219Z"
+last_updated: "2026-03-01T15:50:04Z"
 progress:
-  total_phases: 7
+  total_phases: 8
   completed_phases: 7
-  total_plans: 21
-  completed_plans: 21
+  total_plans: 24
+  completed_plans: 23
 ---
 
 # Project State
@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 
 **Core value:** Give developers full visibility into their AI coding spend — locally first, with no friction.
-**Current focus:** v1.1 Phase 7 — Differentiator Features
+**Current focus:** v1.1 Phase 8 — Dark Mode & Personality
 
 ## Current Position
 
-Phase: 07-differentiator-features ✅ COMPLETE (2026-03-01)
-Plan: 07-04 ✅ COMPLETE (2026-03-01)
-Status: All 4 plans complete; Phase 7 fully done
-Last activity: 2026-03-01 — 07-04 complete; CostBarChart has Hourly bucket (4th option) with 48h range guard, CSS-only tooltip, HH:00 x-axis formatter, IANA tz forwarding, and auto-reset to 'day' when range widens
+Phase: 08-dark-mode-personality 🚧 IN PROGRESS
+Plan: 08-02 ✅ COMPLETE (2026-03-01)
+Status: 2/3 plans complete; dark mode plumbing + personality copy system done; component sweep remaining
+Last activity: 2026-03-01 — 08-02 complete; quips.ts with 14 QUIPS keys × 5 entries, pickQuip/pickSpendQuip utilities; StatCard extended with quip? prop and dark mode classes
 
 ## Accumulated Context
 
@@ -78,6 +78,12 @@ Last activity: 2026-03-01 — 07-04 complete; CostBarChart has Hourly bucket (4t
 - ?tz= always sent on all /cost-over-time requests regardless of bucket — backend ignores for non-hour buckets; simplifies client logic
 - Hourly bucket in CostBarChart disabled when from/to undefined or range > 48h; tooltip via CSS-only group-hover (no JS state)
 - from/to passed as props to CostBarChart (not imported from store) — keeps component testable and decoupled
+- quip renders AFTER children in StatCard (commentary reads last, after trend indicators)
+- pickSpendQuip returns null for exact zero — no quip shown for blank/zero-spend state
+- spend_any catches fractional spend (0 < x < $1) to avoid gap before first dollar milestone
+- StatCard dark mode tokens: border=#30363d, bg=#161b22, label text=#8b949e, value text=#e6edf3
+- QUIPS satisfies Record<string, string[]> — type-safe at compile time without losing key specificity
+- web/src/lib/ directory created in Phase 8 (did not exist before 08-02)
 
 ### Open Blockers for v1.1
 

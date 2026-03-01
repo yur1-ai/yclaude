@@ -99,8 +99,8 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Dark mode plumbing: useThemeStore (Zustand persist), FOUC script in index.html, CSS vars in index.css, sidebar footer toggle in Layout.tsx
-- [ ] 08-02-PLAN.md — Personality copy system: quips.ts with all 14 quip keys + pickQuip/pickSpendQuip utilities; StatCard quip? prop
+- [x] 08-01-PLAN.md — Dark mode plumbing: useThemeStore (Zustand persist), FOUC script in index.html, CSS vars in index.css, sidebar footer toggle in Layout.tsx
+- [x] 08-02-PLAN.md — Personality copy system: quips.ts with all 14 quip keys + pickQuip/pickSpendQuip utilities; StatCard quip? prop
 - [ ] 08-03-PLAN.md — Full component sweep: dark: classes on all 10 components/pages; personality wiring (Overview spend quips, all 5 page empty states, ActivityHeatmap 90th-pct quips + dark theme)
 
 ### Phase 9: npm Distribution & CI/CD
@@ -190,5 +190,5 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 5. Model & Project Breakdowns | v1.1 | 3/3 | Complete | 2026-03-01 |
 | 6. Session Explorer | v1.1 | 3/3 | Complete | 2026-03-01 |
 | 7. Differentiator Features | 4/4 | Complete   | 2026-03-01 | - |
-| 8. Dark Mode & Personality | v1.1 | 0/3 | Not started | - |
+| 8. Dark Mode & Personality | v1.1 | 2/3 | In Progress | - |
 | 9. npm Distribution & CI/CD | v1.1 | 0/TBD | Not started | - |
