@@ -20,6 +20,9 @@ export interface SessionSummary {
   timestamp: string;
   durationMs: number | null;
   gitBranch: string | null;
+  mainCostUsd?: number;
+  subagentCostUsd?: number;
+  hasSubagents?: boolean;
 }
 
 export interface SessionDetailData {

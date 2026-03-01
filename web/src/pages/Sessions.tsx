@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useSessions, SessionRow } from '../hooks/useSessions';
 import { useProjects } from '../hooks/useProjects';
+import { useBranches } from '../hooks/useBranches';
+import { SubagentBadge } from '../components/SubagentBadge';
 import { SortableTable, Column } from '../components/SortableTable';
 import { DateRangePicker } from '../components/DateRangePicker';
 
@@ -17,16 +19,34 @@ const columns: Column<SessionRow>[] = [
     sortable: true,
     render: (row) => {
       const models = row.models as string[];
-      if (models.length <= 1) return <span>{row.model as string}</span>;
+      const label = models.length <= 1 ? (row.model as string) : 'Mixed';
+      const tooltip = models.length > 1 ? models.join(', ') : null;
       return (
-        <span className="relative group cursor-help underline decoration-dotted">
-          Mixed
-          <span className="absolute bottom-full left-0 mb-1 hidden group-hover:block rounded bg-slate-800 text-white text-xs p-2 whitespace-nowrap z-10">
-            {models.join(', ')}
-          </span>
+        <span className="flex items-center gap-1.5">
+          {tooltip ? (
+            <span className="relative group cursor-help underline decoration-dotted">
+              {label}
+              <span className="absolute bottom-full left-0 mb-1 hidden group-hover:block rounded bg-slate-800 text-white text-xs p-2 whitespace-nowrap z-10">
+                {tooltip}
+              </span>
+            </span>
+          ) : (
+            <span>{label}</span>
+          )}
+          {row.hasSubagents && <SubagentBadge />}
         </span>
       );
     },
+  },
+  {
+    key: 'gitBranch',
+    label: 'Branch',
+    sortable: true,
+    render: (row) => (
+      <span className="text-slate-500 text-xs font-mono">
+        {(row.gitBranch as string | null) ?? '—'}
+      </span>
+    ),
   },
   {
     key: 'costUsd',
@@ -56,12 +76,14 @@ const columns: Column<SessionRow>[] = [
 export default function Sessions() {
   const navigate = useNavigate();
   const [projectFilter, setProjectFilter] = useState<string | null>(null);
-  const { data, isLoading, isError, page, setPage } = useSessions(projectFilter);
+  const [branchFilter, setBranchFilter] = useState<string | null>(null);
+  const { data, isLoading, isError, page, setPage } = useSessions(projectFilter, branchFilter);
   const { data: projectsData } = useProjects();
+  const { data: branchesData } = useBranches();
 
   useEffect(() => {
     setPage(1);
-  }, [projectFilter, setPage]);
+  }, [projectFilter, branchFilter, setPage]);
 
   const totalPages = Math.ceil((data?.total ?? 0) / (data?.pageSize ?? 50));
 
@@ -79,6 +101,18 @@ export default function Sessions() {
             {projectsData?.rows.map((p) => (
               <option key={p.cwd ?? 'unknown'} value={p.cwd ?? ''}>
                 {p.displayName}
+              </option>
+            ))}
+          </select>
+          <select
+            value={branchFilter ?? ''}
+            onChange={(e) => setBranchFilter(e.target.value || null)}
+            className="rounded border border-slate-200 text-sm px-2 py-1.5 text-slate-600 bg-white"
+          >
+            <option value="">All branches</option>
+            {branchesData?.branches.map((b) => (
+              <option key={b} value={b}>
+                {b}
               </option>
             ))}
           </select>

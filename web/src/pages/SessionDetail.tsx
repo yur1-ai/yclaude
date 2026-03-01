@@ -83,7 +83,13 @@ export default function SessionDetail() {
   const { summary, turns } = data;
 
   const stats: { label: string; value: string }[] = [
-    { label: 'Total Cost', value: `$${summary.totalCost.toFixed(2)} est.` },
+    ...(summary.hasSubagents
+      ? [
+          { label: 'Total Cost', value: `$${summary.totalCost.toFixed(2)} est.` },
+          { label: 'Main Thread', value: `$${(summary.mainCostUsd ?? 0).toFixed(2)} est.` },
+          { label: 'Subagents', value: `$${(summary.subagentCostUsd ?? 0).toFixed(2)} est.` },
+        ]
+      : [{ label: 'Total Cost', value: `$${summary.totalCost.toFixed(2)} est.` }]),
     {
       label: 'Model',
       value:
