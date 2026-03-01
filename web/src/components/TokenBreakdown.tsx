@@ -44,7 +44,7 @@ export function TokenBreakdown({ tokens, totalCost }: TokenBreakdownProps) {
             <tr key={label} className="border-t border-slate-100 dark:border-[#30363d]">
               <td className="py-2 pr-4 text-slate-700 dark:text-[#e6edf3] font-medium">{label}</td>
               <td className="py-2 pr-4">
-                <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-[#21262d]">
+                <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-[#1c2128]">
                   <div
                     className="h-2 rounded-full"
                     style={{ width: `${share}%`, backgroundColor: color }}
