@@ -277,7 +277,222 @@ export function apiRoutes(state: AppState): Hono {
 
   // Stub routes — return empty shapes for Phase 4+ implementation
   app.get('/events', (c) => c.json({ events: [] }));
-  app.get('/sessions', (c) => c.json({ sessions: [] }));
+
+  // GET /api/v1/sessions — paginated session list.
+  // Groups state.costs by sessionId. Sessions with no token-bearing events are excluded.
+  // Supports ?from=ISO, ?to=ISO date filtering, ?project=cwd filter, ?page=N pagination.
+  app.get('/sessions', (c) => {
+    interface SessionRow extends Record<string, unknown> {
+      sessionId: string;
+      displayName: string;
+      cwd: string | null;
+      model: string;
+      models: string[];
+      costUsd: number;
+      tokens: { input: number; output: number; cacheCreation: number; cacheRead: number };
+      timestamp: string;
+      durationMs: number | null;
+    }
+
+    const PAGE_SIZE = 50;
+
+    const fromStr = c.req.query('from');
+    const toStr = c.req.query('to');
+    const projectFilter = c.req.query('project') ?? null;
+    const pageParam = parseInt(c.req.query('page') ?? '1', 10);
+    const page = Math.max(1, isNaN(pageParam) ? 1 : pageParam);
+
+    const from = parseDate(fromStr);
+    const to = parseDate(toStr);
+
+    if (from === 'invalid') return c.json({ error: "Invalid 'from' date" }, 400);
+    if (to === 'invalid') return c.json({ error: "Invalid 'to' date" }, 400);
+
+    // Filter by date range — never mutate state.costs
+    let costs = state.costs;
+    if (from) costs = costs.filter((e) => new Date(e.timestamp).getTime() >= from.getTime());
+    if (to) costs = costs.filter((e) => new Date(e.timestamp).getTime() <= to.getTime());
+
+    // Filter by project (cwd)
+    if (projectFilter !== null) {
+      costs = costs.filter((e) => (e.cwd ?? null) === projectFilter);
+    }
+
+    // Group ALL events by sessionId (not just token-bearing)
+    const sessionMap = new Map<string, { events: typeof costs }>();
+    for (const e of costs) {
+      const group = sessionMap.get(e.sessionId);
+      if (group) {
+        group.events.push(e);
+      } else {
+        sessionMap.set(e.sessionId, { events: [e] });
+      }
+    }
+
+    // Build SessionRow for each group
+    const allSessions: SessionRow[] = [];
+
+    for (const [sessionId, { events }] of sessionMap) {
+      // Sort events by timestamp ascending (stable: JS .sort() is stable in V8)
+      const sorted = [...events].sort(
+        (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+      );
+
+      const tokenEvents = sorted.filter((e) => e.tokens !== undefined);
+
+      // Skip sessions with zero token-bearing events
+      if (tokenEvents.length === 0) continue;
+
+      const timestamp = sorted[0]!.timestamp;
+      const cwd = sorted[0]!.cwd ?? null;
+
+      // durationMs: max across ALL events (not just token-bearing), null if none have it
+      let durationMs: number | null = null;
+      for (const e of sorted) {
+        if (e.durationMs !== undefined) {
+          durationMs = durationMs === null ? e.durationMs : Math.max(durationMs, e.durationMs);
+        }
+      }
+
+      // costUsd: sum across ALL events
+      const costUsd = sorted.reduce((sum, e) => sum + e.costUsd, 0);
+
+      // tokens: sum across token-bearing events only
+      const tokens = tokenEvents.reduce(
+        (acc, e) => ({
+          input: acc.input + (e.tokens!.input),
+          output: acc.output + (e.tokens!.output),
+          cacheCreation: acc.cacheCreation + (e.tokens!.cacheCreation),
+          cacheRead: acc.cacheRead + (e.tokens!.cacheRead),
+        }),
+        { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
+      );
+
+      // models: distinct model names from token-bearing events
+      const models = [...new Set(tokenEvents.map((e) => e.model ?? 'Unknown'))];
+      const model = models.length === 1 ? models[0]! : 'Mixed';
+
+      allSessions.push({ sessionId, displayName: '', cwd, model, models, costUsd, tokens, timestamp, durationMs });
+    }
+
+    // Assign display names for all unique cwds
+    const uniqueCwds = [...new Set(allSessions.map((s) => s.cwd))];
+    const names = assignProjectNames(uniqueCwds);
+    for (const s of allSessions) {
+      s.displayName = names.get(s.cwd) ?? s.cwd ?? 'Unknown project';
+    }
+
+    // Sort by timestamp descending
+    allSessions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+    const total = allSessions.length;
+    const sessions = allSessions.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+    return c.json({ sessions, total, page, pageSize: PAGE_SIZE });
+  });
+
+  // GET /api/v1/sessions/:id — session detail with per-turn breakdown.
+  // Returns { summary, turns } for a valid sessionId, 404 for unknown IDs.
+  app.get('/sessions/:id', (c) => {
+    interface TurnRow {
+      turn: number;
+      model: string;
+      tokens: { input: number; output: number; cacheCreation: number; cacheRead: number };
+      costUsd: number;
+      cumulativeCost: number;
+      timestamp: string;
+    }
+
+    interface SessionSummary {
+      sessionId: string;
+      displayName: string;
+      cwd: string | null;
+      model: string;
+      models: string[];
+      totalCost: number;
+      totalTokens: { input: number; output: number; cacheCreation: number; cacheRead: number };
+      timestamp: string;
+      durationMs: number | null;
+      gitBranch: string | null;
+    }
+
+    const sessionId = c.req.param('id');
+    const allEvents = state.costs.filter((e) => e.sessionId === sessionId);
+
+    if (allEvents.length === 0) {
+      return c.json({ error: 'Session not found' }, 404);
+    }
+
+    // Sort all events by timestamp ascending (stable)
+    const sorted = [...allEvents].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    );
+
+    const tokenEvents = sorted.filter((e) => e.tokens !== undefined);
+
+    // Build turns from token-bearing events with running cumulative cost
+    let cumulative = 0;
+    const turns: TurnRow[] = tokenEvents.map((e, i) => {
+      cumulative += e.costUsd;
+      return {
+        turn: i + 1,
+        model: e.model ?? 'Unknown',
+        tokens: {
+          input: e.tokens!.input,
+          output: e.tokens!.output,
+          cacheCreation: e.tokens!.cacheCreation,
+          cacheRead: e.tokens!.cacheRead,
+        },
+        costUsd: e.costUsd,
+        cumulativeCost: cumulative,
+        timestamp: e.timestamp,
+      };
+    });
+
+    // Build summary from all events
+    const cwd = sorted[0]!.cwd ?? null;
+    const timestamp = sorted[0]!.timestamp;
+
+    let durationMs: number | null = null;
+    for (const e of sorted) {
+      if (e.durationMs !== undefined) {
+        durationMs = durationMs === null ? e.durationMs : Math.max(durationMs, e.durationMs);
+      }
+    }
+
+    const gitBranch = sorted.find((e) => e.gitBranch)?.gitBranch ?? null;
+    const totalCost = sorted.reduce((sum, e) => sum + e.costUsd, 0);
+
+    const models = [...new Set(tokenEvents.map((e) => e.model ?? 'Unknown'))];
+    const model = models.length === 1 ? models[0]! : 'Mixed';
+
+    const totalTokens = tokenEvents.reduce(
+      (acc, e) => ({
+        input: acc.input + e.tokens!.input,
+        output: acc.output + e.tokens!.output,
+        cacheCreation: acc.cacheCreation + e.tokens!.cacheCreation,
+        cacheRead: acc.cacheRead + e.tokens!.cacheRead,
+      }),
+      { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
+    );
+
+    const displayName = assignProjectNames([cwd]).get(cwd) ?? cwd ?? 'Unknown';
+
+    const summary: SessionSummary = {
+      sessionId,
+      displayName,
+      cwd,
+      model,
+      models,
+      totalCost,
+      totalTokens,
+      timestamp,
+      durationMs,
+      gitBranch,
+    };
+
+    return c.json({ summary, turns });
+  });
 
   return app;
 }
