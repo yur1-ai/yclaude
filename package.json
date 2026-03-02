@@ -3,6 +3,10 @@
   "version": "0.1.6",
   "description": "Local-first analytics dashboard for Claude Code usage",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yur1-ai/yclaude"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "exports": {
