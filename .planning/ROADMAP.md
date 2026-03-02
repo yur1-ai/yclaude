@@ -34,7 +34,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 - [x] **Phase 6: Session Explorer** - Browsable session list with drill-down detail view showing per-turn token breakdown
 - [x] **Phase 7: Differentiator Features** - Cache efficiency score, activity heatmap, sidechain/subagent analysis, git branch filtering, 24h/hourly chart window (completed 2026-03-01)
 - [x] **Phase 8: Dark Mode & Personality** - System-aware dark mode toggle and humorous personality copy woven throughout all views (completed 2026-03-01)
-- [ ] **Phase 9: npm Distribution & CI/CD** - Manual npm publish (DIST-01) then automated GitHub Actions pipeline on tag push (DIST-02)
+- [x] **Phase 9: npm Distribution & CI/CD** - Manual npm publish (DIST-01) then automated GitHub Actions pipeline on tag push (DIST-02) — completed 2026-03-01
 
 ## Phase Details
 
@@ -114,10 +114,10 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — Build restructure: migrate web-dist/ to dist/web/, tsup.config.prod.ts with noExternal, Biome setup, package.json fields (files/engines/prepublishOnly), dynamic CLI version
-- [ ] 09-02-PLAN.md — GitHub Actions workflows: ci.yml (PR quality gate) + publish.yml (v* tag triggered publish + GitHub Release)
-- [ ] 09-03-PLAN.md — README.md: badges, hero screenshot, feature tour for all 7 pages, install instructions, CLI options
-- [ ] 09-04-PLAN.md — Publish checkpoint: npm name verification, granular token creation, GitHub secret setup, first manual npm publish
+- [x] 09-01-PLAN.md — Build restructure: migrate web-dist/ to dist/web/, tsup.config.prod.ts with noExternal, Biome setup, package.json fields (files/engines/prepublishOnly), dynamic CLI version
+- [x] 09-02-PLAN.md — GitHub Actions workflows: ci.yml (PR quality gate) + publish.yml (v* tag triggered publish + GitHub Release)
+- [x] 09-03-PLAN.md — README.md: badges, hero screenshot, feature tour for all 7 pages, install instructions, CLI options
+- [x] 09-04-PLAN.md — Publish checkpoint: npm name verification, OIDC Trusted Publishing setup, first manual npm publish (0.1.0), CI-verified publish (0.1.7)
 
 ### Phase 9.1: Cost Accuracy & Pricing Refactor
 **Type**: INSERTED — gap closure after Phase 9
@@ -193,4 +193,4 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 6. Session Explorer | v1.1 | 3/3 | Complete | 2026-03-01 |
 | 7. Differentiator Features | 4/4 | Complete   | 2026-03-01 | - |
 | 8. Dark Mode & Personality | v1.1 | 3/3 | Complete | 2026-03-01 |
-| 9. npm Distribution & CI/CD | 1/4 | In Progress|  | - |
+| 9. npm Distribution & CI/CD | v1.1 | 4/4 | Complete | 2026-03-01 |

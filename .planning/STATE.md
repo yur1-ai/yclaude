@@ -6,7 +6,7 @@ status: in_progress
 last_updated: "2026-03-01T22:57:00Z"
 progress:
   total_phases: 9
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 25
   completed_plans: 25
 ---
@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 
 **Core value:** Give developers full visibility into their AI coding spend — locally first, with no friction.
-**Current focus:** v1.1 Phase 9 — npm Distribution & CI/CD
+**Current focus:** v1.1 COMPLETE — yclaude 0.1.7 live on npmjs.com
 
 ## Current Position
 
 Phase: 09-npm-distribution-ci-cd
-Plan: 09-01 ✅ — complete
-Status: 09-01 ✅ — Phase 9 Plan 1 complete
-Last activity: 2026-03-01 — 09-01 complete; unified dist/ output, prod tsup bundle, Biome at exit 0, package.json publish-ready
+Plan: 09-04 ✅ — complete
+Status: Phase 9 COMPLETE — all 4 plans done
+Last activity: 2026-03-01 — 09-04 complete; yclaude 0.1.7 live on npmjs.com via GitHub Actions OIDC Trusted Publishing with provenance attestation
 
 ## Accumulated Context
 
@@ -102,7 +102,7 @@ Last activity: 2026-03-01 — 09-01 complete; unified dist/ output, prod tsup bu
 
 ### Open Blockers for v1.1
 
-- **Phase 9**: Verify `yclaude` name availability on npm before Phase 9 publish
+None — all blockers resolved. v1.1 is complete.
 
 ### Pending Todos
 
