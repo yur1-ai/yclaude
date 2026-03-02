@@ -449,7 +449,7 @@ export function apiRoutes(state: AppState): Hono {
       // Skip sessions with zero token-bearing events
       if (tokenEvents.length === 0) continue;
 
-      const timestamp = sorted[0]?.timestamp;
+      const timestamp = sorted[0]?.timestamp ?? '';
       const cwd = sorted[0]?.cwd ?? null;
 
       // durationMs: max across ALL events (not just token-bearing), null if none have it
@@ -472,10 +472,10 @@ export function apiRoutes(state: AppState): Hono {
       // tokens: sum across token-bearing events only
       const tokens = tokenEvents.reduce(
         (acc, e) => ({
-          input: acc.input + e.tokens?.input,
-          output: acc.output + e.tokens?.output,
-          cacheCreation: acc.cacheCreation + e.tokens?.cacheCreation,
-          cacheRead: acc.cacheRead + e.tokens?.cacheRead,
+          input: acc.input + (e.tokens?.input ?? 0),
+          output: acc.output + (e.tokens?.output ?? 0),
+          cacheCreation: acc.cacheCreation + (e.tokens?.cacheCreation ?? 0),
+          cacheRead: acc.cacheRead + (e.tokens?.cacheRead ?? 0),
         }),
         { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
       );
@@ -568,10 +568,10 @@ export function apiRoutes(state: AppState): Hono {
         turn: i + 1,
         model: e.model ?? 'Unknown',
         tokens: {
-          input: e.tokens?.input,
-          output: e.tokens?.output,
-          cacheCreation: e.tokens?.cacheCreation,
-          cacheRead: e.tokens?.cacheRead,
+          input: e.tokens?.input ?? 0,
+          output: e.tokens?.output ?? 0,
+          cacheCreation: e.tokens?.cacheCreation ?? 0,
+          cacheRead: e.tokens?.cacheRead ?? 0,
         },
         costUsd: e.costUsd,
         cumulativeCost: cumulative,
@@ -581,7 +581,7 @@ export function apiRoutes(state: AppState): Hono {
 
     // Build summary from all events
     const cwd = sorted[0]?.cwd ?? null;
-    const timestamp = sorted[0]?.timestamp;
+    const timestamp = sorted[0]?.timestamp ?? '';
 
     let durationMs: number | null = null;
     for (const e of sorted) {
@@ -604,10 +604,10 @@ export function apiRoutes(state: AppState): Hono {
 
     const totalTokens = tokenEvents.reduce(
       (acc, e) => ({
-        input: acc.input + e.tokens?.input,
-        output: acc.output + e.tokens?.output,
-        cacheCreation: acc.cacheCreation + e.tokens?.cacheCreation,
-        cacheRead: acc.cacheRead + e.tokens?.cacheRead,
+        input: acc.input + (e.tokens?.input ?? 0),
+        output: acc.output + (e.tokens?.output ?? 0),
+        cacheCreation: acc.cacheCreation + (e.tokens?.cacheCreation ?? 0),
+        cacheRead: acc.cacheRead + (e.tokens?.cacheRead ?? 0),
       }),
       { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
     );
