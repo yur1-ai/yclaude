@@ -1,6 +1,6 @@
 {
   "name": "yclaude",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Local-first analytics dashboard for Claude Code usage",
   "license": "MIT",
   "repository": {
