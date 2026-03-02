@@ -29,7 +29,9 @@
       "web/node_modules",
       "web/dist",
       ".claude",
-      ".planning"
+      ".planning",
+      "package.json",
+      "package-lock.json"
     ]
   }
 }
