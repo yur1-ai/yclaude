@@ -12,8 +12,8 @@ Requirements for the Analytics Completion + Distribution milestone (Phases 5–9
 
 - [x] **ANLT-04**: User can view estimated cost broken down by model as a donut chart with a companion sortable table
 - [x] **ANLT-05**: User can view per-project cost breakdown with human-readable project names derived from directory paths (not raw slugs)
-- [ ] **ANLT-07**: User can see a cache efficiency score (% of input tokens from cache) with a trend indicator showing direction over time
-- [ ] **ANLT-08**: User can see a GitHub-style activity heatmap on the Overview showing daily usage intensity, with personality-copy annotations on hover
+- [x] **ANLT-07**: User can see a cache efficiency score (% of input tokens from cache) with a trend indicator showing direction over time
+- [x] **ANLT-08**: User can see a GitHub-style activity heatmap on the Overview showing daily usage intensity, with personality-copy annotations on hover
 - [x] **ANLT-09**: User can select a 24h time window on the cost-over-time chart that renders hourly buckets with appropriately labeled x-axis ticks
 
 ### Sessions
@@ -29,12 +29,12 @@ Requirements for the Analytics Completion + Distribution milestone (Phases 5–9
 
 ### Personality
 
-- [ ] **PRSL-01**: User encounters humorous personality copy in stat callouts, empty states, loading states, milestone labels, and high-spend moments — at least 5 rotating quips per context; copy never replaces data labels
+- [x] **PRSL-01**: User encounters humorous personality copy in stat callouts, empty states, loading states, milestone labels, and high-spend moments — at least 5 rotating quips per context; copy never replaces data labels
 
 ### Distribution
 
 - [x] **DIST-01**: User (developer) can publish yclaude to npm manually: pre-built web assets bundled, no source maps, correct `main`/`bin`/`files` fields, `.npmignore` excluding dev artifacts, `yclaude` name confirmed available, polished README with install instructions and feature screenshots live on npmjs.com
-- [ ] **DIST-02**: Developer can push a git tag and have GitHub Actions automatically run lint, typecheck, tests, build, and `npm publish` — no manual publish steps required for future releases
+- [x] **DIST-02**: Developer can push a git tag and have GitHub Actions automatically run lint, typecheck, tests, build, and `npm publish` — no manual publish steps required for future releases
 
 ## v2 Requirements
 
@@ -71,15 +71,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ANLT-05 | Phase 5 | Complete |
 | SESS-01 | Phase 6 | Complete |
 | SESS-02 | Phase 6 | Complete |
-| ANLT-07 | Phase 7 | Pending |
-| ANLT-08 | Phase 7 | Pending |
+| ANLT-07 | Phase 7 | Complete (07-03) |
+| ANLT-08 | Phase 7 | Complete (07-03) |
 | ANLT-09 | Phase 7 | Complete |
 | SESS-03 | Phase 7 | Complete (07-02) |
 | SESS-04 | Phase 7 | Complete (07-02) |
 | CLI-03 | Phase 8 | Complete (08-01) |
-| PRSL-01 | Phase 8 | Pending |
+| PRSL-01 | Phase 8 | Complete (08-02, 08-03) |
 | DIST-01 | Phase 9 | Complete |
-| DIST-02 | Phase 9 | Pending |
+| DIST-02 | Phase 9 | Complete (09-02) |
 
 **Coverage:**
 - v1.1 requirements: 13 total
@@ -88,4 +88,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-28*
-*Last updated: 2026-03-01 after 07-02 execution — SESS-03 and SESS-04 fully complete; ANLT-08, ANLT-09 backend done, frontend plans 07-03/04 pending*
+*Last updated: 2026-03-02 — all v1.1 requirements marked complete per milestone audit; stale Pending statuses resolved for ANLT-07, ANLT-08, PRSL-01, DIST-02*

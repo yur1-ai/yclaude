@@ -21,6 +21,7 @@ decisions:
   - Token tooltip via render prop — tooltip HTML lives in consuming page, not in SortableTable
   - Row key uses array index i — rows have no stable identity key in API shape
   - Sort indicator only shows on active column — no indicator on inactive sortable columns
+requirements-completed: []
 metrics:
   duration: "~10 minutes"
   completed: "2026-03-01"

@@ -23,6 +23,7 @@ decisions:
   - ModelRow and ProjectRow extend Record<string, unknown> for SortableTable generic constraint
   - Tooltip formatter handles undefined value for TypeScript compatibility with recharts types
   - Projects % of total column uses key 'cwd' with sortable:false to avoid duplicate 'costUsd' key
+requirements-completed: [ANLT-04, ANLT-05]
 metrics:
   duration: "~10 minutes"
   completed: "2026-03-01"

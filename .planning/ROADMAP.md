@@ -191,6 +191,7 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 4. Cost Analytics Dashboard | v1.0 | 3/3 | Complete | 2026-02-28 |
 | 5. Model & Project Breakdowns | v1.1 | 3/3 | Complete | 2026-03-01 |
 | 6. Session Explorer | v1.1 | 3/3 | Complete | 2026-03-01 |
-| 7. Differentiator Features | 4/4 | Complete   | 2026-03-01 | - |
+| 7. Differentiator Features | v1.1 | 4/4 | Complete | 2026-03-01 |
 | 8. Dark Mode & Personality | v1.1 | 3/3 | Complete | 2026-03-01 |
-| 9. npm Distribution & CI/CD | v1.1 | Complete    | 2026-03-02 | 2026-03-01 |
+| 9. npm Distribution & CI/CD | v1.1 | 4/4 | Complete | 2026-03-01 |
+| 9.1. Cost Accuracy & Pricing Refactor | v1.1 | 0/4 | Pending | — |

@@ -19,6 +19,7 @@ key_files:
 decisions:
   - Single commit for both routes — both tasks modify same file and form one coherent unit
   - lastSegment extracted as named helper for clarity and testability
+requirements-completed: [ANLT-04, ANLT-05]
 metrics:
   duration: "~10 minutes"
   completed: "2026-03-01"
