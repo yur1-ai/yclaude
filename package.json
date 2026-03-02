@@ -11,9 +11,7 @@
   "bin": {
     "yclaude": "./dist/server/cli.js"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "npm run build:backend && npm run build:frontend",
     "build:backend": "tsup",
