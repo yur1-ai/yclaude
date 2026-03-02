@@ -58,6 +58,8 @@ describe('/api/v1/summary', () => {
       totalCost: 0,
       totalTokens: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
       eventCount: 0,
+      mainCostUsd: 0,
+      subagentCostUsd: 0,
     });
   });
 
