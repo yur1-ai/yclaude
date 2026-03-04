@@ -180,9 +180,9 @@ Target structure: extract to a separate `pricing-config.ts` (or `.json`) with:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 09.1-01-PLAN.md — Pricing refactor: tier-reference architecture with 7 named tier constants, PRICING_LAST_UPDATED/PRICING_SOURCE metadata exports, expanded pricing tests
-- [ ] 09.1-02-PLAN.md — Unknown model visibility: /api/v1/models unknownModels response field, API tests, Models page inline warning
-- [ ] 09.1-03-PLAN.md — Cost info tooltips: CostInfoTooltip component, StatCard labelSuffix prop, SortableTable Column.label widening, tooltip wiring on Overview/Models/Sessions
+- [x] 09.1-01-PLAN.md — Pricing refactor: tier-reference architecture with 7 named tier constants, PRICING_LAST_UPDATED/PRICING_SOURCE metadata exports, expanded pricing tests
+- [x] 09.1-02-PLAN.md — Unknown model visibility: /api/v1/models unknownModels response field, API tests, Models page inline warning
+- [x] 09.1-03-PLAN.md — Cost info tooltips: CostInfoTooltip component, StatCard labelSuffix prop, SortableTable Column.label widening, tooltip wiring on Overview/Models/Sessions
 
 ## Progress
 
@@ -201,4 +201,4 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 7. Differentiator Features | v1.1 | 4/4 | Complete | 2026-03-01 |
 | 8. Dark Mode & Personality | v1.1 | 3/3 | Complete | 2026-03-01 |
 | 9. npm Distribution & CI/CD | v1.1 | 4/4 | Complete | 2026-03-01 |
-| 9.1. Cost Accuracy & Pricing Refactor | v1.1 | 0/3 | In Progress | — |
+| 9.1. Cost Accuracy & Pricing Refactor | v1.1 | 3/3 | Complete | 2026-03-04 |
