@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ActivityHeatmap } from '../components/ActivityHeatmap';
 import { CacheEfficiencyCard } from '../components/CacheEfficiencyCard';
 import { CostBarChart } from '../components/CostBarChart';
+import { CostInfoTooltip } from '../components/CostInfoTooltip';
 import { DateRangePicker } from '../components/DateRangePicker';
 import { StatCard } from '../components/StatCard';
 import { TokenBreakdown } from '../components/TokenBreakdown';
@@ -76,13 +77,14 @@ export default function Overview() {
         <StatCard
           label="All-time est."
           value={allTimeValue}
+          labelSuffix={<CostInfoTooltip />}
           quip={
             !allTimePending && allTimeSummary
               ? (pickSpendQuip(allTimeSummary.totalCost) ?? undefined)
               : undefined
           }
         />
-        <StatCard label={periodLabel} value={periodValue}>
+        <StatCard label={periodLabel} value={periodValue} labelSuffix={<CostInfoTooltip />}>
           <TrendIndicator percent={trendPercent} />
         </StatCard>
       </div>

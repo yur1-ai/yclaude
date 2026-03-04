@@ -65,7 +65,11 @@ export default function Models() {
     },
     {
       key: 'costUsd',
-      label: <span className="inline-flex items-center gap-1">Cost <CostInfoTooltip /></span>,
+      label: (
+        <span className="inline-flex items-center gap-1">
+          Cost <CostInfoTooltip />
+        </span>
+      ),
       render: (row) => <span>${row.costUsd.toFixed(2)} est.</span>,
     },
     {
@@ -184,9 +188,10 @@ export default function Models() {
       </div>
       {data?.unknownModels && (
         <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 px-1">
-          &#9888; {data.unknownModels.sessionCount} session{data.unknownModels.sessionCount !== 1 ? 's' : ''} used
-          unrecognized model{data.unknownModels.models.length !== 1 ? 's' : ''} ({data.unknownModels.models.join(', ')})
-          &mdash; costs may be understated
+          &#9888; {data.unknownModels.sessionCount} session
+          {data.unknownModels.sessionCount !== 1 ? 's' : ''} used unrecognized model
+          {data.unknownModels.models.length !== 1 ? 's' : ''} (
+          {data.unknownModels.models.join(', ')}) &mdash; costs may be understated
         </p>
       )}
     </div>

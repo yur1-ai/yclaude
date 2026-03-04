@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { CostInfoTooltip } from '../components/CostInfoTooltip';
 import { DateRangePicker } from '../components/DateRangePicker';
 import { type Column, SortableTable } from '../components/SortableTable';
 import { SubagentBadge } from '../components/SubagentBadge';
@@ -51,7 +52,11 @@ const columns: Column<SessionRow>[] = [
   },
   {
     key: 'costUsd',
-    label: 'Cost',
+    label: (
+      <span className="inline-flex items-center gap-1">
+        Cost <CostInfoTooltip />
+      </span>
+    ),
     sortable: true,
     render: (row) => <span>${(row.costUsd as number).toFixed(2)}</span>,
   },

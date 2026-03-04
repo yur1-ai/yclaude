@@ -21,8 +21,8 @@ export function CostInfoTooltip() {
         className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block
                    rounded bg-slate-800 dark:bg-slate-700 text-white text-xs p-2 w-64 text-left z-10"
       >
-        Based on API token pricing. If you're on Claude Pro or Max, your actual
-        spend is your subscription fee -- not these numbers.
+        Based on API token pricing. If you're on Claude Pro or Max, your actual spend is your
+        subscription fee -- not these numbers.
       </span>
     </span>
   );
