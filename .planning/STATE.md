@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Analytics Completion + Distribution
 status: completed
-last_updated: "2026-03-04T14:25:40.016Z"
-last_activity: 2026-03-04 — 09.1-01 complete; pricing.ts refactored to 7-tier architecture with metadata exports
+last_updated: "2026-03-04T14:31:34.000Z"
+last_activity: 2026-03-04 — 09.1-03 complete; CostInfoTooltip on Overview, Models, Sessions pages
 progress:
   total_phases: 6
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 20
-  completed_plans: 18
+  completed_plans: 20
 ---
 
 # Project State
@@ -24,9 +24,9 @@ See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 ## Current Position
 
 Phase: 09.1-cost-accuracy-pricing-refactor
-Plan: 09.1-01 of 3 ✅ — complete
-Status: Plan 01 done, continuing to Plan 02
-Last activity: 2026-03-04 — 09.1-01 complete; pricing.ts refactored to 7-tier architecture with metadata exports
+Plan: 09.1-03 of 3 ✅ — complete (PHASE COMPLETE)
+Status: Phase 9.1 complete; all 3 plans executed
+Last activity: 2026-03-04 — 09.1-03 complete; CostInfoTooltip on Overview, Models, Sessions pages
 
 ## Accumulated Context
 
@@ -102,8 +102,16 @@ Last activity: 2026-03-04 — 09.1-01 complete; pricing.ts refactored to 7-tier 
 - Dynamic CLI version: createRequire('../../package.json') reads version field at runtime from bundled package.json path
 - Tier-reference pricing: 7 named const tier objects (TIER_OPUS, TIER_OPUS_PREMIUM, TIER_SONNET, TIER_HAIKU_45, TIER_HAIKU_35, TIER_HAIKU_3, TIER_SONNET_3) referenced by 19 model ID entries in MODEL_PRICING
 - PRICING_LAST_UPDATED and PRICING_SOURCE exported as module-level constants from pricing.ts -- machine-readable metadata
+- unknownModels field is null (not undefined) when no unknown models exist -- explicit signal to frontend
+- Unknown model aggregation reuses already date-filtered costs variable -- warning inherits date range filter automatically
+- Unknown model warning uses text-xs text-amber-600 below table (subtle, not yellow banner) -- per user preference
 - Published Anthropic cache prices for claude-3-haiku retained as-is (0.3, 0.03) despite not matching exact multiplier formulas -- correctness over formulaic consistency
 - TIER_SONNET_3 kept separate from TIER_SONNET despite identical values -- generational clarity for deprecated model
+- CostInfoTooltip uses inline SVG info-circle icon (w-3.5 h-3.5), not Unicode -- consistent cross-browser rendering
+- Tooltip width w-64 with text-left wrapping -- tooltip text too long for whitespace-nowrap
+- Models donut chart: "Spend by model" heading with tooltip added above chart -- SVG `<text>` cannot contain React components
+- StatCard.labelSuffix as optional ReactNode -- non-breaking composable slot for icons/badges after label text
+- SortableTable Column.label widened from string to React.ReactNode -- safe because label only used in JSX rendering, never for string operations or React keys
 
 ### Open Blockers
 
@@ -111,4 +119,4 @@ None
 
 ### Pending Todos
 
-- **Phase 9.1 Plans 02-03**: API augmentation for unknown models, info tooltips on cost headings
+None - Phase 9.1 complete
