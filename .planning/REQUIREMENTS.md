@@ -39,9 +39,9 @@ Requirements for the Analytics Completion + Distribution milestone (Phases 5–9
 ### Cost Accuracy & Pricing (Phase 9.1)
 
 - [ ] **9.1-01**: Cost values are labelled in a way that accurately communicates what they represent for both API and Pro/Max users — info tooltips on section headings explain pricing basis; no silent overstatement of spend
-- [ ] **9.1-02**: pricing.ts is split into a config layer (named tier definitions) and a lookup layer (model ID to tier), with exported PRICING_LAST_UPDATED and PRICING_SOURCE metadata constants
+- [x] **9.1-02**: pricing.ts is split into a config layer (named tier definitions) and a lookup layer (model ID to tier), with exported PRICING_LAST_UPDATED and PRICING_SOURCE metadata constants
 - [ ] **9.1-03**: Unknown model IDs produce a visible warning on the Models page listing unrecognized model names and affected session count — not silent $0
-- [ ] **9.1-04**: All existing 137+ tests continue to pass; new tests cover pricing config structure (tier deduplication, cache multiplier invariants, metadata exports) and /api/v1/models endpoint (including unknown model scenarios)
+- [x] **9.1-04**: All existing 137+ tests continue to pass; new tests cover pricing config structure (tier deduplication, cache multiplier invariants, metadata exports) and /api/v1/models endpoint (including unknown model scenarios)
 
 ## v2 Requirements
 

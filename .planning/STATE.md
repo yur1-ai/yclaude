@@ -2,13 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Analytics Completion + Distribution
-status: unknown
-last_updated: "2026-03-02T01:59:28.747Z"
+status: completed
+last_updated: "2026-03-04T14:25:40.016Z"
+last_activity: 2026-03-04 — 09.1-01 complete; pricing.ts refactored to 7-tier architecture with metadata exports
 progress:
-  total_phases: 9
-  completed_phases: 9
-  total_plans: 28
-  completed_plans: 28
+  total_phases: 6
+  completed_phases: 5
+  total_plans: 20
+  completed_plans: 18
 ---
 
 # Project State
@@ -18,14 +19,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 
 **Core value:** Give developers full visibility into their AI coding spend — locally first, with no friction.
-**Current focus:** v1.1 COMPLETE — yclaude 0.1.7 live on npmjs.com
+**Current focus:** Phase 9.1 — Cost accuracy & pricing refactor
 
 ## Current Position
 
-Phase: 09-npm-distribution-ci-cd
-Plan: 09-04 ✅ — complete
-Status: Phase 9 COMPLETE — all 4 plans done
-Last activity: 2026-03-01 — 09-04 complete; yclaude 0.1.7 live on npmjs.com via GitHub Actions OIDC Trusted Publishing with provenance attestation
+Phase: 09.1-cost-accuracy-pricing-refactor
+Plan: 09.1-01 of 3 ✅ — complete
+Status: Plan 01 done, continuing to Plan 02
+Last activity: 2026-03-04 — 09.1-01 complete; pricing.ts refactored to 7-tier architecture with metadata exports
 
 ## Accumulated Context
 
@@ -99,14 +100,15 @@ Last activity: 2026-03-01 — 09-04 complete; yclaude 0.1.7 live on npmjs.com vi
 - noArrayIndexKey rule disabled globally in biome.json — rows have no stable identity key (existing SortableTable decision); inline biome-ignore ineffective for JSX attribute-level rules in Biome 1.9.0
 - dist/ is unified build output directory — web-dist/ is obsolete; dist/web/ for frontend assets, dist/server/ for server JS
 - Dynamic CLI version: createRequire('../../package.json') reads version field at runtime from bundled package.json path
+- Tier-reference pricing: 7 named const tier objects (TIER_OPUS, TIER_OPUS_PREMIUM, TIER_SONNET, TIER_HAIKU_45, TIER_HAIKU_35, TIER_HAIKU_3, TIER_SONNET_3) referenced by 19 model ID entries in MODEL_PRICING
+- PRICING_LAST_UPDATED and PRICING_SOURCE exported as module-level constants from pricing.ts -- machine-readable metadata
+- Published Anthropic cache prices for claude-3-haiku retained as-is (0.3, 0.03) despite not matching exact multiplier formulas -- correctness over formulaic consistency
+- TIER_SONNET_3 kept separate from TIER_SONNET despite identical values -- generational clarity for deprecated model
 
-### Open Blockers for v1.1
+### Open Blockers
 
-None — all blockers resolved. v1.1 is complete.
+None
 
 ### Pending Todos
 
-- **Phase 9.1 (deferred)**: Cost accuracy for Pro/Max users — full spec in ROADMAP.md Phase 9.1
-  section. Tldr: current "est." numbers use API pay-per-token pricing and overstate spend for
-  Pro/Max subscribers. Needs investigation of JSONL fields, relabelling strategy, and
-  pricing.ts refactor (extract tier constants from model-ID map).
+- **Phase 9.1 Plans 02-03**: API augmentation for unknown models, info tooltips on cost headings
