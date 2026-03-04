@@ -76,6 +76,10 @@ describe('Pricing metadata', () => {
     expect(PRICING_LAST_UPDATED).toBe('2026-02-28');
   });
 
+  it('PRICING_LAST_UPDATED matches YYYY-MM-DD format', () => {
+    expect(PRICING_LAST_UPDATED).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
   it('exports PRICING_SOURCE as a non-empty URL string', () => {
     expect(typeof PRICING_SOURCE).toBe('string');
     expect(PRICING_SOURCE.length).toBeGreaterThan(0);
@@ -83,13 +87,28 @@ describe('Pricing metadata', () => {
   });
 });
 
-describe('Tier reference identity', () => {
+describe('Tier reference deduplication', () => {
   it('claude-opus-4-6 and claude-opus-4-5 share the same tier object', () => {
     expect(MODEL_PRICING['claude-opus-4-6']).toBe(MODEL_PRICING['claude-opus-4-5']);
   });
 
   it('claude-opus-4-1 and claude-opus-4-0 share the same tier object', () => {
     expect(MODEL_PRICING['claude-opus-4-1']).toBe(MODEL_PRICING['claude-opus-4-0']);
+  });
+
+  it('dated aliases share identity with short aliases', () => {
+    // Opus 4.5
+    expect(MODEL_PRICING['claude-opus-4-5']).toBe(MODEL_PRICING['claude-opus-4-5-20251101']);
+    // Haiku 4.5
+    expect(MODEL_PRICING['claude-haiku-4-5']).toBe(MODEL_PRICING['claude-haiku-4-5-20251001']);
+    // Sonnet 4.5
+    expect(MODEL_PRICING['claude-sonnet-4-5']).toBe(MODEL_PRICING['claude-sonnet-4-5-20250929']);
+    // Opus 4.1
+    expect(MODEL_PRICING['claude-opus-4-1']).toBe(MODEL_PRICING['claude-opus-4-1-20250805']);
+    // Sonnet 4.0
+    expect(MODEL_PRICING['claude-sonnet-4-0']).toBe(MODEL_PRICING['claude-sonnet-4-20250514']);
+    // Opus 4.0
+    expect(MODEL_PRICING['claude-opus-4-0']).toBe(MODEL_PRICING['claude-opus-4-20250514']);
   });
 
   it('all 19 existing model IDs still present with correct numeric values', () => {
