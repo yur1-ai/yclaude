@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MODEL_PRICING } from '../pricing.js';
+import { MODEL_PRICING, PRICING_LAST_UPDATED, PRICING_SOURCE } from '../pricing.js';
 
 describe('MODEL_PRICING constants', () => {
   it('has an entry for claude-opus-4-6 with correct pricing', () => {
@@ -67,6 +67,82 @@ describe('MODEL_PRICING constants', () => {
         (MODEL_PRICING as Record<string, unknown>)[model],
         `Missing model: ${model}`,
       ).toBeDefined();
+    }
+  });
+});
+
+describe('Pricing metadata', () => {
+  it('exports PRICING_LAST_UPDATED as 2026-02-28', () => {
+    expect(PRICING_LAST_UPDATED).toBe('2026-02-28');
+  });
+
+  it('exports PRICING_SOURCE as a non-empty URL string', () => {
+    expect(typeof PRICING_SOURCE).toBe('string');
+    expect(PRICING_SOURCE.length).toBeGreaterThan(0);
+    expect(PRICING_SOURCE).toMatch(/^https:\/\//);
+  });
+});
+
+describe('Tier reference identity', () => {
+  it('claude-opus-4-6 and claude-opus-4-5 share the same tier object', () => {
+    expect(MODEL_PRICING['claude-opus-4-6']).toBe(MODEL_PRICING['claude-opus-4-5']);
+  });
+
+  it('claude-opus-4-1 and claude-opus-4-0 share the same tier object', () => {
+    expect(MODEL_PRICING['claude-opus-4-1']).toBe(MODEL_PRICING['claude-opus-4-0']);
+  });
+
+  it('all 19 existing model IDs still present with correct numeric values', () => {
+    // Opus tier ($5/$25)
+    expect(MODEL_PRICING['claude-opus-4-6'].inputPerMTok).toBe(5.0);
+    expect(MODEL_PRICING['claude-opus-4-6'].outputPerMTok).toBe(25.0);
+    expect(MODEL_PRICING['claude-opus-4-5'].inputPerMTok).toBe(5.0);
+    expect(MODEL_PRICING['claude-opus-4-5-20251101'].inputPerMTok).toBe(5.0);
+
+    // Opus premium tier ($15/$75)
+    expect(MODEL_PRICING['claude-opus-4-1'].inputPerMTok).toBe(15.0);
+    expect(MODEL_PRICING['claude-opus-4-1-20250805'].inputPerMTok).toBe(15.0);
+    expect(MODEL_PRICING['claude-opus-4-0'].inputPerMTok).toBe(15.0);
+    expect(MODEL_PRICING['claude-opus-4-20250514'].inputPerMTok).toBe(15.0);
+    expect(MODEL_PRICING['claude-3-opus-20240229'].inputPerMTok).toBe(15.0);
+
+    // Sonnet tier ($3/$15)
+    expect(MODEL_PRICING['claude-sonnet-4-6'].inputPerMTok).toBe(3.0);
+    expect(MODEL_PRICING['claude-sonnet-4-5'].inputPerMTok).toBe(3.0);
+    expect(MODEL_PRICING['claude-sonnet-4-5-20250929'].inputPerMTok).toBe(3.0);
+    expect(MODEL_PRICING['claude-sonnet-4-0'].inputPerMTok).toBe(3.0);
+    expect(MODEL_PRICING['claude-sonnet-4-20250514'].inputPerMTok).toBe(3.0);
+    expect(MODEL_PRICING['claude-sonnet-3-7-20250219'].inputPerMTok).toBe(3.0);
+
+    // Sonnet 3 tier ($3/$15)
+    expect(MODEL_PRICING['claude-3-sonnet-20240229'].inputPerMTok).toBe(3.0);
+
+    // Haiku tiers
+    expect(MODEL_PRICING['claude-haiku-4-5'].inputPerMTok).toBe(1.0);
+    expect(MODEL_PRICING['claude-haiku-4-5-20251001'].inputPerMTok).toBe(1.0);
+    expect(MODEL_PRICING['claude-3-5-haiku-20241022'].inputPerMTok).toBe(0.8);
+    expect(MODEL_PRICING['claude-3-haiku-20240307'].inputPerMTok).toBe(0.25);
+  });
+});
+
+describe('Cache multiplier invariant (all tiers)', () => {
+  it('every model entry satisfies 5m~1.25x, 1h~2.0x, read~0.1x of inputPerMTok', () => {
+    // Precision 1 (1 decimal place) accommodates known rounding in published
+    // Anthropic pricing for older models (e.g. claude-3-haiku: 0.25*1.25=0.3125
+    // but published as 0.3). All current-gen tiers match exactly at precision 5.
+    for (const [_model, pricing] of Object.entries(MODEL_PRICING)) {
+      expect(pricing.cacheWrite5mPerMTok).toBeCloseTo(
+        pricing.inputPerMTok * 1.25,
+        1,
+      );
+      expect(pricing.cacheWrite1hPerMTok).toBeCloseTo(
+        pricing.inputPerMTok * 2.0,
+        1,
+      );
+      expect(pricing.cacheReadPerMTok).toBeCloseTo(
+        pricing.inputPerMTok * 0.1,
+        1,
+      );
     }
   });
 });
