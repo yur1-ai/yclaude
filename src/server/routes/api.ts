@@ -253,7 +253,23 @@ export function apiRoutes(state: AppState): Hono {
 
     const totalCost = rows.reduce((s, r) => s + r.costUsd, 0);
 
-    return c.json({ rows, totalCost });
+    // Collect unknown model IDs and their distinct session count
+    const unknownModelIds = new Set<string>();
+    const unknownSessionIds = new Set<string>();
+    for (const e of costs) {
+      if (e.unknownModel && e.model) {
+        unknownModelIds.add(e.model);
+        unknownSessionIds.add(e.sessionId);
+      }
+    }
+
+    return c.json({
+      rows,
+      totalCost,
+      unknownModels: unknownModelIds.size > 0
+        ? { models: [...unknownModelIds].sort(), sessionCount: unknownSessionIds.size }
+        : null,
+    });
   });
 
   // GET /api/v1/projects — aggregates cost data grouped by project (cwd).
