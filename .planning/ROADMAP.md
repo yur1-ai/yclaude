@@ -7,8 +7,8 @@ yclaude delivers a local-first analytics dashboard for Claude Code usage, distri
 ## Milestones
 
 - ✅ **v1.0 Local MVP** — Phases 1–4 (shipped 2026-02-28)
-- 🚧 **v1.1 Analytics Completion + Distribution** — Phases 5–9 (in progress)
-- 📋 **v2.0 Cloud & Teams** — Phases 10+ (planned)
+- 🚧 **v1.1 Analytics Completion + Distribution** — Phases 5–10 (in progress)
+- 📋 **v2.0 Cloud & Teams** — Phases 11+ (planned)
 
 ## Phases
 
@@ -35,6 +35,9 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 - [x] **Phase 7: Differentiator Features** - Cache efficiency score, activity heatmap, sidechain/subagent analysis, git branch filtering, 24h/hourly chart window (completed 2026-03-01)
 - [x] **Phase 8: Dark Mode & Personality** - System-aware dark mode toggle and humorous personality copy woven throughout all views (completed 2026-03-01)
 - [x] **Phase 9: npm Distribution & CI/CD** - Manual npm publish (DIST-01) then automated GitHub Actions pipeline on tag push (DIST-02) — completed 2026-03-01
+- [x] **Phase 9.1: Cost Accuracy & Pricing Refactor** - Tier-reference pricing, info tooltips, unknown model warning — completed 2026-03-04
+- [ ] **Phase 9.2: Tech Debt Cleanup & Date Range Presets** - Wire unused exports, add 24h/48h presets, remove dead code
+- [ ] **Phase 10: Conversations Viewer** - Chats tab with `--show-messages` opt-in gating for browsing conversation text (CHAT-01)
 
 ## Phase Details
 
@@ -184,6 +187,69 @@ Plans:
 - [x] 09.1-02-PLAN.md — Unknown model visibility: /api/v1/models unknownModels response field, API tests, Models page inline warning
 - [x] 09.1-03-PLAN.md — Cost info tooltips: CostInfoTooltip component, StatCard labelSuffix prop, SortableTable Column.label widening, tooltip wiring on Overview/Models/Sessions
 
+### Phase 9.2: Tech Debt Cleanup & Date Range Presets
+**Type**: INSERTED — tech debt closure before milestone completion
+**Goal**: Close all non-critical tech debt from the v1.1 milestone audit and add 24h/48h date range presets for quick access to hourly chart view
+**Depends on**: Phase 9.1
+**Requirements**: 9.2-01, 9.2-02, 9.2-03, 9.2-04, 9.2-05
+
+#### Items
+
+1. **Wire PRICING_LAST_UPDATED / PRICING_SOURCE into UI** (9.2-01)
+   - CostInfoTooltip currently hardcodes its tooltip text — wire in the actual `PRICING_LAST_UPDATED` and `PRICING_SOURCE` values from `pricing.ts` so users see when pricing data was last verified
+   - Requires: expose metadata via a new API route or include in existing `/api/v1/models` response
+
+2. **Wire usePriorSummary into Overview period-cost trend** (9.2-02)
+   - The Overview page's "Period Cost" StatCard trend is permanently `null`
+   - `usePriorSummary` hook exists and already powers CacheEfficiencyCard — wire it to the Overview cost StatCard for period-over-period trend (e.g., "+12% vs prior 7d")
+
+3. **Add 24h/48h presets to DateRangePicker** (9.2-03)
+   - Current presets: `7d | 30d | 90d | all | custom`
+   - Add `24h` and `48h` presets that auto-select the corresponding date range, enabling the hourly bucket button on the Overview chart
+   - Update `Preset` type in `useDateRangeStore.ts` and `DateRangePicker.tsx`
+
+4. **Remove /api/v1/events stub** (9.2-04)
+   - `api.ts:335` returns `{ events: [] }` with no consumer — dead code
+
+5. **Remove QUIPS.loading_generic** (9.2-05)
+   - Defined in `quips.ts` but never referenced in any component — dead code
+
+#### Success Criteria
+1. CostInfoTooltip shows the actual pricing last-updated date and source URL from `pricing.ts` metadata
+2. Overview "Period Cost" StatCard shows a trend percentage (up/down vs prior period) instead of null
+3. DateRangePicker offers "24h" and "48h" presets; selecting "24h" enables the Hourly button on the cost chart
+4. `/api/v1/events` route is removed; no test or consumer references it
+5. `QUIPS.loading_generic` is removed from `quips.ts`
+
+**Plans**: 2 plans
+
+Plans:
+- [ ] 09.2-01-PLAN.md — Pricing metadata wiring: /api/v1/pricing-meta endpoint, usePricingMeta hook, dynamic CostInfoTooltip, dead code removal (/events stub + loading_generic quip)
+- [ ] 09.2-02-PLAN.md — Date range presets and period cost trend: 24h/48h presets in DateRangePicker, usePriorSummary wired into Overview Period Cost StatCard
+
+### Phase 10: Conversations Viewer
+**Goal**: Users can optionally browse their conversation text in a dedicated Chats tab, gated behind the `--show-messages` CLI flag to preserve privacy by default
+**Depends on**: Phase 9.2
+**Requirements**: CHAT-01
+
+#### Background
+yclaude's core privacy guarantee is that no conversation text appears in the dashboard. However, some users want to review their chat history alongside cost data. Phase 10 adds a Chats tab that displays parsed conversation text — but ONLY when the user explicitly opts in via `--show-messages` on the CLI. Without this flag, the Chats tab is hidden entirely.
+
+#### Design Constraints
+- **Privacy gate**: The `--show-messages` flag must be the ONLY way to enable chat display. No localStorage toggle, no URL hack — server must control whether message content is served.
+- **No content in existing views**: Session Explorer (Phase 6) must remain metadata-only regardless of the `--show-messages` flag. Chats is a separate page.
+- **Data source**: Conversation text lives in the same `~/.claude/projects/**/*.jsonl` files — `user` and `assistant` events contain message content. The parser already reads these but the server currently strips content before sending to the frontend.
+
+#### Success Criteria
+1. A `--show-messages` CLI flag gates the entire Chats feature — without it, the Chats nav item and route are absent
+2. The Chats page lists conversations with project name, timestamp, and a preview snippet (first user message, truncated)
+3. Clicking a conversation shows the full message thread with user/assistant turns rendered as a chat interface
+4. Markdown in assistant messages is rendered (code blocks, lists, inline code at minimum)
+5. The existing Session Explorer pages remain metadata-only regardless of `--show-messages`
+6. Server-side enforcement: the `/api/v1/chats` endpoint returns 403 if `--show-messages` was not passed
+
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
@@ -202,3 +268,5 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 8. Dark Mode & Personality | v1.1 | 3/3 | Complete | 2026-03-01 |
 | 9. npm Distribution & CI/CD | v1.1 | 4/4 | Complete | 2026-03-01 |
 | 9.1. Cost Accuracy & Pricing Refactor | v1.1 | 3/3 | Complete | 2026-03-04 |
+| 9.2. Tech Debt Cleanup & Date Range Presets | v1.1 | 0/2 | Planned | — |
+| 10. Conversations Viewer | v1.1 | 0/? | Planned | — |
