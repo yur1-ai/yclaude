@@ -256,3 +256,109 @@ describe('/api/v1/cost-over-time', () => {
     expect(body).toEqual({ error: "Invalid 'from' date" });
   });
 });
+
+type ModelsBody = {
+  rows: Array<{
+    model: string;
+    costUsd: number;
+    eventCount: number;
+    tokens: { input: number; output: number; cacheCreation: number; cacheRead: number };
+  }>;
+  totalCost: number;
+  unknownModels: { models: string[]; sessionCount: number } | null;
+};
+
+function makeCostEventWithModel(
+  costUsd: number,
+  model: string,
+  opts?: { unknownModel?: true; timestamp?: string; sessionId?: string },
+): CostEvent {
+  const base = makeCostEvent(costUsd, opts?.timestamp);
+  return {
+    ...base,
+    model,
+    ...(opts?.sessionId ? { sessionId: opts.sessionId } : {}),
+    ...(opts?.unknownModel ? { unknownModel: true } : {}),
+  };
+}
+
+describe('/api/v1/models', () => {
+  it('empty state returns rows: [], totalCost: 0, unknownModels: null', async () => {
+    const state: AppState = { events: [], costs: [] };
+    const app = createApp(state);
+    const res = await app.request('/api/v1/models');
+    const body = (await res.json()) as ModelsBody;
+    expect(body).toEqual({ rows: [], totalCost: 0, unknownModels: null });
+  });
+
+  it('2 known-model events returns unknownModels: null', async () => {
+    const costs = [
+      makeCostEventWithModel(0.01, 'claude-sonnet-4-20250514'),
+      makeCostEventWithModel(0.02, 'claude-sonnet-4-20250514'),
+    ];
+    const state: AppState = { events: [], costs };
+    const app = createApp(state);
+    const res = await app.request('/api/v1/models');
+    const body = (await res.json()) as ModelsBody;
+    expect(body.unknownModels).toBeNull();
+    expect(body.rows).toHaveLength(1);
+  });
+
+  it('1 unknown-model event returns unknownModels with model and session count', async () => {
+    const costs = [
+      makeCostEventWithModel(0.01, 'fake-model', { unknownModel: true }),
+    ];
+    const state: AppState = { events: [], costs };
+    const app = createApp(state);
+    const res = await app.request('/api/v1/models');
+    const body = (await res.json()) as ModelsBody;
+    expect(body.unknownModels).toEqual({
+      models: ['fake-model'],
+      sessionCount: 1,
+    });
+  });
+
+  it('3 events (2 unknown same model, 1 known) returns correct unknownModels', async () => {
+    const costs = [
+      makeCostEventWithModel(0.01, 'fake-model', { unknownModel: true, sessionId: 'sess-a' }),
+      makeCostEventWithModel(0.02, 'fake-model', { unknownModel: true, sessionId: 'sess-b' }),
+      makeCostEventWithModel(0.03, 'claude-sonnet-4-20250514'),
+    ];
+    const state: AppState = { events: [], costs };
+    const app = createApp(state);
+    const res = await app.request('/api/v1/models');
+    const body = (await res.json()) as ModelsBody;
+    expect(body.unknownModels).toEqual({
+      models: ['fake-model'],
+      sessionCount: 2,
+    });
+  });
+
+  it('date filter excludes unknown models outside range (unknownModels: null)', async () => {
+    const costs = [
+      makeCostEventWithModel(0.01, 'claude-sonnet-4-20250514', { timestamp: '2024-01-05T00:00:00Z' }),
+      makeCostEventWithModel(0.02, 'fake-model', { unknownModel: true, timestamp: '2024-01-01T00:00:00Z' }),
+    ];
+    const state: AppState = { events: [], costs };
+    const app = createApp(state);
+    // Filter to only include 2024-01-04 onward — excludes the unknown model event
+    const res = await app.request('/api/v1/models?from=2024-01-04T00:00:00Z');
+    const body = (await res.json()) as ModelsBody;
+    expect(body.unknownModels).toBeNull();
+    expect(body.rows).toHaveLength(1);
+  });
+
+  it('unknownModels.models array is sorted alphabetically', async () => {
+    const costs = [
+      makeCostEventWithModel(0.01, 'zebra-model', { unknownModel: true }),
+      makeCostEventWithModel(0.02, 'alpha-model', { unknownModel: true }),
+      makeCostEventWithModel(0.03, 'mid-model', { unknownModel: true }),
+    ];
+    const state: AppState = { events: [], costs };
+    const app = createApp(state);
+    const res = await app.request('/api/v1/models');
+    const body = (await res.json()) as ModelsBody;
+    expect(body.unknownModels).not.toBeNull();
+    expect(body.unknownModels?.models).toEqual(['alpha-model', 'mid-model', 'zebra-model']);
+  });
+});
