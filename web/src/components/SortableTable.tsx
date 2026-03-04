@@ -4,7 +4,7 @@ type SortDir = 'asc' | 'desc';
 
 export interface Column<T> {
   key: keyof T;
-  label: string;
+  label: React.ReactNode;
   sortable?: boolean;
   render?: (row: T) => React.ReactNode;
 }
