@@ -11,6 +11,7 @@ export interface ModelRow extends Record<string, unknown> {
 export interface ModelsData {
   rows: ModelRow[];
   totalCost: number;
+  unknownModels?: { models: string[]; sessionCount: number } | null;
 }
 
 export function useModels() {
