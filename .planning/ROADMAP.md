@@ -123,7 +123,7 @@ Plans:
 **Type**: INSERTED — gap closure after Phase 9
 **Goal**: Cost estimates reflect reality for Pro/Max subscribers; pricing data is maintainable and separated from engine code
 **Depends on**: Phase 9
-**Requirements**: TBD (new req IDs to be assigned during planning)
+**Requirements**: 9.1-01, 9.1-02, 9.1-03, 9.1-04
 
 #### Background
 Current cost display is labelled "est." but the estimates are based on **API pay-per-token pricing**
@@ -177,6 +177,13 @@ Target structure: extract to a separate `pricing-config.ts` (or `.json`) with:
 3. Unknown model IDs produce a visible warning in the dashboard (not silent $0)
 4. All existing 137+ tests continue to pass; new tests cover the pricing config structure
 
+**Plans**: 3 plans
+
+Plans:
+- [ ] 09.1-01-PLAN.md — Pricing refactor: tier-reference architecture with 7 named tier constants, PRICING_LAST_UPDATED/PRICING_SOURCE metadata exports, expanded pricing tests
+- [ ] 09.1-02-PLAN.md — Unknown model visibility: /api/v1/models unknownModels response field, API tests, Models page inline warning
+- [ ] 09.1-03-PLAN.md — Cost info tooltips: CostInfoTooltip component, StatCard labelSuffix prop, SortableTable Column.label widening, tooltip wiring on Overview/Models/Sessions
+
 ## Progress
 
 **Execution Order:**
@@ -194,4 +201,4 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 7. Differentiator Features | v1.1 | 4/4 | Complete | 2026-03-01 |
 | 8. Dark Mode & Personality | v1.1 | 3/3 | Complete | 2026-03-01 |
 | 9. npm Distribution & CI/CD | v1.1 | 4/4 | Complete | 2026-03-01 |
-| 9.1. Cost Accuracy & Pricing Refactor | v1.1 | 0/4 | Pending | — |
+| 9.1. Cost Accuracy & Pricing Refactor | v1.1 | 0/3 | In Progress | — |

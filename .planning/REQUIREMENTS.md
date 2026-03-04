@@ -36,6 +36,13 @@ Requirements for the Analytics Completion + Distribution milestone (Phases 5–9
 - [x] **DIST-01**: User (developer) can publish yclaude to npm manually: pre-built web assets bundled, no source maps, correct `main`/`bin`/`files` fields, `.npmignore` excluding dev artifacts, `yclaude` name confirmed available, polished README with install instructions and feature screenshots live on npmjs.com
 - [x] **DIST-02**: Developer can push a git tag and have GitHub Actions automatically run lint, typecheck, tests, build, and `npm publish` — no manual publish steps required for future releases
 
+### Cost Accuracy & Pricing (Phase 9.1)
+
+- [ ] **9.1-01**: Cost values are labelled in a way that accurately communicates what they represent for both API and Pro/Max users — info tooltips on section headings explain pricing basis; no silent overstatement of spend
+- [ ] **9.1-02**: pricing.ts is split into a config layer (named tier definitions) and a lookup layer (model ID to tier), with exported PRICING_LAST_UPDATED and PRICING_SOURCE metadata constants
+- [ ] **9.1-03**: Unknown model IDs produce a visible warning on the Models page listing unrecognized model names and affected session count — not silent $0
+- [ ] **9.1-04**: All existing 137+ tests continue to pass; new tests cover pricing config structure (tier deduplication, cache multiplier invariants, metadata exports) and /api/v1/models endpoint (including unknown model scenarios)
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -80,12 +87,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRSL-01 | Phase 8 | Complete (08-02, 08-03) |
 | DIST-01 | Phase 9 | Complete |
 | DIST-02 | Phase 9 | Complete (09-02) |
+| 9.1-01 | Phase 9.1 | Pending (09.1-03) |
+| 9.1-02 | Phase 9.1 | Pending (09.1-01) |
+| 9.1-03 | Phase 9.1 | Pending (09.1-02) |
+| 9.1-04 | Phase 9.1 | Pending (09.1-01, 09.1-02) |
 
 **Coverage:**
 - v1.1 requirements: 13 total
 - Mapped to phases: 13
-- Unmapped: 0 ✓
+- Unmapped: 0
+- Phase 9.1 requirements: 4 total (inserted post-milestone)
+- Mapped: 4
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-28*
-*Last updated: 2026-03-02 — all v1.1 requirements marked complete per milestone audit; stale Pending statuses resolved for ANLT-07, ANLT-08, PRSL-01, DIST-02*
+*Last updated: 2026-03-04 — added Phase 9.1 cost accuracy requirements (9.1-01 through 9.1-04)*
