@@ -1,6 +1,139 @@
 import { Hono } from 'hono';
 import { PRICING_LAST_UPDATED, PRICING_SOURCE } from '../../cost/pricing.js';
+import type { NormalizedEvent } from '../../parser/types.js';
 import type { AppState } from '../server.js';
+
+// -------------------------
+// Content extraction helpers for /chats endpoints
+// -------------------------
+
+interface ContentBlock {
+  type: 'text' | 'tool_use' | 'tool_result';
+  text?: string;
+  toolName?: string;
+  toolInput?: Record<string, unknown>;
+  toolId?: string;
+  toolUseId?: string;
+  resultContent?: string;
+  isError?: boolean;
+}
+
+/**
+ * Extracts structured content blocks from a raw message object.
+ * Filters out 'thinking' blocks. Truncates tool_result content at maxLen chars.
+ */
+function extractContentBlocks(
+  message: Record<string, unknown>,
+  maxToolResultLen = 10000,
+): ContentBlock[] {
+  const content = message.content;
+  if (typeof content === 'string') {
+    return [{ type: 'text', text: content }];
+  }
+  if (!Array.isArray(content)) return [];
+
+  const blocks: ContentBlock[] = [];
+  for (const block of content) {
+    if (typeof block !== 'object' || block === null) continue;
+    const b = block as Record<string, unknown>;
+    const bType = b.type as string;
+    if (bType === 'text') {
+      blocks.push({ type: 'text', text: String(b.text ?? '') });
+    } else if (bType === 'tool_use') {
+      blocks.push({
+        type: 'tool_use',
+        toolName: String(b.name ?? ''),
+        toolInput: (b.input as Record<string, unknown>) ?? {},
+        toolId: String(b.id ?? ''),
+      });
+    } else if (bType === 'tool_result') {
+      const raw = b.content;
+      let resultStr = '';
+      if (typeof raw === 'string') {
+        resultStr = raw;
+      } else if (Array.isArray(raw)) {
+        resultStr = raw
+          .filter(
+            (r: unknown) =>
+              typeof r === 'object' && r !== null && (r as Record<string, unknown>).type === 'text',
+          )
+          .map((r: unknown) => String((r as Record<string, unknown>).text ?? ''))
+          .join('\n');
+      }
+      blocks.push({
+        type: 'tool_result',
+        toolUseId: String(b.tool_use_id ?? ''),
+        resultContent: resultStr.length > maxToolResultLen
+          ? resultStr.slice(0, maxToolResultLen)
+          : resultStr,
+        isError: b.is_error === true,
+      });
+    }
+    // 'thinking' blocks are intentionally skipped
+  }
+  return blocks;
+}
+
+/**
+ * Extracts the first user message text from a list of events.
+ * Returns both truncated (~80 chars) and full versions.
+ */
+function extractFirstUserMessage(events: NormalizedEvent[]): { truncated: string; full: string } {
+  for (const e of events) {
+    if (e.type !== 'user') continue;
+    const msg = (e as Record<string, unknown>).message;
+    if (!msg || typeof msg !== 'object') continue;
+    const m = msg as Record<string, unknown>;
+    let text = '';
+    if (typeof m.content === 'string') {
+      text = m.content;
+    } else if (Array.isArray(m.content)) {
+      for (const block of m.content) {
+        if (
+          typeof block === 'object' &&
+          block !== null &&
+          (block as Record<string, unknown>).type === 'text'
+        ) {
+          text = String((block as Record<string, unknown>).text ?? '');
+          break;
+        }
+      }
+    }
+    if (text) {
+      return {
+        truncated: text.length > 80 ? `${text.slice(0, 80)}...` : text,
+        full: text,
+      };
+    }
+  }
+  return { truncated: '', full: '' };
+}
+
+/**
+ * Concatenates all text content from all events for full-text search matching.
+ */
+function getTextContent(events: NormalizedEvent[]): string {
+  const parts: string[] = [];
+  for (const e of events) {
+    const msg = (e as Record<string, unknown>).message;
+    if (!msg || typeof msg !== 'object') continue;
+    const m = msg as Record<string, unknown>;
+    if (typeof m.content === 'string') {
+      parts.push(m.content);
+    } else if (Array.isArray(m.content)) {
+      for (const block of m.content) {
+        if (
+          typeof block === 'object' &&
+          block !== null &&
+          (block as Record<string, unknown>).type === 'text'
+        ) {
+          parts.push(String((block as Record<string, unknown>).text ?? ''));
+        }
+      }
+    }
+  }
+  return parts.join(' ');
+}
 
 /**
  * Parses an optional date string from query params.
@@ -666,6 +799,231 @@ export function apiRoutes(state: AppState): Hono {
     };
 
     return c.json({ summary, turns });
+  });
+
+  // -------------------------
+  // Chats endpoints — gated behind showMessages flag
+  // -------------------------
+
+  const CHATS_PAGE_SIZE = 50;
+  const CHATS_403_MSG =
+    'Conversation viewing is disabled. Start with --show-messages to enable.';
+
+  // GET /api/v1/chats — paginated chat list with text search.
+  app.get('/chats', (c) => {
+    if (!state.showMessages || !state.rawEvents) {
+      return c.json({ error: CHATS_403_MSG }, 403);
+    }
+
+    const fromStr = c.req.query('from');
+    const toStr = c.req.query('to');
+    const projectFilter = c.req.query('project') ?? null;
+    const searchQuery = c.req.query('search') ?? null;
+    const pageParam = Number.parseInt(c.req.query('page') ?? '1', 10);
+    const page = Math.max(1, Number.isNaN(pageParam) ? 1 : pageParam);
+
+    const from = parseDate(fromStr);
+    const to = parseDate(toStr);
+
+    if (from === 'invalid') return c.json({ error: "Invalid 'from' date" }, 400);
+    if (to === 'invalid') return c.json({ error: "Invalid 'to' date" }, 400);
+
+    // Filter rawEvents by date range
+    let rawEvents = state.rawEvents;
+    if (from) rawEvents = rawEvents.filter((e) => new Date(e.timestamp) >= from);
+    if (to) rawEvents = rawEvents.filter((e) => new Date(e.timestamp) <= to);
+
+    // Filter by project (cwd)
+    if (projectFilter !== null) {
+      rawEvents = rawEvents.filter((e) => (e.cwd ?? null) === projectFilter);
+    }
+
+    // Group by sessionId
+    const sessionMap = new Map<string, NormalizedEvent[]>();
+    for (const e of rawEvents) {
+      const group = sessionMap.get(e.sessionId);
+      if (group) {
+        group.push(e);
+      } else {
+        sessionMap.set(e.sessionId, [e]);
+      }
+    }
+
+    // Build chat list items
+    interface ChatItem extends Record<string, unknown> {
+      sessionId: string;
+      displayName: string;
+      cwd: string | null;
+      model: string;
+      costUsd: number;
+      timestamp: string;
+      firstMessage: string;
+      firstMessageFull: string;
+      turnCount: number;
+    }
+
+    const allChats: ChatItem[] = [];
+
+    for (const [sessionId, events] of sessionMap) {
+      // Sort events by timestamp ascending
+      const sorted = [...events].sort(
+        (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+      );
+
+      // Apply text search filter (case-insensitive substring across all text content)
+      if (searchQuery !== null) {
+        const allText = getTextContent(sorted).toLowerCase();
+        if (!allText.includes(searchQuery.toLowerCase())) continue;
+      }
+
+      const { truncated, full } = extractFirstUserMessage(sorted);
+      const cwd = sorted[0]?.cwd ?? null;
+      const timestamp = sorted[0]?.timestamp ?? '';
+
+      // Model from first assistant event
+      const assistantEvent = sorted.find((e) => e.type === 'assistant' && e.model);
+      const model = assistantEvent?.model ?? 'Unknown';
+
+      // Cost from costs array (matching sessionId)
+      const sessionCosts = state.costs.filter((ce) => ce.sessionId === sessionId);
+      const costUsd = sessionCosts.reduce((s, e) => s + e.costUsd, 0);
+
+      // Turn count = user + assistant events
+      const turnCount = sorted.filter((e) => e.type === 'user' || e.type === 'assistant').length;
+
+      allChats.push({
+        sessionId,
+        displayName: '',
+        cwd,
+        model,
+        costUsd,
+        timestamp,
+        firstMessage: truncated,
+        firstMessageFull: full,
+        turnCount,
+      });
+    }
+
+    // Assign display names
+    const uniqueCwds = [...new Set(allChats.map((c) => c.cwd))];
+    const names = assignProjectNames(uniqueCwds);
+    for (const chat of allChats) {
+      chat.displayName = names.get(chat.cwd) ?? chat.cwd ?? 'Unknown project';
+    }
+
+    // Sort by timestamp descending (newest first)
+    allChats.sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    );
+
+    const total = allChats.length;
+    const chats = allChats.slice((page - 1) * CHATS_PAGE_SIZE, page * CHATS_PAGE_SIZE);
+
+    return c.json({ chats, total, page, pageSize: CHATS_PAGE_SIZE });
+  });
+
+  // GET /api/v1/chats/:id — full conversation thread with content blocks.
+  app.get('/chats/:id', (c) => {
+    if (!state.showMessages || !state.rawEvents) {
+      return c.json({ error: CHATS_403_MSG }, 403);
+    }
+
+    const sessionId = c.req.param('id');
+    const sessionEvents = state.rawEvents.filter((e) => e.sessionId === sessionId);
+
+    if (sessionEvents.length === 0) {
+      return c.json({ error: 'Conversation not found' }, 404);
+    }
+
+    // Sort events by timestamp ascending
+    const sorted = [...sessionEvents].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    );
+
+    // Build messages array
+    interface MessageTurn {
+      role: string;
+      content: ContentBlock[];
+      timestamp: string;
+      model?: string;
+      tokens?: { input: number; output: number; cacheCreation: number; cacheRead: number };
+    }
+
+    const messages: MessageTurn[] = [];
+    for (const e of sorted) {
+      if (e.type !== 'user' && e.type !== 'assistant') continue;
+
+      const msg = (e as Record<string, unknown>).message as Record<string, unknown> | undefined;
+      const content = msg ? extractContentBlocks(msg) : [];
+
+      const turn: MessageTurn = {
+        role: e.type,
+        content,
+        timestamp: e.timestamp,
+      };
+
+      if (e.type === 'assistant') {
+        turn.model = e.model ?? 'Unknown';
+        if (e.tokens) {
+          turn.tokens = {
+            input: e.tokens.input,
+            output: e.tokens.output,
+            cacheCreation: e.tokens.cacheCreation,
+            cacheRead: e.tokens.cacheRead,
+          };
+        }
+      }
+
+      messages.push(turn);
+    }
+
+    // Build summary (mirrors SessionDetail pattern)
+    const cwd = sorted[0]?.cwd ?? null;
+    const timestamp = sorted[0]?.timestamp ?? '';
+
+    let durationMs: number | null = null;
+    for (const e of sorted) {
+      if (e.durationMs !== undefined) {
+        durationMs = durationMs === null ? e.durationMs : Math.max(durationMs, e.durationMs);
+      }
+    }
+
+    const gitBranch = sorted.find((e) => e.gitBranch)?.gitBranch ?? null;
+    const tokenEvents = sorted.filter((e) => e.tokens !== undefined);
+    const models = [...new Set(tokenEvents.map((e) => e.model ?? 'Unknown'))];
+    // biome-ignore lint/style/noNonNullAssertion: models[0] defined when length >= 1
+    const model = models.length === 1 ? models[0]! : models.length === 0 ? 'Unknown' : 'Mixed';
+
+    const totalTokens = tokenEvents.reduce(
+      (acc, e) => ({
+        input: acc.input + (e.tokens?.input ?? 0),
+        output: acc.output + (e.tokens?.output ?? 0),
+        cacheCreation: acc.cacheCreation + (e.tokens?.cacheCreation ?? 0),
+        cacheRead: acc.cacheRead + (e.tokens?.cacheRead ?? 0),
+      }),
+      { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
+    );
+
+    // Cost from costs array
+    const sessionCosts = state.costs.filter((ce) => ce.sessionId === sessionId);
+    const totalCost = sessionCosts.reduce((s, e) => s + e.costUsd, 0);
+
+    const displayName = assignProjectNames([cwd]).get(cwd) ?? cwd ?? 'Unknown';
+
+    const summary = {
+      sessionId,
+      displayName,
+      cwd,
+      model,
+      models,
+      totalCost,
+      totalTokens,
+      timestamp,
+      durationMs,
+      gitBranch,
+    };
+
+    return c.json({ summary, messages });
   });
 
   return app;
