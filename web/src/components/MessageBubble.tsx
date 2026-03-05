@@ -1,11 +1,15 @@
+import { useMemo } from 'react';
 import type { ChatMessage } from '../hooks/useChatDetail';
+import { hasXmlTags, processContent } from '../lib/contentPreprocessor';
 import { MarkdownRenderer } from './MarkdownRenderer';
+import { SkillBlock } from './SkillBlock';
 import { ToolUseBlock } from './ToolUseBlock';
 
 interface MessageBubbleProps {
   message: ChatMessage;
   toolResults: Map<string, { content?: string; isError?: boolean }>;
   isDark: boolean;
+  showRaw?: boolean;
 }
 
 function formatTimestamp(ts: string): string {
@@ -16,7 +20,39 @@ function formatTokens(tokens: { input: number; output: number }): string {
   return `${tokens.input.toLocaleString()} in, ${tokens.output.toLocaleString()} out`;
 }
 
-export function MessageBubble({ message, toolResults, isDark }: MessageBubbleProps) {
+/** Process a text block through the content preprocessor */
+function useProcessedText(text: string, showRaw: boolean) {
+  return useMemo(() => {
+    if (showRaw || !hasXmlTags(text)) {
+      return { text, skillSections: [], isSystemOnly: false, skillName: null };
+    }
+    return processContent(text);
+  }, [text, showRaw]);
+}
+
+function TextBlockContent({
+  text,
+  isDark,
+  showRaw,
+}: { text: string; isDark: boolean; showRaw: boolean }) {
+  const processed = useProcessedText(text, showRaw);
+
+  return (
+    <>
+      {/* Skill invocation block (if detected) */}
+      {processed.skillSections.length > 0 && (
+        <SkillBlock
+          skillName={processed.skillName ?? 'Skill Prompt'}
+          sections={processed.skillSections}
+        />
+      )}
+      {/* Remaining text content */}
+      {processed.text && <MarkdownRenderer content={processed.text} isDark={isDark} />}
+    </>
+  );
+}
+
+export function MessageBubble({ message, toolResults, isDark, showRaw = false }: MessageBubbleProps) {
   const { role, content, timestamp, model, tokens } = message;
 
   if (role === 'user') {
@@ -31,7 +67,7 @@ export function MessageBubble({ message, toolResults, isDark }: MessageBubblePro
                   return (
                     // biome-ignore lint/suspicious/noArrayIndexKey: content blocks have no stable id
                     <div key={i}>
-                      <MarkdownRenderer content={block.text} isDark={isDark} />
+                      <TextBlockContent text={block.text} isDark={isDark} showRaw={showRaw} />
                     </div>
                   );
                 }
@@ -78,7 +114,7 @@ export function MessageBubble({ message, toolResults, isDark }: MessageBubblePro
             return (
               // biome-ignore lint/suspicious/noArrayIndexKey: content blocks have no stable id
               <div key={i}>
-                <MarkdownRenderer content={block.text} isDark={isDark} />
+                <TextBlockContent text={block.text} isDark={isDark} showRaw={showRaw} />
               </div>
             );
           }

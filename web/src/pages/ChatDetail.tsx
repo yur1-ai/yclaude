@@ -1,8 +1,39 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { MessageBubble } from '../components/MessageBubble';
 import { useChatDetail } from '../hooks/useChatDetail';
+import type { ChatMessage } from '../hooks/useChatDetail';
 import { useConfig } from '../hooks/useConfig';
+import { hasXmlTags, processContent } from '../lib/contentPreprocessor';
+
+/** Check if a message is purely system/skill metadata with no real content */
+function isSystemOnlyMessage(msg: ChatMessage): boolean {
+  // Only filter user messages — assistant messages always have real content
+  if (msg.role !== 'user') return false;
+
+  for (const block of msg.content) {
+    if (block.type === 'text' && block.text) {
+      if (!hasXmlTags(block.text)) return false;
+      const processed = processContent(block.text);
+      if (!processed.isSystemOnly) return false;
+    }
+  }
+  return true;
+}
+
+/** Detect if a message is a skill invocation separator */
+function getSkillInvocation(msg: ChatMessage): string | null {
+  if (msg.role !== 'user') return null;
+  for (const block of msg.content) {
+    if (block.type === 'text' && block.text && hasXmlTags(block.text)) {
+      const processed = processContent(block.text);
+      if (processed.isSystemOnly && processed.skillName) {
+        return processed.skillName;
+      }
+    }
+  }
+  return null;
+}
 
 export default function ChatDetail() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -10,6 +41,7 @@ export default function ChatDetail() {
   const { data: config, isLoading: configLoading } = useConfig();
   const { data, isLoading, isError, error } = useChatDetail(sessionId);
   const isDark = document.documentElement.classList.contains('dark');
+  const [showRaw, setShowRaw] = useState(false);
 
   // Build tool results map: toolUseId -> { content, isError }
   const toolResults = useMemo(() => {
@@ -100,17 +132,32 @@ export default function ChatDetail() {
       </div>
 
       {/* Page header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/chats')}
+            className="text-sm text-slate-500 hover:text-slate-700 dark:text-[#8b949e] dark:hover:text-[#e6edf3]"
+          >
+            &larr; Chats
+          </button>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-[#e6edf3]">
+            {summary.displayName}
+          </h1>
+        </div>
+
+        {/* Raw/Clean toggle */}
         <button
           type="button"
-          onClick={() => navigate('/chats')}
-          className="text-sm text-slate-500 hover:text-slate-700 dark:text-[#8b949e] dark:hover:text-[#e6edf3]"
+          onClick={() => setShowRaw((v) => !v)}
+          className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${
+            showRaw
+              ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400'
+              : 'border-slate-200 bg-white text-slate-500 dark:border-[#30363d] dark:bg-[#161b22] dark:text-[#8b949e]'
+          }`}
         >
-          &larr; Chats
+          {showRaw ? 'Show clean' : 'Show raw'}
         </button>
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-[#e6edf3]">
-          {summary.displayName}
-        </h1>
       </div>
 
       {/* Summary card */}
@@ -145,10 +192,39 @@ export default function ChatDetail() {
           Conversation
         </h2>
         <div className="divide-y divide-slate-100 dark:divide-[#21262d]">
-          {messages.map((msg, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: messages have no stable id
-            <MessageBubble key={i} message={msg} toolResults={toolResults} isDark={isDark} />
-          ))}
+          {messages.map((msg, i) => {
+            // In clean mode, replace system-only messages with a separator
+            if (!showRaw) {
+              const skillInvocation = getSkillInvocation(msg);
+              if (skillInvocation) {
+                return (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: messages have no stable id
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 py-3 text-xs text-slate-400 dark:text-[#484f58]"
+                  >
+                    <div className="flex-1 border-t border-slate-200 dark:border-[#21262d]" />
+                    <span className="font-mono shrink-0">/{skillInvocation}</span>
+                    <div className="flex-1 border-t border-slate-200 dark:border-[#21262d]" />
+                  </div>
+                );
+              }
+              if (isSystemOnlyMessage(msg)) {
+                return null; // Hide pure system messages entirely
+              }
+            }
+
+            return (
+              // biome-ignore lint/suspicious/noArrayIndexKey: messages have no stable id
+              <MessageBubble
+                key={i}
+                message={msg}
+                toolResults={toolResults}
+                isDark={isDark}
+                showRaw={showRaw}
+              />
+            );
+          })}
         </div>
       </div>
     </div>
