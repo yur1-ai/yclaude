@@ -257,6 +257,23 @@ describe('/api/v1/cost-over-time', () => {
   });
 });
 
+describe('/api/v1/pricing-meta', () => {
+  it('returns pricing metadata with lastUpdated and source', async () => {
+    const state: AppState = { events: [], costs: [] };
+    const app = createApp(state);
+    const res = await app.request('/api/v1/pricing-meta');
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toHaveProperty('lastUpdated');
+    expect(body).toHaveProperty('source');
+    expect(typeof body.lastUpdated).toBe('string');
+    expect(typeof body.source).toBe('string');
+    // Verify they match the actual exports
+    expect(body.lastUpdated).toBe('2026-02-28');
+    expect(body.source).toContain('anthropic.com');
+  });
+});
+
 type ModelsBody = {
   rows: Array<{
     model: string;

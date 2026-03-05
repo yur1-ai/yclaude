@@ -123,14 +123,6 @@ export const QUIPS = {
     'High activity. Claude kept up.',
   ],
 
-  /** Brief loading state quip — minimal, not cutesy */
-  loading_generic: [
-    'Loading...',
-    'Fetching data.',
-    'One moment.',
-    'Working on it.',
-    'Calculating.',
-  ],
 } satisfies Record<string, string[]>;
 
 /**

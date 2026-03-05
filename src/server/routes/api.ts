@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { PRICING_LAST_UPDATED, PRICING_SOURCE } from '../../cost/pricing.js';
 import type { AppState } from '../server.js';
 
 /**
@@ -331,8 +332,10 @@ export function apiRoutes(state: AppState): Hono {
     return c.json({ rows, totalCost });
   });
 
-  // Stub routes — return empty shapes for Phase 4+ implementation
-  app.get('/events', (c) => c.json({ events: [] }));
+  // GET /api/v1/pricing-meta — returns pricing metadata (last-updated date and source URL).
+  app.get('/pricing-meta', (c) =>
+    c.json({ lastUpdated: PRICING_LAST_UPDATED, source: PRICING_SOURCE })
+  );
 
   // GET /api/v1/branches — returns sorted unique non-null gitBranch values from all events.
   app.get('/branches', (c) => {
