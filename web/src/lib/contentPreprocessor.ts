@@ -114,7 +114,7 @@ export function processContent(text: string): ProcessedContent {
   const normalized = cleaned.replace(/\n{3,}/g, '\n\n').trim();
 
   // A message is "system only" if after stripping all tags, very little content remains
-  const isSystemOnly = normalized.length < 10 && sections.length > 0;
+  const isSystemOnly = normalized.length < 10;
 
   return {
     text: normalized,

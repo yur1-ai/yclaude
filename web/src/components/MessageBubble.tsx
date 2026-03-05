@@ -56,6 +56,17 @@ export function MessageBubble({ message, toolResults, isDark, showRaw = false }:
   const { role, content, timestamp, model, tokens } = message;
 
   if (role === 'user') {
+    // Check if this user message has any visible content after processing
+    if (!showRaw) {
+      const hasVisibleContent = content.some((block) => {
+        if (block.type !== 'text' || !block.text) return false;
+        if (!hasXmlTags(block.text)) return true;
+        const processed = processContent(block.text);
+        return processed.text.length > 0 || processed.skillSections.length > 0;
+      });
+      if (!hasVisibleContent) return null;
+    }
+
     return (
       <div className="flex justify-end my-4">
         <div className="max-w-[80%]">
