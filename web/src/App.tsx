@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider, createHashRouter } from 'react-router';
 import Layout from './components/Layout';
+import ChatDetail from './pages/ChatDetail';
 import Chats from './pages/Chats';
 import Models from './pages/Models';
 import Overview from './pages/Overview';
@@ -29,6 +30,7 @@ const router = createHashRouter([
       { path: 'sessions', element: <Sessions /> },
       { path: 'sessions/:id', element: <SessionDetail /> },
       { path: 'chats', element: <Chats /> },
+      { path: 'chats/:sessionId', element: <ChatDetail /> },
     ],
   },
 ]);
