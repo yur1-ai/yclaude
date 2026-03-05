@@ -1,5 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { ChatItem } from '../hooks/useChats';
+import { hasXmlTags, processContent } from '../lib/contentPreprocessor';
+
+/** Strip XML tags from preview text, returning clean plain text */
+function cleanPreview(text: string): string {
+  if (!text || !hasXmlTags(text)) return text;
+  return processContent(text).text;
+}
 
 interface ChatCardProps {
   chat: ChatItem;
@@ -44,6 +51,8 @@ export function ChatCard({ chat, searchQuery, onViewConversation }: ChatCardProp
   const projectName = chat.displayName;
   const formattedTime = new Date(chat.timestamp).toLocaleString();
   const costLabel = `$${chat.costUsd.toFixed(2)} est.`;
+  const preview = useMemo(() => cleanPreview(chat.firstMessage), [chat.firstMessage]);
+  const fullMessage = useMemo(() => cleanPreview(chat.firstMessageFull), [chat.firstMessageFull]);
 
   return (
     <div
@@ -77,7 +86,7 @@ export function ChatCard({ chat, searchQuery, onViewConversation }: ChatCardProp
       {expanded ? (
         <div className="mt-2">
           <p className="text-sm text-slate-600 dark:text-[#8b949e] whitespace-pre-wrap">
-            <HighlightedText text={chat.firstMessageFull} query={searchQuery ?? ''} />
+            <HighlightedText text={fullMessage} query={searchQuery ?? ''} />
           </p>
           <div className="flex items-center justify-between mt-3">
             <span className="text-xs text-slate-400 dark:text-[#8b949e]">
@@ -98,7 +107,7 @@ export function ChatCard({ chat, searchQuery, onViewConversation }: ChatCardProp
       ) : (
         <div className="flex items-center justify-between mt-1">
           <p className="text-sm text-slate-500 dark:text-[#8b949e] truncate mr-2">
-            <HighlightedText text={chat.firstMessage} query={searchQuery ?? ''} />
+            <HighlightedText text={preview} query={searchQuery ?? ''} />
           </p>
           <span className="text-xs text-slate-400 dark:text-[#8b949e] shrink-0">
             {costLabel}
