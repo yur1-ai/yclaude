@@ -19,16 +19,16 @@ created: 2026-03-05
 |----------|-------|
 | **Framework** | vitest (existing) |
 | **Config file** | `web/vitest.config.ts` + `vitest.config.ts` (root) |
-| **Quick run command** | `bun test --reporter=verbose` |
-| **Full suite command** | `bun test --reporter=verbose` |
+| **Quick run command** | `npx vitest run --reporter=dot` |
+| **Full suite command** | `npx vitest run` |
 | **Estimated runtime** | ~15 seconds |
 
 ---
 
 ## Sampling Rate
 
-- **After every task commit:** Run `bun test --reporter=verbose`
-- **After every plan wave:** Run `bun test --reporter=verbose`
+- **After every task commit:** Run `npx vitest run --reporter=dot`
+- **After every plan wave:** Run `npx vitest run`
 - **Before `/gsd:verify-work`:** Full suite must be green
 - **Max feedback latency:** 15 seconds
 
@@ -38,10 +38,10 @@ created: 2026-03-05
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 10-01-01 | 01 | 1 | CHAT-01 | unit | `bun test` | ❌ W0 | ⬜ pending |
-| 10-01-02 | 01 | 1 | CHAT-01 | unit | `bun test` | ❌ W0 | ⬜ pending |
-| 10-02-01 | 02 | 1 | CHAT-01 | unit | `bun test` | ❌ W0 | ⬜ pending |
-| 10-03-01 | 03 | 2 | CHAT-01 | integration | `bun test` | ❌ W0 | ⬜ pending |
+| 10-01-01 | 01 | 1 | CHAT-01 | unit | `npx vitest run` | ❌ W0 | ⬜ pending |
+| 10-01-02 | 01 | 1 | CHAT-01 | unit | `npx vitest run` | ❌ W0 | ⬜ pending |
+| 10-02-01 | 02 | 1 | CHAT-01 | unit | `npx vitest run` | ❌ W0 | ⬜ pending |
+| 10-03-01 | 03 | 2 | CHAT-01 | integration | `npx vitest run` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
