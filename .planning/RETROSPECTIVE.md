@@ -2,6 +2,63 @@
 
 ---
 
+## Milestone: v1.1 — Analytics Completion + Distribution
+
+**Shipped:** 2026-03-05
+**Phases:** 8 | **Plans:** 25
+
+### What Was Built
+
+- 6 new pages: Models (donut chart + table), Projects (decoded names), Sessions (paginated + drill-down), Chats (opt-in conversation viewer with markdown)
+- Dark mode with system-aware toggle and persistent localStorage preference
+- Personality copy system with 14 quip categories woven throughout all views
+- npm publishing with automated GitHub Actions CI/CD on tag push
+- Tier-reference pricing architecture with info tooltips and unknown model warnings
+- Conversations viewer gated behind `--show-messages` CLI flag with server-side 403 enforcement
+- 24h/48h date range presets enabling hourly chart buckets
+
+### What Worked
+
+- **Phase-by-phase execution** kept scope manageable — each phase had clear boundaries and success criteria
+- **Server-side aggregation pattern** (established in v1.0) scaled cleanly across all 12 new API endpoints
+- **TDD approach in API development** (Phase 6) caught issues early and provided regression safety
+- **Decimal phase insertion** (9.1, 9.2) for gap closure worked well — addressed audit findings without disrupting milestone structure
+- **Milestone audit before completion** surfaced the pricing accuracy issue (Phase 9.1) and tech debt (Phase 9.2) early enough to fix
+- **CSS vars on charts from v1.0** meant dark mode (Phase 8) required zero chart color rewrites
+
+### What Was Inefficient
+
+- **SUMMARY.md format inconsistency** — early phases (5) had "## One-liner" sections, later phases dropped them; made automated extraction harder
+- **REQUIREMENTS.md traceability staleness** — 9.1-01 through 9.1-04 showed "Pending" when actually Complete; Phase 9.2 requirements defined only in ROADMAP.md
+- **Nyquist validation partially adopted** (3/8 phases) — should either commit fully or drop it in v2.0
+- **Phase 10 XML tag rendering issues** required multiple fix iterations (server-side stripping, blank message filtering) — research phase should have identified Claude system prompt XML tags as a rendering concern
+
+### Patterns Established
+
+- `SortableTable<T extends Record<string, unknown>>` generic pattern for all data tables
+- Detail page layout: page-header → summary-card → chart-card → table-card with space-y-6
+- `CostInfoTooltip` pattern for contextual pricing explanations
+- Dual event pipeline (filtered + raw) for privacy-gated content serving
+- Server-side XML stripping for clean markdown rendering
+- `ChatCard` standalone component pattern (cards for browsing, tables for structured data)
+
+### Key Lessons
+
+1. **Pricing accuracy matters more than presentation polish** — users noticed "est. prices seem off" before they noticed missing dark mode; fix data accuracy first
+2. **Privacy gates must be server-side** (403 enforcement), never client-side toggles — prevents data leakage through URL manipulation
+3. **Module-level side effects** (media listeners, store references) create subtle initialization ordering bugs — prefer lazy initialization
+4. **Recharts requires hex colors** in many contexts (heatmap theme) — CSS variables don't work everywhere; document per-component
+5. **Decimal phases are efficient for gap closure** — lower overhead than a full new milestone cycle
+
+### Cost Observations
+
+- 146 commits across 5 days for 8 phases and 25 plans
+- Codebase grew from ~3,017 LOC to ~8,264 LOC (+174% in 5 days)
+- Tests grew from 102 to 174 (+71%)
+- Notable: Decimal phase insertion is an efficient pattern — 9.1 and 9.2 together addressed all audit findings without major rework
+
+---
+
 ## Milestone: v1.0 — Local MVP
 
 **Shipped:** 2026-02-28
@@ -26,29 +83,28 @@
 
 ### What Was Inefficient
 
-- **Phase 2 VERIFICATION scope confusion** — verifier correctly flagged CORE-04 as partial (server/CSP not built yet), but this triggered a `gaps_found` status that required audit investigation to resolve; would have been cleaner if the PLAN explicitly noted "CORE-04 split: privacy filter here, server/CSP in Phase 3"
-- **webDistPath absolute path resolution** — discovered mid-Phase 3 that `path.resolve('web-dist')` breaks under `npx` (resolves relative to cwd, not binary); `fileURLToPath(new URL('../../web-dist', import.meta.url))` was the fix; this should be in the Phase 3 research/pitfalls docs earlier
-- **react-day-picker CSS isolation** — spent a moment debugging global CSS pollution before landing on "import in the component, not index.css"; should be a documented pattern
+- **Phase 2 VERIFICATION scope confusion** — verifier correctly flagged CORE-04 as partial (server/CSP not built yet), but this triggered a `gaps_found` status that required audit investigation to resolve
+- **webDistPath absolute path resolution** — discovered mid-Phase 3 that `path.resolve('web-dist')` breaks under `npx`; `fileURLToPath(new URL(..., import.meta.url))` was the fix
+- **react-day-picker CSS isolation** — spent time debugging global CSS pollution before landing on "import in the component, not index.css"
 
 ### Patterns Established
 
-- `parseDate()` three-state return (`null | Date | 'invalid'`) — distinguishes absent from malformed without boolean flags; reuse in any future date-parsing API routes
-- `queryKey` uses serialized store values (`from?.toISOString()`) not `new Date()` — prevents infinite refetch loops; enforce in code review
-- Zustand preset buttons → immediate store update → all TanStack Query refetches fire automatically — clean reactive pattern for future global filters
-- `applyPrivacyFilter()` in library layer (not CLI/server) — keeps privacy guarantee testable independently of the server
+- `parseDate()` three-state return (`null | Date | 'invalid'`) — distinguishes absent from malformed without boolean flags
+- `queryKey` uses serialized store values (`from?.toISOString()`) not `new Date()` — prevents infinite refetch loops
+- Zustand preset buttons → immediate store update → all TanStack Query refetches fire automatically
+- `applyPrivacyFilter()` in library layer (not CLI/server) — keeps privacy guarantee testable independently
 
 ### Key Lessons
 
-1. **Split cross-phase requirements explicitly in the plan** — if a requirement spans two phases, note it in both plans ("CORE-04 part 1: privacy filter here; part 2: server/CSP in Phase 3") to prevent verification confusion
-2. **npx path resolution is a footgun** — any file served relative to the binary location needs `fileURLToPath(new URL(..., import.meta.url))`; add to PITFALLS for Phase 9 (npm distribution)
-3. **Zustand over URL params for global state was right** — URL sync adds complexity with minimal benefit at this scale; revisit only if users request shareable dashboard links
-4. **Milestone boundary at Phase 4 (not Phase 8) was the right call** — Phases 1-4 form a coherent, shippable unit; Phases 5-8 are a natural second layer; cleaner than a monolithic v1.0
+1. **Split cross-phase requirements explicitly** — if a requirement spans two phases, note it in both plans to prevent verification confusion
+2. **npx path resolution is a footgun** — any file served relative to the binary needs `fileURLToPath(new URL(..., import.meta.url))`
+3. **Zustand over URL params for global state was right** — URL sync adds complexity with minimal benefit at this scale
+4. **Milestone boundary at Phase 4 was the right call** — Phases 1-4 form a coherent, shippable unit
 
 ### Cost Observations
 
 - All 4 phases completed in a single day (2026-02-28)
 - ~100 minutes of execution time across 11 plans (~9 min/plan average including checkpoint waits)
-- Sessions: single-day sprint — no cross-session context overhead in v1.0
 - Notable: high velocity from clean foundation; each phase fed directly into the next with no rework
 
 ---
@@ -59,7 +115,23 @@
 
 | Pattern | First seen | Confirmed | Notes |
 |---------|-----------|-----------|-------|
-| TDD prevents integration bugs | v1.0 | — | Red-green on server code; catch issues before browser |
-| CSS vars on charts from day one | v1.0 | — | Pays off in dark mode phase |
-| Branded domain types | v1.0 | — | EstimatedCost; apply to future domain invariants |
-| API-first aggregation | v1.0 | — | Never send raw arrays to frontend |
+| TDD prevents integration bugs | v1.0 | v1.1 | Red-green on server code; catch issues before browser |
+| CSS vars on charts from day one | v1.0 | v1.1 | Paid off — dark mode required zero chart rewrites |
+| Branded domain types | v1.0 | v1.1 | EstimatedCost; apply to future domain invariants |
+| API-first aggregation | v1.0 | v1.1 | Never send raw arrays to frontend; scaled to 12 endpoints |
+| Milestone audit before completion | v1.1 | — | Surfaced 9.1/9.2 gap closure phases; recommend keeping |
+| Decimal phase insertion for gaps | v1.1 | — | Lower overhead than new milestone; efficient pattern |
+
+### Process Evolution
+
+| Milestone | Phases | Plans | Days | LOC | Tests | Key Change |
+|-----------|--------|-------|------|-----|-------|------------|
+| v1.0 | 4 | 11 | 1 | 3,017 | 102 | Initial process — planning + execution in single session |
+| v1.1 | 8 | 25 | 5 | 8,264 | 174 | Added milestone audit, decimal phases, Nyquist (partial) |
+
+### Top Lessons (Verified Across Milestones)
+
+1. **Privacy-first architecture pays dividends** — never had to retrofit privacy after the fact; `applyPrivacyFilter` + `--show-messages` gating both built on this foundation
+2. **Server-side aggregation prevents data leakage** — pattern from v1.0 scaled through all v1.1 features without modification
+3. **Tight phase scoping enables clean milestone boundaries** — both milestones shipped without scope creep
+4. **Data accuracy > presentation polish** — users notice wrong numbers before they notice missing features
