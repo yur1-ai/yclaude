@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Analytics Completion + Distribution
-status: completed
-last_updated: "2026-03-05T01:34:53.445Z"
-last_activity: 2026-03-05 — Completed 09.2-02 (24h/48h date presets, period cost trend)
+milestone: v1.2
+milestone_name: Conversations Viewer
+status: executing
+last_updated: "2026-03-05T09:01:19Z"
+last_activity: 2026-03-05 — Completed 10-01 (conversations viewer backend)
 progress:
-  total_phases: 8
+  total_phases: 9
   completed_phases: 7
-  total_plans: 22
-  completed_plans: 22
+  total_plans: 25
+  completed_plans: 23
 ---
 
 # Project State
@@ -19,14 +19,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 
 **Core value:** Give developers full visibility into their AI coding spend — locally first, with no friction.
-**Current focus:** Phase 9.2 — Tech debt cleanup & date range presets
+**Current focus:** Phase 10 — Conversations Viewer
 
 ## Current Position
 
-Phase: 09.2-tech-debt-date-range-presets
-Plan: 2 of 2 (all plans complete)
-Status: Phase 09.2 complete
-Last activity: 2026-03-05 — Completed 09.2-02 (24h/48h date presets, period cost trend)
+Phase: 10-conversations-viewer
+Plan: 1 of 3 (plan 01 complete)
+Status: Executing phase 10
+Last activity: 2026-03-05 — Completed 10-01 (conversations viewer backend: CLI flag, normalizer, API endpoints)
 
 ## Accumulated Context
 
@@ -121,10 +121,20 @@ Last activity: 2026-03-05 — Completed 09.2-02 (24h/48h date presets, period co
 - Auto-bucket-switch is bidirectional: 24h/48h selects hourly, wider presets revert to daily (single useEffect)
 - TrendIndicator colors NOT modified for cost semantics -- shared with CacheEfficiencyCard where "up" means improvement
 
+- AppState.showMessages is optional (not required boolean) — backward compat with 50+ existing test instantiations
+- preserveContent implemented via runtime check in extractUnknownFields — no KNOWN_FIELDS mutation
+- rawEvents conditionally included in AppState via ternary (not undefined) — exactOptionalPropertyTypes compat
+- Chat list exposes both firstMessage (truncated ~80 chars) and firstMessageFull (full text) — per user decision
+- Text search: case-insensitive substring across concatenated user/assistant text content
+- Tool result content truncated at 10000 chars server-side
+- Thinking blocks excluded from conversation thread output
+- Dual event pipeline: cli.ts creates filtered (applyPrivacyFilter) + rawEvents (preserveContent) arrays
+- 403 gating: check state.showMessages before serving content-bearing data via /chats endpoints
+
 ### Open Blockers
 
 None
 
 ### Pending Todos
 
-- Phase 10: Plan and execute conversations viewer (CHAT-01)
+- Phase 10 Plans 02-03: Frontend for conversations viewer (chat list page, thread page)
