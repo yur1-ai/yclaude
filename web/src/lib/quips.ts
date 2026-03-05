@@ -123,6 +123,24 @@ export const QUIPS = {
     'High activity. Claude kept up.',
   ],
 
+  /** Chats page with no conversations matching current filter */
+  empty_chats: [
+    'No conversations found. Claude said nothing, or the filter is too specific.',
+    'No chats here. Either nothing was said, or it was said elsewhere.',
+    'Empty. The conversations will appear once there are conversations to appear.',
+    'No matching chats. Try a different search or broaden the date range.',
+    'No conversations yet. Open Claude Code and say something.',
+  ],
+
+  /** Chats feature disabled (--show-messages not passed) */
+  feature_disabled: [
+    'This feature is behind a locked door. The key is --show-messages.',
+    'Conversation content stays private by default. Unlock it when you are ready.',
+    'Claude remembers the conversations. Displaying them is your call.',
+    'Privacy first. Conversation viewing is opt-in, not opt-out.',
+    'The chats are there. You just have not asked to see them yet.',
+  ],
+
 } satisfies Record<string, string[]>;
 
 /**

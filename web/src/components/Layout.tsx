@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router';
+import { useConfig } from '../hooks/useConfig';
 import { type Theme, useThemeStore } from '../store/useThemeStore';
 
 const navItems = [
@@ -37,6 +38,8 @@ function ThemeToggle() {
 }
 
 export default function Layout() {
+  const { data: config } = useConfig();
+
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-[#0d1117]">
       <aside className="w-60 shrink-0 bg-white dark:bg-[#161b22] border-r border-slate-200 dark:border-[#30363d] flex flex-col">
@@ -62,6 +65,21 @@ export default function Layout() {
               {label}
             </NavLink>
           ))}
+          <NavLink
+            to="/chats"
+            className={({ isActive }) =>
+              `block px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive
+                  ? 'bg-slate-100 text-slate-900 dark:bg-[#21262d] dark:text-[#e6edf3]'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-[#8b949e] dark:hover:bg-[#21262d] dark:hover:text-[#e6edf3]'
+              }`
+            }
+          >
+            Chats
+            {config && !config.showMessages && (
+              <span className="text-xs opacity-50 ml-1">locked</span>
+            )}
+          </NavLink>
         </nav>
         <div className="px-4 py-3 border-t border-slate-200 dark:border-[#30363d] flex items-center justify-between mt-auto">
           <ThemeToggle />
