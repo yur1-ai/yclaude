@@ -79,18 +79,23 @@ function extractContentBlocks(
  * Handles both self-closing and paired tags. Returns cleaned text with collapsed whitespace.
  */
 function stripXmlTags(text: string): string {
-  // Remove paired tags and their content for known system metadata tags
-  const systemTags = [
+  // Known tags injected by Claude Code runtime and skill/plugin orchestrators
+  const knownTags = [
+    // System metadata
     'command-name', 'command-message', 'command-args',
     'local-command-caveat', 'system-reminder', 'local-command-stdout',
+    // Skill/orchestrator prompts
+    'objective', 'execution_context', 'context', 'process', 'tasks',
+    'success_criteria', 'verification', 'output', 'files_to_read',
+    'behavior', 'action', 'interfaces', 'task', 'done', 'verify',
+    'purpose', 'core_principle', 'required_reading', 'step',
   ];
   let result = text;
-  for (const tag of systemTags) {
+  for (const tag of knownTags) {
     result = result.replace(new RegExp(`<${tag}[^>]*>[\\s\\S]*?</${tag}>`, 'g'), '');
   }
-  // Also strip any remaining partial/broken tags from these known system tags
-  // (handles truncated tags like `<command-message>clear</command-...`)
-  for (const tag of systemTags) {
+  // Strip partial/broken tags (from truncation)
+  for (const tag of knownTags) {
     result = result.replace(new RegExp(`<${tag}[^>]*>[^<]*$`, 'g'), '');
     result = result.replace(new RegExp(`</?${tag}[^>]*>`, 'g'), '');
   }
