@@ -9,6 +9,7 @@ import { TokenBreakdown } from '../components/TokenBreakdown';
 import { TrendIndicator } from '../components/TrendIndicator';
 import { useAllTimeSummary } from '../hooks/useAllTimeSummary';
 import { type Bucket, useCostOverTime } from '../hooks/useCostOverTime';
+import { usePriorSummary } from '../hooks/usePriorSummary';
 import { useSummary } from '../hooks/useSummary';
 import { QUIPS, pickQuip, pickSpendQuip } from '../lib/quips';
 import { useDateRangeStore } from '../store/useDateRangeStore';
@@ -20,25 +21,31 @@ export default function Overview() {
   const { data: periodSummary, isPending: periodPending } = useSummary();
   const { data: allTimeSummary, isPending: allTimePending } = useAllTimeSummary();
   const { data: costOverTime, isPending: chartPending } = useCostOverTime(bucket);
+  const { data: priorSummary } = usePriorSummary(from, to);
 
-  // Reset hourly bucket if date range becomes too wide
+  // Auto-switch bucket based on date range
   useEffect(() => {
-    if (bucket === 'hour' && from && to && to.getTime() - from.getTime() > 48 * 60 * 60 * 1000) {
+    if (!from || !to) return;
+    const rangeMs = to.getTime() - from.getTime();
+    if (bucket === 'hour' && rangeMs > 48 * 60 * 60 * 1000) {
+      // Range too wide for hourly -- revert to day
       setBucket('day');
+    } else if (bucket !== 'hour' && rangeMs <= 48 * 60 * 60 * 1000 && (preset === '24h' || preset === '48h')) {
+      // 24h/48h preset selected -- auto-switch to hourly
+      setBucket('hour');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- setBucket is a stable Zustand setter
-  }, [from, to, bucket]);
+  }, [from, to, bucket, preset]);
 
-  // Trend: compute % change vs prior equivalent period.
-  // Prior period requires a second API call with shifted date bounds — deferred to Phase 5+.
-  // For now, TrendIndicator renders its null state ("No prior data") for all presets.
+  // Trend: compute % change vs prior equivalent period
   const trendPercent: number | null = (() => {
-    if (!periodSummary || !allTimeSummary) return null;
-    // For 'all' or 'custom' preset, no trend shown
+    if (!periodSummary || !priorSummary) return null;
     if (preset === 'all' || preset === 'custom') return null;
-    // Phase 4 defers prior-period query — return null to show "No prior data".
-    // Phase 5+ can add a usePriorSummary hook for exact trend calculation.
-    return null;
+    if (priorSummary.totalCost === 0) return null;
+    const pct = ((periodSummary.totalCost - priorSummary.totalCost) / priorSummary.totalCost) * 100;
+    // Suppress micro-fluctuations below 1%
+    if (Math.abs(pct) < 1) return null;
+    return pct;
   })();
 
   const periodLabel =
