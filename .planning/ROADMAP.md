@@ -224,8 +224,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 09.2-01-PLAN.md — Pricing metadata wiring: /api/v1/pricing-meta endpoint, usePricingMeta hook, dynamic CostInfoTooltip, dead code removal (/events stub + loading_generic quip)
-- [ ] 09.2-02-PLAN.md — Date range presets and period cost trend: 24h/48h presets in DateRangePicker, usePriorSummary wired into Overview Period Cost StatCard
+- [x] 09.2-01-PLAN.md — Pricing metadata wiring: /api/v1/pricing-meta endpoint, usePricingMeta hook, dynamic CostInfoTooltip, dead code removal (/events stub + loading_generic quip)
+- [x] 09.2-02-PLAN.md — Date range presets and period cost trend: 24h/48h presets in DateRangePicker, usePriorSummary wired into Overview Period Cost StatCard
 
 ### Phase 10: Conversations Viewer
 **Goal**: Users can optionally browse their conversation text in a dedicated Chats tab, gated behind the `--show-messages` CLI flag to preserve privacy by default
@@ -248,7 +248,12 @@ yclaude's core privacy guarantee is that no conversation text appears in the das
 5. The existing Session Explorer pages remain metadata-only regardless of `--show-messages`
 6. Server-side enforcement: the `/api/v1/chats` endpoint returns 403 if `--show-messages` was not passed
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — Backend plumbing: --show-messages CLI flag, normalizer preserveContent, AppState expansion, /config + /chats + /chats/:id API endpoints with 403 gating and tests
+- [ ] 10-02-PLAN.md — Frontend shell + chat list: install deps, useConfig/useChats hooks, Layout nav update, ChatsDisabled page, Chats page with card layout, search, pagination, expand/collapse
+- [ ] 10-03-PLAN.md — Chat detail + markdown rendering: MarkdownRenderer, CodeBlock, ToolUseBlock, MessageBubble components, useChatDetail hook, ChatDetail page, visual verification checkpoint
 
 ## Progress
 
@@ -268,5 +273,5 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 8. Dark Mode & Personality | v1.1 | 3/3 | Complete | 2026-03-01 |
 | 9. npm Distribution & CI/CD | v1.1 | 4/4 | Complete | 2026-03-01 |
 | 9.1. Cost Accuracy & Pricing Refactor | v1.1 | 3/3 | Complete | 2026-03-04 |
-| 9.2. Tech Debt Cleanup & Date Range Presets | v1.1 | Complete    | 2026-03-05 | — |
-| 10. Conversations Viewer | v1.1 | 0/? | Planned | — |
+| 9.2. Tech Debt Cleanup & Date Range Presets | v1.1 | 2/2 | Complete | 2026-03-05 |
+| 10. Conversations Viewer | v1.1 | 0/3 | Planned | — |
