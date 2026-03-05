@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Analytics Completion + Distribution
 status: in_progress
-last_updated: "2026-03-05T01:28:40.000Z"
+last_updated: "2026-03-05T01:29:00.000Z"
 last_activity: 2026-03-05 — Completed Phase 09.2 (all plans)
 progress:
   total_phases: 8
@@ -116,6 +116,10 @@ Last activity: 2026-03-05 — Completed 09.2-02 (24h/48h date presets, period co
 - usePricingMeta uses staleTime: Infinity since pricing metadata is static for server lifetime -- never refetches
 - /api/v1/events stub route removed -- was dead code returning empty { events: [] }
 - QUIPS.loading_generic removed from quips.ts -- unused quip array, no consumers
+- 24h/48h presets use ms-arithmetic (to.getTime() - hours * 60 * 60 * 1000) not setDate -- avoids DST boundary bugs
+- Sub-1% trend fluctuations suppressed (Math.abs(pct) < 1 returns null) -- prevents noisy micro-changes in Period Cost StatCard
+- Auto-bucket-switch is bidirectional: 24h/48h selects hourly, wider presets revert to daily (single useEffect)
+- TrendIndicator colors NOT modified for cost semantics -- shared with CacheEfficiencyCard where "up" means improvement
 
 ### Open Blockers
 
@@ -123,5 +127,4 @@ None
 
 ### Pending Todos
 
-- Phase 9.2: Plan and execute tech debt cleanup + 24h/48h date range presets
 - Phase 10: Plan and execute conversations viewer (CHAT-01)
