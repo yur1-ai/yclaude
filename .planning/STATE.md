@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Analytics Completion + Distribution
-status: completed
-last_updated: "2026-03-04T14:31:34.000Z"
-last_activity: 2026-03-04 — 09.1-03 complete; CostInfoTooltip on Overview, Models, Sessions pages
+status: in_progress
+last_updated: "2026-03-04T20:00:00.000Z"
+last_activity: 2026-03-04 — Added Phase 9.2 (tech debt) and Phase 10 (conversations viewer) to v1.1
 progress:
-  total_phases: 6
+  total_phases: 8
   completed_phases: 6
   total_plans: 20
   completed_plans: 20
@@ -19,14 +19,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 
 **Core value:** Give developers full visibility into their AI coding spend — locally first, with no friction.
-**Current focus:** Phase 9.1 — Cost accuracy & pricing refactor
+**Current focus:** Phase 9.2 — Tech debt cleanup & date range presets
 
 ## Current Position
 
-Phase: 09.1-cost-accuracy-pricing-refactor
-Plan: 09.1-03 of 3 ✅ — complete (PHASE COMPLETE)
-Status: Phase 9.1 complete; all 3 plans executed
-Last activity: 2026-03-04 — 09.1-03 complete; CostInfoTooltip on Overview, Models, Sessions pages
+Phase: 09.2-tech-debt-date-range-presets
+Plan: Not yet planned
+Status: Phase added to roadmap; pending planning
+Last activity: 2026-03-04 — Phase 9.2 and Phase 10 added to v1.1 milestone
 
 ## Accumulated Context
 
@@ -119,4 +119,5 @@ None
 
 ### Pending Todos
 
-None - Phase 9.1 complete
+- Phase 9.2: Plan and execute tech debt cleanup + 24h/48h date range presets
+- Phase 10: Plan and execute conversations viewer (CHAT-01)
