@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Conversations Viewer
 status: executing
-last_updated: "2026-03-05T09:01:19Z"
-last_activity: 2026-03-05 — Completed 10-01 (conversations viewer backend)
+last_updated: "2026-03-05T09:07:00Z"
+last_activity: 2026-03-05 — Completed 10-02 (conversations viewer frontend shell)
 progress:
   total_phases: 9
   completed_phases: 7
   total_plans: 25
-  completed_plans: 23
+  completed_plans: 24
 ---
 
 # Project State
@@ -24,9 +24,9 @@ See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 ## Current Position
 
 Phase: 10-conversations-viewer
-Plan: 1 of 3 (plan 01 complete)
+Plan: 2 of 3 (plan 02 complete)
 Status: Executing phase 10
-Last activity: 2026-03-05 — Completed 10-01 (conversations viewer backend: CLI flag, normalizer, API endpoints)
+Last activity: 2026-03-05 — Completed 10-02 (conversations viewer frontend: chat list, hooks, nav, disabled page)
 
 ## Accumulated Context
 
@@ -130,6 +130,11 @@ Last activity: 2026-03-05 — Completed 10-01 (conversations viewer backend: CLI
 - Thinking blocks excluded from conversation thread output
 - Dual event pipeline: cli.ts creates filtered (applyPrivacyFilter) + rawEvents (preserveContent) arrays
 - 403 gating: check state.showMessages before serving content-bearing data via /chats endpoints
+- Chats NavLink placed as separate JSX after navItems.map() — supports conditional locked indicator via useConfig()
+- Search debounce: useState + useEffect + setTimeout pair (searchInput immediate, debouncedSearch delayed) — no external debounce library
+- ChatCard standalone component with div-based card layout — cards are different browsing pattern from SortableTable
+- HighlightedText splits on regex + wraps in `<mark>` — case-insensitive search highlighting without dangerouslySetInnerHTML
+- react-markdown, remark-gfm, react-syntax-highlighter installed in Plan 02 (used by Plan 03)
 
 ### Open Blockers
 
@@ -137,4 +142,4 @@ None
 
 ### Pending Todos
 
-- Phase 10 Plans 02-03: Frontend for conversations viewer (chat list page, thread page)
+- Phase 10 Plan 03: Conversation thread page (ChatDetail with markdown rendering, tool blocks)

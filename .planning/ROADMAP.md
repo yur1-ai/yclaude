@@ -274,4 +274,4 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 9. npm Distribution & CI/CD | v1.1 | 4/4 | Complete | 2026-03-01 |
 | 9.1. Cost Accuracy & Pricing Refactor | v1.1 | 3/3 | Complete | 2026-03-04 |
 | 9.2. Tech Debt Cleanup & Date Range Presets | v1.1 | 2/2 | Complete | 2026-03-05 |
-| 10. Conversations Viewer | 1/3 | In Progress|  | — |
+| 10. Conversations Viewer | 2/3 | In Progress|  | — |
