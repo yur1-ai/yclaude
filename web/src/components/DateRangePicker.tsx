@@ -7,6 +7,8 @@ import { useThemeStore } from '../store/useThemeStore';
 
 type PresetButton = { key: Preset; label: string };
 const PRESETS: PresetButton[] = [
+  { key: '24h', label: '24h' },
+  { key: '48h', label: '48h' },
   { key: '7d', label: '7d' },
   { key: '30d', label: '30d' },
   { key: '90d', label: '90d' },
@@ -19,6 +21,10 @@ function formatDate(d: Date): string {
 
 function getActiveLabel(preset: Preset, from: Date | undefined, to: Date | undefined): string {
   switch (preset) {
+    case '24h':
+      return 'Last 24h';
+    case '48h':
+      return 'Last 48h';
     case '7d':
       return 'Last 7d';
     case '30d':
