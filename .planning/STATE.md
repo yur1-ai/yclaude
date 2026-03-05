@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Analytics Completion + Distribution
 status: in_progress
-last_updated: "2026-03-04T20:00:00.000Z"
-last_activity: 2026-03-04 — Added Phase 9.2 (tech debt) and Phase 10 (conversations viewer) to v1.1
+last_updated: "2026-03-05T01:28:40.000Z"
+last_activity: 2026-03-05 — Completed Phase 09.2 (all plans)
 progress:
   total_phases: 8
-  completed_phases: 6
-  total_plans: 20
-  completed_plans: 20
+  completed_phases: 7
+  total_plans: 22
+  completed_plans: 22
 ---
 
 # Project State
@@ -24,9 +24,9 @@ See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 ## Current Position
 
 Phase: 09.2-tech-debt-date-range-presets
-Plan: Not yet planned
-Status: Phase added to roadmap; pending planning
-Last activity: 2026-03-04 — Phase 9.2 and Phase 10 added to v1.1 milestone
+Plan: 2 of 2 (all plans complete)
+Status: Phase 09.2 complete
+Last activity: 2026-03-05 — Completed 09.2-02 (24h/48h date presets, period cost trend)
 
 ## Accumulated Context
 
@@ -112,6 +112,10 @@ Last activity: 2026-03-04 — Phase 9.2 and Phase 10 added to v1.1 milestone
 - Models donut chart: "Spend by model" heading with tooltip added above chart -- SVG `<text>` cannot contain React components
 - StatCard.labelSuffix as optional ReactNode -- non-breaking composable slot for icons/badges after label text
 - SortableTable Column.label widened from string to React.ReactNode -- safe because label only used in JSX rendering, never for string operations or React keys
+- CostInfoTooltip info icon is a clickable <a> tag opening PRICING_SOURCE in new tab -- replaces cursor-help span with cursor-pointer anchor
+- usePricingMeta uses staleTime: Infinity since pricing metadata is static for server lifetime -- never refetches
+- /api/v1/events stub route removed -- was dead code returning empty { events: [] }
+- QUIPS.loading_generic removed from quips.ts -- unused quip array, no consumers
 
 ### Open Blockers
 
