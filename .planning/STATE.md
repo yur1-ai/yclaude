@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Conversations Viewer
-status: executing
-last_updated: "2026-03-05T09:07:00Z"
-last_activity: 2026-03-05 — Completed 10-02 (conversations viewer frontend shell)
+status: complete
+last_updated: "2026-03-05T17:27:00Z"
+last_activity: 2026-03-05 — Completed 10-03 (conversation thread viewer with markdown rendering)
 progress:
   total_phases: 9
-  completed_phases: 7
+  completed_phases: 9
   total_plans: 25
-  completed_plans: 24
+  completed_plans: 25
 ---
 
 # Project State
@@ -19,14 +19,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28 after v1.0 milestone)
 
 **Core value:** Give developers full visibility into their AI coding spend — locally first, with no friction.
-**Current focus:** Phase 10 — Conversations Viewer
+**Current focus:** Phase 10 — Conversations Viewer (COMPLETE)
 
 ## Current Position
 
 Phase: 10-conversations-viewer
-Plan: 2 of 3 (plan 02 complete)
-Status: Executing phase 10
-Last activity: 2026-03-05 — Completed 10-02 (conversations viewer frontend: chat list, hooks, nav, disabled page)
+Plan: 3 of 3 (all plans complete)
+Status: Phase 10 complete -- v1.2 milestone (Conversations Viewer) delivered
+Last activity: 2026-03-05 — Completed 10-03 (conversation thread viewer with markdown rendering, tool blocks, XML preprocessing)
 
 ## Accumulated Context
 
@@ -135,6 +135,13 @@ Last activity: 2026-03-05 — Completed 10-02 (conversations viewer frontend: ch
 - ChatCard standalone component with div-based card layout — cards are different browsing pattern from SortableTable
 - HighlightedText splits on regex + wraps in `<mark>` — case-insensitive search highlighting without dangerouslySetInnerHTML
 - react-markdown, remark-gfm, react-syntax-highlighter installed in Plan 02 (used by Plan 03)
+- XML tag preprocessing with raw/clean toggle -- Claude system prompts inject XML tags that pollute rendered output; regex stripping with toggle preserves debugging capability
+- SkillBlock component for skill/orchestrator XML content -- separate from ToolUseBlock since skills are prompt context, not tool invocations
+- Server-side XML stripping for chat list previews -- client-side stripping caused visible flicker; moved to /chats endpoint
+- Blank message filtering after XML stripping -- messages containing only XML tags hidden from thread to avoid empty bubbles
+- PrismLight with 12 languages + 6 aliases for tree-shaking -- full Prism bundle too large
+- Tool result matching via Map<toolId, result> passed to MessageBubble -- keeps tool_use and tool_result paired inline
+- react-markdown code override: fenced code blocks delegated to CodeBlock via className match; pre override returns children directly to prevent double-wrapping
 
 ### Open Blockers
 
@@ -142,4 +149,4 @@ None
 
 ### Pending Todos
 
-- Phase 10 Plan 03: Conversation thread page (ChatDetail with markdown rendering, tool blocks)
+None -- v1.2 milestone complete

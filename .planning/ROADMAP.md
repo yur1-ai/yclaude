@@ -251,9 +251,9 @@ yclaude's core privacy guarantee is that no conversation text appears in the das
 **Plans**: 3 plans
 
 Plans:
-- [ ] 10-01-PLAN.md — Backend plumbing: --show-messages CLI flag, normalizer preserveContent, AppState expansion, /config + /chats + /chats/:id API endpoints with 403 gating and tests
-- [ ] 10-02-PLAN.md — Frontend shell + chat list: install deps, useConfig/useChats hooks, Layout nav update, ChatsDisabled page, Chats page with card layout, search, pagination, expand/collapse
-- [ ] 10-03-PLAN.md — Chat detail + markdown rendering: MarkdownRenderer, CodeBlock, ToolUseBlock, MessageBubble components, useChatDetail hook, ChatDetail page, visual verification checkpoint
+- [x] 10-01-PLAN.md — Backend plumbing: --show-messages CLI flag, normalizer preserveContent, AppState expansion, /config + /chats + /chats/:id API endpoints with 403 gating and tests
+- [x] 10-02-PLAN.md — Frontend shell + chat list: install deps, useConfig/useChats hooks, Layout nav update, ChatsDisabled page, Chats page with card layout, search, pagination, expand/collapse
+- [x] 10-03-PLAN.md — Chat detail + markdown rendering: MarkdownRenderer, CodeBlock, ToolUseBlock, MessageBubble components, useChatDetail hook, ChatDetail page, visual verification checkpoint
 
 ## Progress
 
@@ -274,4 +274,4 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 9. npm Distribution & CI/CD | v1.1 | 4/4 | Complete | 2026-03-01 |
 | 9.1. Cost Accuracy & Pricing Refactor | v1.1 | 3/3 | Complete | 2026-03-04 |
 | 9.2. Tech Debt Cleanup & Date Range Presets | v1.1 | 2/2 | Complete | 2026-03-05 |
-| 10. Conversations Viewer | 2/3 | In Progress|  | — |
+| 10. Conversations Viewer | v1.1 | 3/3 | Complete | 2026-03-05 |

@@ -43,13 +43,13 @@ Requirements for the Analytics Completion + Distribution milestone (Phases 5–9
 - [x] **9.1-03**: Unknown model IDs produce a visible warning on the Models page listing unrecognized model names and affected session count — not silent $0
 - [x] **9.1-04**: All existing 137+ tests continue to pass; new tests cover pricing config structure (tier deduplication, cache multiplier invariants, metadata exports) and /api/v1/models endpoint (including unknown model scenarios)
 
+### Conversations (Phase 10)
+
+- [x] **CHAT-01**: User can view conversation messages in a Chats tab, gated behind `--show-messages` opt-in flag for privacy — chat list with search/pagination, full conversation thread with markdown rendering, syntax highlighting, collapsible tool blocks
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
-
-### Conversations
-
-- **CHAT-01**: User can view conversation messages in a Chats tab, gated behind `--show-messages` opt-in flag for privacy — deferred due to privacy complexity and low priority in v1.x
 
 ### Cloud & Teams (v2.0)
 
@@ -91,6 +91,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | 9.1-02 | Phase 9.1 | Pending (09.1-01) |
 | 9.1-03 | Phase 9.1 | Pending (09.1-02) |
 | 9.1-04 | Phase 9.1 | Pending (09.1-01, 09.1-02) |
+| CHAT-01 | Phase 10 | Complete (10-01, 10-02, 10-03) |
 
 **Coverage:**
 - v1.1 requirements: 13 total
@@ -102,4 +103,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-28*
-*Last updated: 2026-03-04 — added Phase 9.1 cost accuracy requirements (9.1-01 through 9.1-04)*
+*Last updated: 2026-03-05 — CHAT-01 complete (Phase 10 conversations viewer)*
