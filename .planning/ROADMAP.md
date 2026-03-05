@@ -36,7 +36,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 - [x] **Phase 8: Dark Mode & Personality** - System-aware dark mode toggle and humorous personality copy woven throughout all views (completed 2026-03-01)
 - [x] **Phase 9: npm Distribution & CI/CD** - Manual npm publish (DIST-01) then automated GitHub Actions pipeline on tag push (DIST-02) — completed 2026-03-01
 - [x] **Phase 9.1: Cost Accuracy & Pricing Refactor** - Tier-reference pricing, info tooltips, unknown model warning — completed 2026-03-04
-- [ ] **Phase 9.2: Tech Debt Cleanup & Date Range Presets** - Wire unused exports, add 24h/48h presets, remove dead code
+- [x] **Phase 9.2: Tech Debt Cleanup & Date Range Presets** - Wire unused exports, add 24h/48h presets, remove dead code (completed 2026-03-05)
 - [ ] **Phase 10: Conversations Viewer** - Chats tab with `--show-messages` opt-in gating for browsing conversation text (CHAT-01)
 
 ## Phase Details
@@ -268,5 +268,5 @@ v1.1: 5 → 6 → (parallel with 5 if capacity) → 7 → 8 → 9
 | 8. Dark Mode & Personality | v1.1 | 3/3 | Complete | 2026-03-01 |
 | 9. npm Distribution & CI/CD | v1.1 | 4/4 | Complete | 2026-03-01 |
 | 9.1. Cost Accuracy & Pricing Refactor | v1.1 | 3/3 | Complete | 2026-03-04 |
-| 9.2. Tech Debt Cleanup & Date Range Presets | v1.1 | 0/2 | Planned | — |
+| 9.2. Tech Debt Cleanup & Date Range Presets | v1.1 | Complete    | 2026-03-05 | — |
 | 10. Conversations Viewer | v1.1 | 0/? | Planned | — |
