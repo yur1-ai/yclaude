@@ -3,7 +3,10 @@ import type { NormalizedEvent } from './types.js';
 // Normalizes a raw JSONL event object into a NormalizedEvent.
 // Returns null for events that lack a uuid (e.g., file-history-snapshot, queue-operation).
 // All unrecognized top-level fields are preserved via spread per user decision.
-export function normalizeEvent(raw: Record<string, unknown>): NormalizedEvent | null {
+export function normalizeEvent(
+  raw: Record<string, unknown>,
+  options?: { preserveContent?: boolean },
+): NormalizedEvent | null {
   const uuid = raw.uuid;
   const type = raw.type;
   const timestamp = raw.timestamp;
@@ -20,7 +23,7 @@ export function normalizeEvent(raw: Record<string, unknown>): NormalizedEvent | 
     timestamp: typeof timestamp === 'string' ? timestamp : '',
     sessionId: typeof sessionId === 'string' ? sessionId : '',
     // Preserve all other fields via passthrough
-    ...extractUnknownFields(raw),
+    ...extractUnknownFields(raw, options?.preserveContent),
   };
 
   // Populate optional known fields
@@ -79,10 +82,13 @@ const KNOWN_FIELDS = new Set([
   'message',
 ]);
 
-function extractUnknownFields(raw: Record<string, unknown>): Record<string, unknown> {
+function extractUnknownFields(
+  raw: Record<string, unknown>,
+  preserveContent?: boolean,
+): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(raw)) {
-    if (!KNOWN_FIELDS.has(key)) {
+    if (!KNOWN_FIELDS.has(key) || (key === 'message' && preserveContent)) {
       result[key] = value;
     }
   }

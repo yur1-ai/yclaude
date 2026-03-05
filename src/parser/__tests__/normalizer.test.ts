@@ -170,4 +170,69 @@ describe('normalizeEvent()', () => {
     expect(result).not.toBeNull();
     expect(result?.uuid).toBe('abc-1');
   });
+
+  it('excludes message field by default (preserveContent not set)', () => {
+    const result = normalizeEvent({
+      uuid: 'abc-1',
+      type: 'user',
+      timestamp: '2024-01-01T00:00:00Z',
+      sessionId: 'session-123',
+      message: { role: 'user', content: 'Hello' },
+    });
+    expect(result).not.toBeNull();
+    expect('message' in (result as Record<string, unknown>)).toBe(false);
+  });
+
+  it('excludes message field when preserveContent is false', () => {
+    const result = normalizeEvent(
+      {
+        uuid: 'abc-1',
+        type: 'user',
+        timestamp: '2024-01-01T00:00:00Z',
+        sessionId: 'session-123',
+        message: { role: 'user', content: 'Hello' },
+      },
+      { preserveContent: false },
+    );
+    expect(result).not.toBeNull();
+    expect('message' in (result as Record<string, unknown>)).toBe(false);
+  });
+
+  it('includes message field when preserveContent is true', () => {
+    const msgObj = { role: 'user', content: 'Hello world' };
+    const result = normalizeEvent(
+      {
+        uuid: 'abc-1',
+        type: 'user',
+        timestamp: '2024-01-01T00:00:00Z',
+        sessionId: 'session-123',
+        message: msgObj,
+      },
+      { preserveContent: true },
+    );
+    expect(result).not.toBeNull();
+    expect((result as Record<string, unknown>).message).toEqual(msgObj);
+  });
+
+  it('preserveContent=true still extracts tokens from assistant message', () => {
+    const result = normalizeEvent(
+      {
+        uuid: 'abc-1',
+        type: 'assistant',
+        timestamp: '2024-01-01T00:00:00Z',
+        sessionId: 'session-123',
+        message: {
+          model: 'claude-opus-4',
+          usage: { input_tokens: 100, output_tokens: 50 },
+          content: [{ type: 'text', text: 'response' }],
+        },
+      },
+      { preserveContent: true },
+    );
+    expect(result).not.toBeNull();
+    expect(result?.model).toBe('claude-opus-4');
+    expect(result?.tokens?.input).toBe(100);
+    // message should also be preserved
+    expect((result as Record<string, unknown>).message).toBeDefined();
+  });
 });

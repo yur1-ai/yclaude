@@ -28,7 +28,10 @@ export async function parseAll(options: ParseOptions = {}): Promise<NormalizedEv
   for (const file of files) {
     for await (const raw of streamJSONLFile(file)) {
       if (typeof raw !== 'object' || raw === null) continue;
-      const event = normalizeEvent(raw as Record<string, unknown>);
+      const event = normalizeEvent(
+        raw as Record<string, unknown>,
+        options.preserveContent ? { preserveContent: true } : undefined,
+      );
       if (event !== null) {
         dedup.add(event);
       }

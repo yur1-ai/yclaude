@@ -20,6 +20,8 @@ const webDistPath = fileURLToPath(new URL('../../dist/web', import.meta.url));
 export interface AppState {
   events: NormalizedEvent[];
   costs: CostEvent[];
+  rawEvents?: NormalizedEvent[]; // Content-bearing events, only when showMessages=true
+  showMessages?: boolean; // --show-messages flag; undefined/false = conversations disabled
 }
 
 /**

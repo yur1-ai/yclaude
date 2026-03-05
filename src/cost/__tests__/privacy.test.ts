@@ -141,4 +141,28 @@ describe('applyPrivacyFilter', () => {
     expect(r2.uuid).toBe('uuid-2');
     expect(r3.uuid).toBe('uuid-3');
   });
+
+  it('strips message, content, and text fields even when preserveContent was used upstream (regression guard)', () => {
+    // Simulates the case where normalizeEvent was called with preserveContent=true,
+    // producing events with message fields. applyPrivacyFilter must still strip them.
+    const eventWithAllContent = {
+      ...safeEvent,
+      uuid: 'uuid-privacy',
+      message: { role: 'assistant', content: [{ type: 'text', text: 'secret response' }] },
+      content: 'raw content',
+      text: 'raw text',
+    } as NormalizedEvent;
+
+    const result = applyPrivacyFilter([eventWithAllContent]);
+    expect(result).toHaveLength(1);
+    // biome-ignore lint/style/noNonNullAssertion: test-only; length asserted above
+    const filtered = result[0]!;
+    expect('message' in filtered).toBe(false);
+    expect('content' in filtered).toBe(false);
+    expect('text' in filtered).toBe(false);
+    // Safe fields preserved
+    expect(filtered.uuid).toBe('uuid-privacy');
+    expect(filtered.model).toBe(safeEvent.model);
+    expect(filtered.tokens).toEqual(safeEvent.tokens);
+  });
 });

@@ -5,14 +5,17 @@ import { describe, expect, it } from 'vitest';
  * Parse CLI args using a standalone Commander instance that mirrors cli.ts options.
  * This avoids importing cli.ts directly (which has side effects via program.parse()).
  */
-function parseCLIArgs(argv: string[]): { open: boolean; port: string; dir: string | undefined } {
+function parseCLIArgs(
+  argv: string[],
+): { open: boolean; port: string; dir: string | undefined; showMessages: boolean | undefined } {
   const program = new Command();
   program
     .name('yclaude')
     .version('0.1.0', '-v, --version')
     .option('-d, --dir <path>', 'custom data directory')
     .option('-p, --port <number>', 'port number', '3000')
-    .option('--no-open', 'do not open browser automatically');
+    .option('--no-open', 'do not open browser automatically')
+    .option('--show-messages', 'enable conversation text viewing in Chats tab');
 
   // Parse with process name and script name prepended (Commander convention)
   program.parse(['node', 'yclaude', ...argv]);
@@ -48,5 +51,15 @@ describe('CLI option parsing', () => {
   it('opts.dir is the given path when --dir is passed', () => {
     const opts = parseCLIArgs(['--dir', '/custom/path']);
     expect(opts.dir).toBe('/custom/path');
+  });
+
+  it('opts.showMessages is undefined when --show-messages is not passed', () => {
+    const opts = parseCLIArgs([]);
+    expect(opts.showMessages).toBeUndefined();
+  });
+
+  it('opts.showMessages is true when --show-messages is passed', () => {
+    const opts = parseCLIArgs(['--show-messages']);
+    expect(opts.showMessages).toBe(true);
   });
 });

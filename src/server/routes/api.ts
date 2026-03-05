@@ -80,6 +80,11 @@ function getLocalHourKey(timestamp: string, tz: string): string {
 export function apiRoutes(state: AppState): Hono {
   const app = new Hono();
 
+  // GET /api/v1/config — returns server configuration for frontend feature gating.
+  app.get('/config', (c) => {
+    return c.json({ showMessages: state.showMessages ?? false });
+  });
+
   // GET /api/v1/summary — aggregates cost data into a single summary object.
   // Supports optional ?from=ISO and ?to=ISO date-range filtering.
   // No params = all-time totals (backward compatible).
@@ -178,7 +183,7 @@ export function apiRoutes(state: AppState): Hono {
 
     let result: Array<{ date: string; cost: number }>;
 
-    // Zero-cost gap-fill: only for day bucket when both bounds are explicit
+    // Zero-cost gap-fill for day and hour buckets when both bounds are explicit
     // Note: 'invalid' was already filtered by early returns above; from/to here are Date | null
     if (fromStr && toStr && bucket === 'day' && from && to) {
       result = [];
@@ -192,6 +197,17 @@ export function apiRoutes(state: AppState): Hono {
         const key = cursor.toISOString().slice(0, 10);
         result.push({ date: key, cost: groups.get(key) ?? 0 });
         cursor.setUTCDate(cursor.getUTCDate() + 1);
+      }
+    } else if (fromStr && toStr && bucket === 'hour' && from && to) {
+      result = [];
+      const cursor = new Date(from);
+      cursor.setMinutes(0, 0, 0);
+      const endDate = new Date(to);
+
+      while (cursor <= endDate) {
+        const key = getLocalHourKey(cursor.toISOString(), tz);
+        result.push({ date: key, cost: groups.get(key) ?? 0 });
+        cursor.setTime(cursor.getTime() + 3_600_000);
       }
     } else {
       // No gap-fill: sort entries chronologically

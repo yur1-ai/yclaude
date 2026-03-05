@@ -18,21 +18,38 @@ program
   .option('-p, --port <number>', 'port number', '3000')
   .option('--no-open', 'do not open browser automatically')
   .option('--debug', 'enable debug logging')
+  .option('--show-messages', 'enable conversation text viewing in Chats tab')
   .parse();
 
-const opts = program.opts<{ dir: string | undefined; port: string; open: boolean }>();
+const opts = program.opts<{
+  dir: string | undefined;
+  port: string;
+  open: boolean;
+  showMessages: boolean | undefined;
+}>();
 
 const port = Number.parseInt(opts.port, 10);
 const url = `http://127.0.0.1:${port}`;
 
 // Load and process data pipeline
 // exactOptionalPropertyTypes: pass dir only when defined (undefined !== omitted under strict TS)
-const events = await parseAll(opts.dir !== undefined ? { dir: opts.dir } : {});
+const parseOpts = opts.dir !== undefined ? { dir: opts.dir } : {};
+const showMessages = opts.showMessages ?? false;
+
+// When showMessages is enabled, parse with preserveContent to retain message fields
+const events = await parseAll(showMessages ? { ...parseOpts, preserveContent: true } : parseOpts);
+
+// Always privacy-filter for existing endpoints (sessions, summary, etc.)
 const filtered = applyPrivacyFilter(events);
 const costs = computeCosts(filtered);
 
 // Create Hono app with pre-loaded state
-const app = createApp({ events: filtered, costs });
+// exactOptionalPropertyTypes: only include rawEvents when showMessages is true (undefined !== omitted)
+const app = createApp(
+  showMessages
+    ? { events: filtered, costs, rawEvents: events, showMessages }
+    : { events: filtered, costs, showMessages: false },
+);
 
 // Start server — bind exclusively to 127.0.0.1 (loopback only, never 0.0.0.0)
 serve({ fetch: app.fetch, port, hostname: '127.0.0.1' }, () => {

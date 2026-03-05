@@ -37,4 +37,5 @@ export type NormalizedEvent = z.infer<typeof NormalizedEventSchema>;
 export interface ParseOptions {
   dir?: string; // --dir flag: override default discovery paths
   debug?: boolean; // --debug flag: enable verbose stderr logging
+  preserveContent?: boolean; // --show-messages: keep message field in output
 }
