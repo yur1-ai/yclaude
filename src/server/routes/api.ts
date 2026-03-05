@@ -75,8 +75,33 @@ function extractContentBlocks(
 }
 
 /**
+ * Strips XML-like tags commonly injected by Claude Code system and skill/plugin prompts.
+ * Handles both self-closing and paired tags. Returns cleaned text with collapsed whitespace.
+ */
+function stripXmlTags(text: string): string {
+  // Remove paired tags and their content for known system metadata tags
+  const systemTags = [
+    'command-name', 'command-message', 'command-args',
+    'local-command-caveat', 'system-reminder', 'local-command-stdout',
+  ];
+  let result = text;
+  for (const tag of systemTags) {
+    result = result.replace(new RegExp(`<${tag}[^>]*>[\\s\\S]*?</${tag}>`, 'g'), '');
+  }
+  // Also strip any remaining partial/broken tags from these known system tags
+  // (handles truncated tags like `<command-message>clear</command-...`)
+  for (const tag of systemTags) {
+    result = result.replace(new RegExp(`<${tag}[^>]*>[^<]*$`, 'g'), '');
+    result = result.replace(new RegExp(`</?${tag}[^>]*>`, 'g'), '');
+  }
+  // Collapse multiple whitespace/newlines
+  return result.replace(/\s+/g, ' ').trim();
+}
+
+/**
  * Extracts the first user message text from a list of events.
- * Returns both truncated (~80 chars) and full versions.
+ * Skips messages that are purely system/command XML tags.
+ * Returns both truncated (~80 chars) and full versions with XML tags stripped.
  */
 function extractFirstUserMessage(events: NormalizedEvent[]): { truncated: string; full: string } {
   for (const e of events) {
@@ -100,9 +125,12 @@ function extractFirstUserMessage(events: NormalizedEvent[]): { truncated: string
       }
     }
     if (text) {
+      const cleaned = stripXmlTags(text);
+      // Skip this message if it was entirely system/command tags
+      if (!cleaned) continue;
       return {
-        truncated: text.length > 80 ? `${text.slice(0, 80)}...` : text,
-        full: text,
+        truncated: cleaned.length > 80 ? `${cleaned.slice(0, 80)}...` : cleaned,
+        full: cleaned,
       };
     }
   }
