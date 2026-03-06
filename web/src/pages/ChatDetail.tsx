@@ -198,7 +198,6 @@ export default function ChatDetail() {
               const skillInvocation = getSkillInvocation(msg);
               if (skillInvocation) {
                 return (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: messages have no stable id
                   <div
                     key={i}
                     className="flex items-center gap-3 py-3 text-xs text-slate-400 dark:text-[#484f58]"
@@ -215,7 +214,6 @@ export default function ChatDetail() {
             }
 
             return (
-              // biome-ignore lint/suspicious/noArrayIndexKey: messages have no stable id
               <MessageBubble
                 key={i}
                 message={msg}

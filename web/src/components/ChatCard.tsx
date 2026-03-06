@@ -22,15 +22,10 @@ function HighlightedText({ text, query }: { text: string; query: string }) {
     <>
       {parts.map((part, i) =>
         regex.test(part) ? (
-          <mark
-            // biome-ignore lint/suspicious/noArrayIndexKey: split parts have no stable identity
-            key={i}
-            className="bg-yellow-200 dark:bg-yellow-900/50 rounded-sm"
-          >
+          <mark key={i} className="bg-yellow-200 dark:bg-yellow-900/50 rounded-sm">
             {part}
           </mark>
         ) : (
-          // biome-ignore lint/suspicious/noArrayIndexKey: split parts have no stable identity
           <span key={i}>{part}</span>
         ),
       )}
@@ -46,17 +41,10 @@ export function ChatCard({ chat, searchQuery, onViewConversation }: ChatCardProp
   const costLabel = `$${chat.costUsd.toFixed(2)} est.`;
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
+    <button
+      type="button"
       onClick={() => setExpanded((prev) => !prev)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          setExpanded((prev) => !prev);
-        }
-      }}
-      className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-[#30363d] dark:bg-[#161b22] cursor-pointer hover:border-slate-300 dark:hover:border-[#484f58] transition-colors"
+      className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-[#30363d] dark:bg-[#161b22] cursor-pointer hover:border-slate-300 dark:hover:border-[#484f58] transition-colors w-full text-left"
     >
       {/* Line 1: project name, model badge, timestamp */}
       <div className="flex items-center justify-between gap-2">
@@ -68,9 +56,7 @@ export function ChatCard({ chat, searchQuery, onViewConversation }: ChatCardProp
             {chat.model}
           </span>
         </div>
-        <span className="text-xs text-slate-500 dark:text-[#8b949e] shrink-0">
-          {formattedTime}
-        </span>
+        <span className="text-xs text-slate-500 dark:text-[#8b949e] shrink-0">{formattedTime}</span>
       </div>
 
       {/* Line 2 / Expanded content */}
@@ -100,11 +86,9 @@ export function ChatCard({ chat, searchQuery, onViewConversation }: ChatCardProp
           <p className="text-sm text-slate-500 dark:text-[#8b949e] truncate mr-2">
             <HighlightedText text={chat.firstMessage} query={searchQuery ?? ''} />
           </p>
-          <span className="text-xs text-slate-400 dark:text-[#8b949e] shrink-0">
-            {costLabel}
-          </span>
+          <span className="text-xs text-slate-400 dark:text-[#8b949e] shrink-0">{costLabel}</span>
         </div>
       )}
-    </div>
+    </button>
   );
 }

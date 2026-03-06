@@ -150,18 +150,9 @@ describe('Cache multiplier invariant (all tiers)', () => {
     // Anthropic pricing for older models (e.g. claude-3-haiku: 0.25*1.25=0.3125
     // but published as 0.3). All current-gen tiers match exactly at precision 5.
     for (const [_model, pricing] of Object.entries(MODEL_PRICING)) {
-      expect(pricing.cacheWrite5mPerMTok).toBeCloseTo(
-        pricing.inputPerMTok * 1.25,
-        1,
-      );
-      expect(pricing.cacheWrite1hPerMTok).toBeCloseTo(
-        pricing.inputPerMTok * 2.0,
-        1,
-      );
-      expect(pricing.cacheReadPerMTok).toBeCloseTo(
-        pricing.inputPerMTok * 0.1,
-        1,
-      );
+      expect(pricing.cacheWrite5mPerMTok).toBeCloseTo(pricing.inputPerMTok * 1.25, 1);
+      expect(pricing.cacheWrite1hPerMTok).toBeCloseTo(pricing.inputPerMTok * 2.0, 1);
+      expect(pricing.cacheReadPerMTok).toBeCloseTo(pricing.inputPerMTok * 0.1, 1);
     }
   });
 });

@@ -5,9 +5,12 @@ import { describe, expect, it } from 'vitest';
  * Parse CLI args using a standalone Commander instance that mirrors cli.ts options.
  * This avoids importing cli.ts directly (which has side effects via program.parse()).
  */
-function parseCLIArgs(
-  argv: string[],
-): { open: boolean; port: string; dir: string | undefined; showMessages: boolean | undefined } {
+function parseCLIArgs(argv: string[]): {
+  open: boolean;
+  port: string;
+  dir: string | undefined;
+  showMessages: boolean | undefined;
+} {
   const program = new Command();
   program
     .name('yclaude')

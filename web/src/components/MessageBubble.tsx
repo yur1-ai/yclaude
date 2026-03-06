@@ -52,7 +52,12 @@ function TextBlockContent({
   );
 }
 
-export function MessageBubble({ message, toolResults, isDark, showRaw = false }: MessageBubbleProps) {
+export function MessageBubble({
+  message,
+  toolResults,
+  isDark,
+  showRaw = false,
+}: MessageBubbleProps) {
   const { role, content, timestamp, model, tokens } = message;
 
   if (role === 'user') {
@@ -76,7 +81,6 @@ export function MessageBubble({ message, toolResults, isDark, showRaw = false }:
               {content.map((block, i) => {
                 if (block.type === 'text' && block.text) {
                   return (
-                    // biome-ignore lint/suspicious/noArrayIndexKey: content blocks have no stable id
                     <div key={i}>
                       <TextBlockContent text={block.text} isDark={isDark} showRaw={showRaw} />
                     </div>
@@ -123,7 +127,6 @@ export function MessageBubble({ message, toolResults, isDark, showRaw = false }:
         {content.map((block, i) => {
           if (block.type === 'text' && block.text) {
             return (
-              // biome-ignore lint/suspicious/noArrayIndexKey: content blocks have no stable id
               <div key={i}>
                 <TextBlockContent text={block.text} isDark={isDark} showRaw={showRaw} />
               </div>
@@ -133,7 +136,6 @@ export function MessageBubble({ message, toolResults, isDark, showRaw = false }:
           if (block.type === 'tool_use') {
             const matchedResult = block.toolId ? toolResults.get(block.toolId) : undefined;
             return (
-              // biome-ignore lint/suspicious/noArrayIndexKey: content blocks have no stable id
               <div key={i}>
                 <ToolUseBlock
                   toolName={block.toolName ?? 'unknown'}

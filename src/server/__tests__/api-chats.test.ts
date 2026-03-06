@@ -159,6 +159,7 @@ describe('GET /api/v1/chats — chat list', () => {
     expect(body.pageSize).toBe(50);
     expect(body.chats).toHaveLength(1);
 
+    // biome-ignore lint/style/noNonNullAssertion: test assertions
     const chat = body.chats[0]!;
     expect(chat.sessionId).toBe('sess-1');
     expect(chat).toHaveProperty('displayName');
@@ -193,6 +194,7 @@ describe('GET /api/v1/chats — chat list', () => {
     const app = makeApp({ showMessages: true, rawEvents });
     const res = await app.request('/api/v1/chats');
     const body = (await res.json()) as { chats: Array<Record<string, unknown>> };
+    // biome-ignore lint/style/noNonNullAssertion: test assertions
     const chat = body.chats[0]!;
     // firstMessage should be truncated to ~80 chars + '...'
     expect((chat.firstMessage as string).length).toBeLessThanOrEqual(84);
@@ -380,12 +382,14 @@ describe('GET /api/v1/chats/:id — conversation thread', () => {
     expect(body.messages).toHaveLength(2);
 
     // User message
+    // biome-ignore lint/style/noNonNullAssertion: test assertions
     const userMsg = body.messages[0]!;
     expect(userMsg.role).toBe('user');
     expect(userMsg.content).toHaveLength(1);
     expect(userMsg.content[0]?.type).toBe('text');
 
     // Assistant message
+    // biome-ignore lint/style/noNonNullAssertion: test assertions
     const assistantMsg = body.messages[1]!;
     expect(assistantMsg.role).toBe('assistant');
     expect(assistantMsg.content).toHaveLength(2);
@@ -412,6 +416,7 @@ describe('GET /api/v1/chats/:id — conversation thread', () => {
     const body = (await res.json()) as {
       messages: Array<{ content: Array<Record<string, unknown>> }>;
     };
+    // biome-ignore lint/style/noNonNullAssertion: test assertions
     const msg = body.messages[0]!;
     // Only the text block should remain, thinking block excluded
     expect(msg.content).toHaveLength(1);
@@ -442,6 +447,7 @@ describe('GET /api/v1/chats/:id — conversation thread', () => {
     const body = (await res.json()) as {
       messages: Array<{ content: Array<Record<string, unknown>> }>;
     };
+    // biome-ignore lint/style/noNonNullAssertion: test assertions
     const block = body.messages[0]!.content[0]!;
     expect(block.type).toBe('tool_result');
     expect((block.resultContent as string).length).toBeLessThanOrEqual(10000);

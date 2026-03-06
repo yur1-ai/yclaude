@@ -322,9 +322,7 @@ describe('/api/v1/models', () => {
   });
 
   it('1 unknown-model event returns unknownModels with model and session count', async () => {
-    const costs = [
-      makeCostEventWithModel(0.01, 'fake-model', { unknownModel: true }),
-    ];
+    const costs = [makeCostEventWithModel(0.01, 'fake-model', { unknownModel: true })];
     const state: AppState = { events: [], costs };
     const app = createApp(state);
     const res = await app.request('/api/v1/models');
@@ -353,8 +351,13 @@ describe('/api/v1/models', () => {
 
   it('date filter excludes unknown models outside range (unknownModels: null)', async () => {
     const costs = [
-      makeCostEventWithModel(0.01, 'claude-sonnet-4-20250514', { timestamp: '2024-01-05T00:00:00Z' }),
-      makeCostEventWithModel(0.02, 'fake-model', { unknownModel: true, timestamp: '2024-01-01T00:00:00Z' }),
+      makeCostEventWithModel(0.01, 'claude-sonnet-4-20250514', {
+        timestamp: '2024-01-05T00:00:00Z',
+      }),
+      makeCostEventWithModel(0.02, 'fake-model', {
+        unknownModel: true,
+        timestamp: '2024-01-01T00:00:00Z',
+      }),
     ];
     const state: AppState = { events: [], costs };
     const app = createApp(state);

@@ -1,19 +1,19 @@
 import { useState } from 'react';
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
-import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
-import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
-import python from 'react-syntax-highlighter/dist/esm/languages/prism/python';
 import bash from 'react-syntax-highlighter/dist/esm/languages/prism/bash';
-import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
-import yaml from 'react-syntax-highlighter/dist/esm/languages/prism/yaml';
 import css from 'react-syntax-highlighter/dist/esm/languages/prism/css';
-import markup from 'react-syntax-highlighter/dist/esm/languages/prism/markup';
 import go from 'react-syntax-highlighter/dist/esm/languages/prism/go';
+import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
+import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
+import markdown from 'react-syntax-highlighter/dist/esm/languages/prism/markdown';
+import markup from 'react-syntax-highlighter/dist/esm/languages/prism/markup';
+import python from 'react-syntax-highlighter/dist/esm/languages/prism/python';
 import rust from 'react-syntax-highlighter/dist/esm/languages/prism/rust';
 import sql from 'react-syntax-highlighter/dist/esm/languages/prism/sql';
-import markdown from 'react-syntax-highlighter/dist/esm/languages/prism/markdown';
-import oneLight from 'react-syntax-highlighter/dist/esm/styles/prism/one-light';
+import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
+import yaml from 'react-syntax-highlighter/dist/esm/languages/prism/yaml';
 import oneDark from 'react-syntax-highlighter/dist/esm/styles/prism/one-dark';
+import oneLight from 'react-syntax-highlighter/dist/esm/styles/prism/one-light';
 
 // Register languages
 SyntaxHighlighter.registerLanguage('typescript', typescript);
@@ -56,9 +56,7 @@ export function CodeBlock({ language, isDark, children }: CodeBlockProps) {
     <div className="relative group rounded-lg overflow-hidden my-3">
       {/* Header bar */}
       <div className="flex items-center justify-between bg-slate-100 dark:bg-[#21262d] px-3 py-1.5">
-        <span className="font-mono text-xs text-slate-500 dark:text-[#8b949e]">
-          {language}
-        </span>
+        <span className="font-mono text-xs text-slate-500 dark:text-[#8b949e]">{language}</span>
         <button
           type="button"
           onClick={handleCopy}

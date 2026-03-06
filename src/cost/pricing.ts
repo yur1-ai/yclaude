@@ -15,8 +15,7 @@
 export const PRICING_LAST_UPDATED = '2026-02-28';
 
 /** URL of the canonical Anthropic pricing/models documentation. */
-export const PRICING_SOURCE =
-  'https://docs.anthropic.com/en/docs/about-claude/models';
+export const PRICING_SOURCE = 'https://docs.anthropic.com/en/docs/about-claude/models';
 
 // === Interface ===
 

@@ -63,9 +63,8 @@ function extractContentBlocks(
       blocks.push({
         type: 'tool_result',
         toolUseId: String(b.tool_use_id ?? ''),
-        resultContent: resultStr.length > maxToolResultLen
-          ? resultStr.slice(0, maxToolResultLen)
-          : resultStr,
+        resultContent:
+          resultStr.length > maxToolResultLen ? resultStr.slice(0, maxToolResultLen) : resultStr,
         isError: b.is_error === true,
       });
     }
@@ -82,13 +81,32 @@ function stripXmlTags(text: string): string {
   // Known tags injected by Claude Code runtime and skill/plugin orchestrators
   const knownTags = [
     // System metadata
-    'command-name', 'command-message', 'command-args',
-    'local-command-caveat', 'system-reminder', 'local-command-stdout',
+    'command-name',
+    'command-message',
+    'command-args',
+    'local-command-caveat',
+    'system-reminder',
+    'local-command-stdout',
     // Skill/orchestrator prompts
-    'objective', 'execution_context', 'context', 'process', 'tasks',
-    'success_criteria', 'verification', 'output', 'files_to_read',
-    'behavior', 'action', 'interfaces', 'task', 'done', 'verify',
-    'purpose', 'core_principle', 'required_reading', 'step',
+    'objective',
+    'execution_context',
+    'context',
+    'process',
+    'tasks',
+    'success_criteria',
+    'verification',
+    'output',
+    'files_to_read',
+    'behavior',
+    'action',
+    'interfaces',
+    'task',
+    'done',
+    'verify',
+    'purpose',
+    'core_principle',
+    'required_reading',
+    'step',
   ];
   let result = text;
   for (const tag of knownTags) {
@@ -449,9 +467,10 @@ export function apiRoutes(state: AppState): Hono {
     return c.json({
       rows,
       totalCost,
-      unknownModels: unknownModelIds.size > 0
-        ? { models: [...unknownModelIds].sort(), sessionCount: unknownSessionIds.size }
-        : null,
+      unknownModels:
+        unknownModelIds.size > 0
+          ? { models: [...unknownModelIds].sort(), sessionCount: unknownSessionIds.size }
+          : null,
     });
   });
 
@@ -516,7 +535,7 @@ export function apiRoutes(state: AppState): Hono {
 
   // GET /api/v1/pricing-meta — returns pricing metadata (last-updated date and source URL).
   app.get('/pricing-meta', (c) =>
-    c.json({ lastUpdated: PRICING_LAST_UPDATED, source: PRICING_SOURCE })
+    c.json({ lastUpdated: PRICING_LAST_UPDATED, source: PRICING_SOURCE }),
   );
 
   // GET /api/v1/branches — returns sorted unique non-null gitBranch values from all events.
@@ -839,8 +858,7 @@ export function apiRoutes(state: AppState): Hono {
   // -------------------------
 
   const CHATS_PAGE_SIZE = 50;
-  const CHATS_403_MSG =
-    'Conversation viewing is disabled. Start with --show-messages to enable.';
+  const CHATS_403_MSG = 'Conversation viewing is disabled. Start with --show-messages to enable.';
 
   // GET /api/v1/chats — paginated chat list with text search.
   app.get('/chats', (c) => {
@@ -945,9 +963,7 @@ export function apiRoutes(state: AppState): Hono {
     }
 
     // Sort by timestamp descending (newest first)
-    allChats.sort(
-      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-    );
+    allChats.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
     const total = allChats.length;
     const chats = allChats.slice((page - 1) * CHATS_PAGE_SIZE, page * CHATS_PAGE_SIZE);

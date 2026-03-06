@@ -30,7 +30,11 @@ export default function Overview() {
     if (bucket === 'hour' && rangeMs > 48 * 60 * 60 * 1000) {
       // Range too wide for hourly -- revert to day
       setBucket('day');
-    } else if (bucket !== 'hour' && rangeMs <= 48 * 60 * 60 * 1000 && (preset === '24h' || preset === '48h')) {
+    } else if (
+      bucket !== 'hour' &&
+      rangeMs <= 48 * 60 * 60 * 1000 &&
+      (preset === '24h' || preset === '48h')
+    ) {
       // 24h/48h preset selected -- auto-switch to hourly
       setBucket('hour');
     }

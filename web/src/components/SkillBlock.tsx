@@ -8,9 +8,7 @@ interface SkillBlockProps {
 
 /** Format tag names for display: execution_context -> Execution Context */
 function formatTagName(tag: string): string {
-  return tag
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  return tag.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export function SkillBlock({ skillName, sections }: SkillBlockProps) {
@@ -39,7 +37,10 @@ export function SkillBlock({ skillName, sections }: SkillBlockProps) {
       {expanded && (
         <div className="border-t border-purple-200 dark:border-purple-900/50 px-3 py-2 space-y-3">
           {sections.map((section) => (
-            <SkillSection key={`${section.tag}-${section.content.slice(0, 20)}`} section={section} />
+            <SkillSectionItem
+              key={`${section.tag}-${section.content.slice(0, 20)}`}
+              section={section}
+            />
           ))}
         </div>
       )}
@@ -47,7 +48,7 @@ export function SkillBlock({ skillName, sections }: SkillBlockProps) {
   );
 }
 
-function SkillSection({ section }: { section: SkillSection }) {
+function SkillSectionItem({ section }: { section: SkillSection }) {
   const [open, setOpen] = useState(false);
   const preview = section.content.split('\n')[0].slice(0, 100);
 
@@ -62,9 +63,7 @@ function SkillSection({ section }: { section: SkillSection }) {
         <span className="text-[10px] uppercase tracking-wide text-purple-500 dark:text-purple-400 font-medium">
           {formatTagName(section.tag)}
         </span>
-        {!open && (
-          <span className="text-slate-400 dark:text-[#484f58] truncate">{preview}</span>
-        )}
+        {!open && <span className="text-slate-400 dark:text-[#484f58] truncate">{preview}</span>}
       </button>
       {open && (
         <pre className="mt-1 text-xs bg-purple-100/50 dark:bg-purple-950/30 rounded p-2 overflow-auto max-h-[300px] whitespace-pre-wrap text-slate-700 dark:text-[#8b949e]">

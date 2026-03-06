@@ -17,7 +17,6 @@ export default function Chats() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
   // Debounce search input (300ms)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: setTimeout cleanup handles stale closures
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchInput), 300);
     return () => clearTimeout(timer);

@@ -140,7 +140,6 @@ export const QUIPS = {
     'Privacy first. Conversation viewing is opt-in, not opt-out.',
     'The chats are there. You just have not asked to see them yet.',
   ],
-
 } satisfies Record<string, string[]>;
 
 /**
