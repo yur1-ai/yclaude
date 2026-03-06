@@ -263,7 +263,7 @@ describe('/api/v1/pricing-meta', () => {
     const app = createApp(state);
     const res = await app.request('/api/v1/pricing-meta');
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = (await res.json()) as { lastUpdated: string; source: string };
     expect(body).toHaveProperty('lastUpdated');
     expect(body).toHaveProperty('source');
     expect(typeof body.lastUpdated).toBe('string');
