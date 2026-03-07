@@ -1,42 +1,12 @@
-import { DedupAccumulator } from './parser/dedup.js';
-import { normalizeEvent } from './parser/normalizer.js';
-import { discoverJSONLFiles, streamJSONLFile } from './parser/reader.js';
-import type { NormalizedEvent, ParseOptions } from './parser/types.js';
-import { enableDebug } from './shared/debug.js';
+// Provider types
+export type {
+  UnifiedEvent,
+  ProviderId,
+  CostSource,
+  ProviderAdapter,
+  ProviderInfo,
+  LoadOptions,
+} from './providers/types.js';
 
-// Re-export types for consumers (Phase 2 imports NormalizedEvent from here)
-export type { NormalizedEvent, ParseOptions } from './parser/types.js';
-
-// Phase 2: cost engine public API
-export { applyPrivacyFilter } from './cost/privacy.js';
-export { computeCosts } from './cost/engine.js';
-export type { CostEvent, EstimatedCost } from './cost/types.js';
-export type { KnownModel } from './cost/pricing.js';
-// Note: toEstimatedCost is intentionally NOT re-exported — it is an internal
-// constructor used only by the cost engine.
-
-// Main entry point: discover all JSONL files, parse and normalize every event,
-// deduplicate by UUID, return the canonical event collection.
-export async function parseAll(options: ParseOptions = {}): Promise<NormalizedEvent[]> {
-  if (options.debug) {
-    enableDebug();
-  }
-
-  const files = await discoverJSONLFiles(options.dir);
-  const dedup = new DedupAccumulator();
-
-  for (const file of files) {
-    for await (const raw of streamJSONLFile(file)) {
-      if (typeof raw !== 'object' || raw === null) continue;
-      const event = normalizeEvent(
-        raw as Record<string, unknown>,
-        options.preserveContent ? { preserveContent: true } : undefined,
-      );
-      if (event !== null) {
-        dedup.add(event);
-      }
-    }
-  }
-
-  return dedup.results();
-}
+// Main entry point
+export { loadProviders } from './providers/registry.js';

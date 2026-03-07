@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
-import { PRICING_LAST_UPDATED, PRICING_SOURCE } from '../../cost/pricing.js';
-import type { NormalizedEvent } from '../../parser/types.js';
+import { PRICING_LAST_UPDATED, PRICING_SOURCE } from '../../providers/claude/cost/pricing.js';
+import type { UnifiedEvent } from '../../providers/types.js';
 import type { AppState } from '../server.js';
 
 // -------------------------
@@ -126,17 +126,16 @@ function stripXmlTags(text: string): string {
  * Skips messages that are purely system/command XML tags.
  * Returns both truncated (~80 chars) and full versions with XML tags stripped.
  */
-function extractFirstUserMessage(events: NormalizedEvent[]): { truncated: string; full: string } {
+function extractFirstUserMessage(events: UnifiedEvent[]): { truncated: string; full: string } {
   for (const e of events) {
     if (e.type !== 'user') continue;
-    const msg = (e as Record<string, unknown>).message;
+    const msg = e.message;
     if (!msg || typeof msg !== 'object') continue;
-    const m = msg as Record<string, unknown>;
     let text = '';
-    if (typeof m.content === 'string') {
-      text = m.content;
-    } else if (Array.isArray(m.content)) {
-      for (const block of m.content) {
+    if (typeof msg.content === 'string') {
+      text = msg.content;
+    } else if (Array.isArray(msg.content)) {
+      for (const block of msg.content) {
         if (
           typeof block === 'object' &&
           block !== null &&
@@ -163,16 +162,15 @@ function extractFirstUserMessage(events: NormalizedEvent[]): { truncated: string
 /**
  * Concatenates all text content from all events for full-text search matching.
  */
-function getTextContent(events: NormalizedEvent[]): string {
+function getTextContent(events: UnifiedEvent[]): string {
   const parts: string[] = [];
   for (const e of events) {
-    const msg = (e as Record<string, unknown>).message;
+    const msg = e.message;
     if (!msg || typeof msg !== 'object') continue;
-    const m = msg as Record<string, unknown>;
-    if (typeof m.content === 'string') {
-      parts.push(m.content);
-    } else if (Array.isArray(m.content)) {
-      for (const block of m.content) {
+    if (typeof msg.content === 'string') {
+      parts.push(msg.content);
+    } else if (Array.isArray(msg.content)) {
+      for (const block of msg.content) {
         if (
           typeof block === 'object' &&
           block !== null &&
@@ -282,14 +280,14 @@ export function apiRoutes(state: AppState): Hono {
     if (from === 'invalid') return c.json({ error: "Invalid 'from' date" }, 400);
     if (to === 'invalid') return c.json({ error: "Invalid 'to' date" }, 400);
 
-    // Filter into a new variable — never mutate state.costs
-    let costs = state.costs;
-    if (from) costs = costs.filter((e) => new Date(e.timestamp) >= from);
-    if (to) costs = costs.filter((e) => new Date(e.timestamp) <= to);
+    // Filter into a new variable — never mutate state.events
+    let events = state.events;
+    if (from) events = events.filter((e) => new Date(e.timestamp) >= from);
+    if (to) events = events.filter((e) => new Date(e.timestamp) <= to);
 
-    const totalCost = costs.reduce((sum, event) => sum + event.costUsd, 0);
+    const totalCost = events.reduce((sum, event) => sum + event.costUsd, 0);
 
-    const totalTokens = costs.reduce(
+    const totalTokens = events.reduce(
       (acc, event) => {
         const t = event.tokens;
         if (!t) return acc;
@@ -303,7 +301,7 @@ export function apiRoutes(state: AppState): Hono {
       { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
     );
 
-    const subagentCostUsd = costs
+    const subagentCostUsd = events
       .filter((e) => e.isSidechain === true)
       .reduce((s, e) => s + e.costUsd, 0);
     const mainCostUsd = totalCost - subagentCostUsd;
@@ -311,7 +309,7 @@ export function apiRoutes(state: AppState): Hono {
     return c.json({
       totalCost,
       totalTokens,
-      eventCount: costs.length,
+      eventCount: events.length,
       subagentCostUsd,
       mainCostUsd,
     });
@@ -333,15 +331,15 @@ export function apiRoutes(state: AppState): Hono {
     if (from === 'invalid') return c.json({ error: "Invalid 'from' date" }, 400);
     if (to === 'invalid') return c.json({ error: "Invalid 'to' date" }, 400);
 
-    // Filter costs by date range — never mutate state.costs
-    let costs = state.costs;
-    if (from) costs = costs.filter((e) => new Date(e.timestamp) >= from);
-    if (to) costs = costs.filter((e) => new Date(e.timestamp) <= to);
+    // Filter events by date range — never mutate state.events
+    let events = state.events;
+    if (from) events = events.filter((e) => new Date(e.timestamp) >= from);
+    if (to) events = events.filter((e) => new Date(e.timestamp) <= to);
 
     // Build grouped map: key → accumulated cost
     const groups = new Map<string, number>();
 
-    for (const e of costs) {
+    for (const e of events) {
       // Clone the date to avoid mutations affecting the original timestamp.
       // All bucketing uses UTC methods to match the ISO timestamp strings.
       const d = new Date(e.timestamp);
@@ -417,9 +415,9 @@ export function apiRoutes(state: AppState): Hono {
     if (from === 'invalid') return c.json({ error: "Invalid 'from' date" }, 400);
     if (to === 'invalid') return c.json({ error: "Invalid 'to' date" }, 400);
 
-    let costs = state.costs;
-    if (from) costs = costs.filter((e) => new Date(e.timestamp) >= from);
-    if (to) costs = costs.filter((e) => new Date(e.timestamp) <= to);
+    let events = state.events;
+    if (from) events = events.filter((e) => new Date(e.timestamp) >= from);
+    if (to) events = events.filter((e) => new Date(e.timestamp) <= to);
 
     const groups = new Map<
       string,
@@ -430,7 +428,7 @@ export function apiRoutes(state: AppState): Hono {
       }
     >();
 
-    for (const e of costs) {
+    for (const e of events) {
       const key = e.model ?? 'Unknown';
       const existing = groups.get(key) ?? {
         costUsd: 0,
@@ -457,7 +455,7 @@ export function apiRoutes(state: AppState): Hono {
     // Collect unknown model IDs and their distinct session count
     const unknownModelIds = new Set<string>();
     const unknownSessionIds = new Set<string>();
-    for (const e of costs) {
+    for (const e of events) {
       if (e.unknownModel && e.model) {
         unknownModelIds.add(e.model);
         unknownSessionIds.add(e.sessionId);
@@ -490,9 +488,9 @@ export function apiRoutes(state: AppState): Hono {
     if (from === 'invalid') return c.json({ error: "Invalid 'from' date" }, 400);
     if (to === 'invalid') return c.json({ error: "Invalid 'to' date" }, 400);
 
-    let costs = state.costs;
-    if (from) costs = costs.filter((e) => new Date(e.timestamp) >= from);
-    if (to) costs = costs.filter((e) => new Date(e.timestamp) <= to);
+    let events = state.events;
+    if (from) events = events.filter((e) => new Date(e.timestamp) >= from);
+    if (to) events = events.filter((e) => new Date(e.timestamp) <= to);
 
     const groups = new Map<
       string | null,
@@ -503,7 +501,7 @@ export function apiRoutes(state: AppState): Hono {
       }
     >();
 
-    for (const e of costs) {
+    for (const e of events) {
       const key = e.cwd ?? null;
       const existing = groups.get(key) ?? {
         costUsd: 0,
@@ -542,7 +540,7 @@ export function apiRoutes(state: AppState): Hono {
   app.get('/branches', (c) => {
     const branches = [
       ...new Set(
-        state.costs
+        state.events
           .map((e) => e.gitBranch)
           .filter((b): b is string => typeof b === 'string' && b.length > 0),
       ),
@@ -561,7 +559,7 @@ export function apiRoutes(state: AppState): Hono {
 
     // Group by local date, counting distinct sessionIds
     const daySessions = new Map<string, Set<string>>();
-    for (const e of state.costs) {
+    for (const e of state.events) {
       const d = new Date(e.timestamp);
       const localDate = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(d);
       if (!localDate.startsWith(String(year))) continue;
@@ -595,7 +593,7 @@ export function apiRoutes(state: AppState): Hono {
   });
 
   // GET /api/v1/sessions — paginated session list.
-  // Groups state.costs by sessionId. Sessions with no token-bearing events are excluded.
+  // Groups state.events by sessionId. Sessions with no token-bearing events are excluded.
   // Supports ?from=ISO, ?to=ISO date filtering, ?project=cwd filter, ?branch=name filter, ?page=N pagination.
   app.get('/sessions', (c) => {
     interface SessionRow extends Record<string, unknown> {
@@ -629,24 +627,24 @@ export function apiRoutes(state: AppState): Hono {
     if (from === 'invalid') return c.json({ error: "Invalid 'from' date" }, 400);
     if (to === 'invalid') return c.json({ error: "Invalid 'to' date" }, 400);
 
-    // Filter by date range — never mutate state.costs
-    let costs = state.costs;
-    if (from) costs = costs.filter((e) => new Date(e.timestamp).getTime() >= from.getTime());
-    if (to) costs = costs.filter((e) => new Date(e.timestamp).getTime() <= to.getTime());
+    // Filter by date range — never mutate state.events
+    let events = state.events;
+    if (from) events = events.filter((e) => new Date(e.timestamp).getTime() >= from.getTime());
+    if (to) events = events.filter((e) => new Date(e.timestamp).getTime() <= to.getTime());
 
     // Filter by project (cwd)
     if (projectFilter !== null) {
-      costs = costs.filter((e) => (e.cwd ?? null) === projectFilter);
+      events = events.filter((e) => (e.cwd ?? null) === projectFilter);
     }
 
     // Filter by branch (gitBranch)
     if (branchFilter !== null) {
-      costs = costs.filter((e) => (e.gitBranch ?? null) === branchFilter);
+      events = events.filter((e) => (e.gitBranch ?? null) === branchFilter);
     }
 
     // Group ALL events by sessionId (not just token-bearing)
-    const sessionMap = new Map<string, { events: typeof costs }>();
-    for (const e of costs) {
+    const sessionMap = new Map<string, { events: typeof events }>();
+    for (const e of events) {
       const group = sessionMap.get(e.sessionId);
       if (group) {
         group.events.push(e);
@@ -767,7 +765,7 @@ export function apiRoutes(state: AppState): Hono {
     }
 
     const sessionId = c.req.param('id');
-    const allEvents = state.costs.filter((e) => e.sessionId === sessionId);
+    const allEvents = state.events.filter((e) => e.sessionId === sessionId);
 
     if (allEvents.length === 0) {
       return c.json({ error: 'Session not found' }, 404);
@@ -862,7 +860,7 @@ export function apiRoutes(state: AppState): Hono {
 
   // GET /api/v1/chats — paginated chat list with text search.
   app.get('/chats', (c) => {
-    if (!state.showMessages || !state.rawEvents) {
+    if (!state.showMessages) {
       return c.json({ error: CHATS_403_MSG }, 403);
     }
 
@@ -879,19 +877,19 @@ export function apiRoutes(state: AppState): Hono {
     if (from === 'invalid') return c.json({ error: "Invalid 'from' date" }, 400);
     if (to === 'invalid') return c.json({ error: "Invalid 'to' date" }, 400);
 
-    // Filter rawEvents by date range
-    let rawEvents = state.rawEvents;
-    if (from) rawEvents = rawEvents.filter((e) => new Date(e.timestamp) >= from);
-    if (to) rawEvents = rawEvents.filter((e) => new Date(e.timestamp) <= to);
+    // Filter events with message content (replaces rawEvents)
+    let messageEvents = state.events.filter((e) => e.message !== undefined);
+    if (from) messageEvents = messageEvents.filter((e) => new Date(e.timestamp) >= from);
+    if (to) messageEvents = messageEvents.filter((e) => new Date(e.timestamp) <= to);
 
     // Filter by project (cwd)
     if (projectFilter !== null) {
-      rawEvents = rawEvents.filter((e) => (e.cwd ?? null) === projectFilter);
+      messageEvents = messageEvents.filter((e) => (e.cwd ?? null) === projectFilter);
     }
 
     // Group by sessionId
-    const sessionMap = new Map<string, NormalizedEvent[]>();
-    for (const e of rawEvents) {
+    const sessionMap = new Map<string, UnifiedEvent[]>();
+    for (const e of messageEvents) {
       const group = sessionMap.get(e.sessionId);
       if (group) {
         group.push(e);
@@ -906,6 +904,7 @@ export function apiRoutes(state: AppState): Hono {
       displayName: string;
       cwd: string | null;
       model: string;
+      provider: string;
       costUsd: number;
       timestamp: string;
       firstMessage: string;
@@ -930,14 +929,15 @@ export function apiRoutes(state: AppState): Hono {
       const { truncated, full } = extractFirstUserMessage(sorted);
       const cwd = sorted[0]?.cwd ?? null;
       const timestamp = sorted[0]?.timestamp ?? '';
+      const provider = sorted[0]?.provider ?? 'claude';
 
       // Model from first assistant event
       const assistantEvent = sorted.find((e) => e.type === 'assistant' && e.model);
       const model = assistantEvent?.model ?? 'Unknown';
 
-      // Cost from costs array (matching sessionId)
-      const sessionCosts = state.costs.filter((ce) => ce.sessionId === sessionId);
-      const costUsd = sessionCosts.reduce((s, e) => s + e.costUsd, 0);
+      // Cost from all events in session (unified: costUsd is on every event)
+      const sessionEvents = state.events.filter((ce) => ce.sessionId === sessionId);
+      const costUsd = sessionEvents.reduce((s, e) => s + e.costUsd, 0);
 
       // Turn count = user + assistant events
       const turnCount = sorted.filter((e) => e.type === 'user' || e.type === 'assistant').length;
@@ -947,6 +947,7 @@ export function apiRoutes(state: AppState): Hono {
         displayName: '',
         cwd,
         model,
+        provider,
         costUsd,
         timestamp,
         firstMessage: truncated,
@@ -973,12 +974,15 @@ export function apiRoutes(state: AppState): Hono {
 
   // GET /api/v1/chats/:id — full conversation thread with content blocks.
   app.get('/chats/:id', (c) => {
-    if (!state.showMessages || !state.rawEvents) {
+    if (!state.showMessages) {
       return c.json({ error: CHATS_403_MSG }, 403);
     }
 
     const sessionId = c.req.param('id');
-    const sessionEvents = state.rawEvents.filter((e) => e.sessionId === sessionId);
+    // Filter events with message content for this session
+    const sessionEvents = state.events.filter(
+      (e) => e.sessionId === sessionId && e.message !== undefined,
+    );
 
     if (sessionEvents.length === 0) {
       return c.json({ error: 'Conversation not found' }, 404);
@@ -1002,7 +1006,7 @@ export function apiRoutes(state: AppState): Hono {
     for (const e of sorted) {
       if (e.type !== 'user' && e.type !== 'assistant') continue;
 
-      const msg = (e as Record<string, unknown>).message as Record<string, unknown> | undefined;
+      const msg = e.message;
       const content = msg ? extractContentBlocks(msg) : [];
 
       const turn: MessageTurn = {
@@ -1029,6 +1033,7 @@ export function apiRoutes(state: AppState): Hono {
     // Build summary (mirrors SessionDetail pattern)
     const cwd = sorted[0]?.cwd ?? null;
     const timestamp = sorted[0]?.timestamp ?? '';
+    const provider = sorted[0]?.provider ?? 'claude';
 
     let durationMs: number | null = null;
     for (const e of sorted) {
@@ -1053,9 +1058,9 @@ export function apiRoutes(state: AppState): Hono {
       { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
     );
 
-    // Cost from costs array
-    const sessionCosts = state.costs.filter((ce) => ce.sessionId === sessionId);
-    const totalCost = sessionCosts.reduce((s, e) => s + e.costUsd, 0);
+    // Cost from all events in session (unified: costUsd is on every event)
+    const allSessionEvents = state.events.filter((ce) => ce.sessionId === sessionId);
+    const totalCost = allSessionEvents.reduce((s, e) => s + e.costUsd, 0);
 
     const displayName = assignProjectNames([cwd]).get(cwd) ?? cwd ?? 'Unknown';
 
@@ -1070,6 +1075,7 @@ export function apiRoutes(state: AppState): Hono {
       timestamp,
       durationMs,
       gitBranch,
+      provider,
     };
 
     return c.json({ summary, messages });

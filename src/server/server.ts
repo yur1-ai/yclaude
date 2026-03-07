@@ -3,8 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
 import { secureHeaders } from 'hono/secure-headers';
-import type { CostEvent } from '../cost/types.js';
-import type { NormalizedEvent } from '../parser/types.js';
+import type { ProviderInfo, UnifiedEvent } from '../providers/types.js';
 import { apiRoutes } from './routes/api.js';
 
 // Compute absolute path to dist/web/ relative to this file's location.
@@ -15,12 +14,11 @@ const webDistPath = fileURLToPath(new URL('../../dist/web', import.meta.url));
 
 /**
  * Application state passed to the server factory.
- * All data is loaded at startup from the JSONL pipeline.
+ * All data is loaded at startup via loadProviders().
  */
 export interface AppState {
-  events: NormalizedEvent[];
-  costs: CostEvent[];
-  rawEvents?: NormalizedEvent[]; // Content-bearing events, only when showMessages=true
+  events: UnifiedEvent[];
+  providers: ProviderInfo[];
   showMessages?: boolean; // --show-messages flag; undefined/false = conversations disabled
 }
 
