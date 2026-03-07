@@ -1,32 +1,32 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Analytics Completion + Distribution
-status: archived
-last_updated: "2026-03-05"
-last_activity: 2026-03-05 — Milestone v1.1 archived
+milestone: v1.2
+milestone_name: Multi-Provider Analytics
+status: defining_requirements
+last_updated: "2026-03-07"
+last_activity: 2026-03-07 — Milestone v1.2 started
 progress:
-  total_phases: 8
-  completed_phases: 8
-  total_plans: 25
-  completed_plans: 25
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-05 after v1.1 milestone)
+See: .planning/PROJECT.md (updated 2026-03-07 after v1.2 milestone start)
 
 **Core value:** Give developers full visibility into their AI coding spend — locally first, with no friction.
-**Current focus:** Planning next milestone
+**Current focus:** Defining requirements for multi-provider support (Cursor, OpenCode, Ollama)
 
 ## Current Position
 
-Phase: All v1.1 phases complete (5–10)
-Plan: 25/25 complete
-Status: v1.1 milestone archived — ready for `/gsd:new-milestone`
-Last activity: 2026-03-05 — Milestone v1.1 archived
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-07 — Milestone v1.2 started
 
 ## Accumulated Context
 
@@ -49,4 +49,4 @@ None
 
 ### Pending Todos
 
-None — v1.1 milestone complete
+None — starting fresh milestone

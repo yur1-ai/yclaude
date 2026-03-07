@@ -45,6 +45,19 @@ Give developers and teams full visibility into their AI coding spend — locally
 
 ### Active
 
+## Current Milestone: v1.2 Multi-Provider Analytics
+
+**Goal:** Expand yclaude from Claude Code-only to a universal AI coding analytics dashboard — supporting Cursor, OpenCode, and Ollama alongside existing Claude Code, with full feature parity where data allows and provider-tabbed navigation.
+
+**Target features:**
+- Cursor usage analytics — full parity (cost, sessions, models, conversations where data allows)
+- OpenCode usage analytics — full parity
+- Ollama analytics — usage patterns + estimated equivalent cloud cost ("you saved $X")
+- Provider-agnostic data layer for easy future provider additions
+- Provider-tabbed dashboard UX (separate tab per provider, each with full analytics)
+
+### Future (deferred from v2.0)
+
 - [ ] Cloud sync — opt-in persistence across machines (CLOUD-01)
 - [ ] Team admin aggregated usage view (TEAM-01)
 - [ ] Community benchmarking — anonymized usage comparison (BENCH-01)
@@ -106,4 +119,4 @@ Published on npm as `yclaude` with GitHub Actions CI/CD.
 | Ship v1.0 as Phases 1-4 only | Phases 5-8 are qualitatively different features; fresh context for v1.1 is more token-efficient | ✓ Good — clean milestone boundary |
 
 ---
-*Last updated: 2026-03-05 after v1.1 milestone*
+*Last updated: 2026-03-07 after v1.2 milestone start*
