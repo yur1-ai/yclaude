@@ -1,4 +1,4 @@
-import { debugLog } from '../shared/debug.js';
+import { debugLog } from '../../../shared/debug.js';
 import type { NormalizedEvent } from './types.js';
 
 // Streaming deduplication accumulator.

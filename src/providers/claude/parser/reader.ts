@@ -3,7 +3,7 @@ import { glob } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { createInterface } from 'node:readline';
-import { debugLog } from '../shared/debug.js';
+import { debugLog } from '../../../shared/debug.js';
 
 export async function discoverJSONLFiles(overrideDir?: string): Promise<string[]> {
   const home = os.homedir();
