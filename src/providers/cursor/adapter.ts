@@ -121,9 +121,12 @@ export class CursorAdapter implements ProviderAdapter {
         try {
           const wsJsonPath = join(wsDir, 'workspace.json');
           const wsJsonContent = await readFile(wsJsonPath, 'utf-8');
-          const wsJson = JSON.parse(wsJsonContent) as { folder?: string };
+          const wsJson = JSON.parse(wsJsonContent) as { folder?: string; workspace?: string };
           if (wsJson.folder) {
-            workspacePath = decodeFileUri(wsJson.folder);
+            workspacePath = tryDecodeLocalUri(wsJson.folder);
+          } else if (wsJson.workspace) {
+            // Multi-root workspace — try to resolve from .code-workspace file
+            workspacePath = await resolveWorkspaceFolder(wsJson.workspace);
           }
         } catch {
           debugLog(`No workspace.json in workspace: ${wsDir}`);
@@ -166,14 +169,44 @@ export class CursorAdapter implements ProviderAdapter {
 
 /**
  * Decodes a file:// URI to a filesystem path.
- * Strips `file://` prefix and decodes percent-encoded characters.
+ * Returns undefined for non-file URIs (vscode-remote://, ssh://, etc.)
+ * since those can't be resolved to local paths.
  */
-function decodeFileUri(uri: string): string {
-  let path = uri;
-  if (path.startsWith('file:///')) {
-    path = path.slice('file://'.length);
-  } else if (path.startsWith('file://')) {
-    path = path.slice('file://'.length);
+function tryDecodeLocalUri(uri: string): string | undefined {
+  if (uri.startsWith('file:///')) {
+    return decodeURIComponent(uri.slice('file://'.length));
   }
-  return decodeURIComponent(path);
+  if (uri.startsWith('file://')) {
+    return decodeURIComponent(uri.slice('file://'.length));
+  }
+  // Non-file URIs (vscode-remote://, etc.) — can't resolve locally
+  if (uri.includes('://')) {
+    debugLog(`Skipping non-local URI: ${uri.substring(0, 60)}`);
+    return undefined;
+  }
+  return uri;
+}
+
+/**
+ * Resolves the first folder from a .code-workspace file URI.
+ * Returns undefined if the file can't be read or has no local folders.
+ */
+async function resolveWorkspaceFolder(workspaceUri: string): Promise<string | undefined> {
+  const wsFilePath = tryDecodeLocalUri(workspaceUri);
+  if (!wsFilePath) return undefined;
+
+  try {
+    const content = await readFile(wsFilePath, 'utf-8');
+    const wsFile = JSON.parse(content) as { folders?: Array<{ path: string }> };
+    const firstFolder = wsFile.folders?.[0]?.path;
+    if (!firstFolder) return undefined;
+
+    // Resolve relative paths against the workspace file's directory
+    if (firstFolder.startsWith('/')) return firstFolder;
+    const { dirname } = await import('node:path');
+    return join(dirname(wsFilePath), firstFolder);
+  } catch {
+    debugLog(`Cannot read workspace file: ${wsFilePath}`);
+    return undefined;
+  }
 }

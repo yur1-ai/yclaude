@@ -191,11 +191,14 @@ function processComposer(
 
     const timestamp = getBubbleTimestamp(bubble, head.createdAt);
 
-    // Build tokens if available
-    const tokens = bubble.tokenCount
+    // Build tokens if available (skip zero-zero — v3 bubbles report {0,0} when no data)
+    const hasTokenData =
+      bubble.tokenCount &&
+      (bubble.tokenCount.inputTokens > 0 || bubble.tokenCount.outputTokens > 0);
+    const tokens = hasTokenData
       ? {
-          input: bubble.tokenCount.inputTokens,
-          output: bubble.tokenCount.outputTokens,
+          input: bubble.tokenCount!.inputTokens,
+          output: bubble.tokenCount!.outputTokens,
           cacheCreation: 0,
           cacheRead: 0,
           cacheCreation5m: 0,

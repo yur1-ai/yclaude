@@ -684,6 +684,35 @@ describe('parseCursorData', () => {
       expect(events).toHaveLength(1);
     });
 
+    it('treats zero-zero tokenCount as no data (v3 schema)', async () => {
+      const composerId = 'comp-zero-tokens';
+      const head = sampleComposerHead({ composerId });
+      const composerData = sampleComposerFullData({ composerId });
+
+      const { globalDbPath } = await setupSingleComposer({
+        composerId,
+        composerData,
+        bubbles: [
+          sampleBubble({
+            bubbleId: 'b1',
+            type: 2,
+            _v: 3,
+            tokenCount: { inputTokens: 0, outputTokens: 0 },
+          }),
+        ],
+      });
+
+      const { wsDbPath } = await setupWorkspace({ composerHeads: [head] });
+
+      const events = parseCursorData({
+        globalDbPath,
+        workspaces: [{ dbPath: wsDbPath }],
+      });
+
+      expect(events).toHaveLength(1);
+      expect(events[0]!.tokens).toBeUndefined();
+    });
+
     it('handles missing tokenCount', async () => {
       const composerId = 'comp-no-tokens';
       const head = sampleComposerHead({ composerId });
