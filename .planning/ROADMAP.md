@@ -46,7 +46,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 **Milestone Goal:** Expand yclaude from Claude Code-only to a universal AI coding analytics dashboard -- supporting Cursor, OpenCode, and existing Claude Code with full feature parity where data allows and provider-tabbed navigation.
 
 - [x] **Phase 11: Provider Abstraction Layer** - Unified data model and provider adapter pattern with Claude Code as reference implementation (completed 2026-03-07)
-- [ ] **Phase 12: Cursor Provider** - Full Cursor analytics from state.vscdb (sessions, costs, agent mode)
+- [x] **Phase 12: Cursor Provider** - Full Cursor analytics from state.vscdb (sessions, costs, agent mode) (completed 2026-03-07)
 - [ ] **Phase 13: Multi-Provider API & Dashboard** - Provider-tabbed navigation, API filtering, cross-provider analytics
 - [ ] **Phase 14: OpenCode Provider** - Full OpenCode analytics from opencode.db (sessions, costs, code metrics, hierarchy)
 
@@ -80,8 +80,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 12-01-PLAN.md -- Foundation: types, Zod schemas, platform paths, DB access, parser + unit tests
-- [ ] 12-02-PLAN.md -- Adapter integration: wire CursorAdapter, integration tests, end-to-end verification
+- [x] 12-01-PLAN.md -- Foundation: types, Zod schemas, platform paths, DB access, parser + unit tests
+- [x] 12-02-PLAN.md -- Adapter integration: wire CursorAdapter, integration tests, end-to-end verification
 
 ### Phase 13: Multi-Provider API & Dashboard
 **Goal**: Users can navigate between providers via tabs, filter all data by provider, and see cross-provider analytics showing their total AI coding activity
@@ -140,6 +140,6 @@ Phases execute in numeric order: 11 -> 12 -> 13 -> 14
 | 9.2. Tech Debt & Date Range Presets | v1.1 | 2/2 | Complete | 2026-03-05 |
 | 10. Conversations Viewer | v1.1 | 3/3 | Complete | 2026-03-05 |
 | 11. Provider Abstraction Layer | v1.2 | Complete    | 2026-03-07 | 2026-03-07 |
-| 12. Cursor Provider | 1/2 | In Progress|  | - |
+| 12. Cursor Provider | v1.2 | 2/2 | Complete | 2026-03-07 |
 | 13. Multi-Provider API & Dashboard | v1.2 | 0/? | Not started | - |
 | 14. OpenCode Provider | v1.2 | 0/? | Not started | - |

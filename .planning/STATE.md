@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Multi-Provider Analytics
 status: in-progress
-stopped_at: Completed 12-01-PLAN.md (Cursor extraction pipeline)
-last_updated: "2026-03-07T17:03:10Z"
-last_activity: 2026-03-07 -- Completed Plan 01 (Cursor data extraction pipeline)
+stopped_at: Completed 12-02-PLAN.md (CursorAdapter integration)
+last_updated: "2026-03-07T20:22:24Z"
+last_activity: 2026-03-07 -- Completed Plan 02 (CursorAdapter integration + end-to-end verification)
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 5
-  completed_plans: 4
-  percent: 80
+  completed_plans: 5
+  percent: 100
 ---
 
 # Project State
@@ -25,26 +25,26 @@ See: .planning/PROJECT.md (updated 2026-03-07 after v1.2 milestone start)
 
 ## Current Position
 
-Phase: 12 of 14 (Cursor Provider)
-Plan: 1 of 2 complete
-Status: In Progress
-Last activity: 2026-03-07 -- Completed Plan 01 (Cursor data extraction pipeline)
+Phase: 12 of 14 (Cursor Provider) -- COMPLETE
+Plan: 2 of 2 complete
+Status: Phase 12 Complete -- Ready for Phase 13
+Last activity: 2026-03-07 -- Completed Plan 02 (CursorAdapter integration + end-to-end verification)
 
-Progress: [████████░░] 80%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: 8min
-- Total execution time: 0.53 hours
+- Total plans completed: 5
+- Average duration: 9min
+- Total execution time: 0.78 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 11 | 3 | 25min | 8min |
-| 12 | 1 | 7min | 7min |
+| 12 | 2 | 22min | 11min |
 
 *Updated after each plan completion*
 
@@ -74,6 +74,11 @@ Progress: [████████░░] 80%
 - Cost distributed evenly across AI bubbles in a composer, raw costInCents preserved on first event
 - Model name from usageData keys (prefer non-default) with modelConfig.modelName fallback
 - isAgentic derived from composer head unifiedMode, not per-bubble isAgentic flag
+- Constructor-injected testDataDirs for deterministic adapter tests without mocking os.homedir
+- Multi-root workspace support: read .code-workspace files for workspace.json entries with `workspace` key
+- vscode-remote:// URIs gracefully skipped (remote SSH workspaces have no local cwd)
+- Zero-token v3 bubbles ({inputTokens:0, outputTokens:0}) treated as undefined to avoid false display
+- Cursor cost $0.00 accepted as data limitation (usageData empty in recent Cursor versions)
 
 ### Pending Todos
 
@@ -87,6 +92,6 @@ None -- starting fresh milestone
 
 ## Session Continuity
 
-Last session: 2026-03-07T17:03:10Z
-Stopped at: Completed 12-01-PLAN.md (Cursor data extraction pipeline)
-Resume file: .planning/phases/12-cursor-provider/12-02-PLAN.md
+Last session: 2026-03-07T20:22:24Z
+Stopped at: Completed 12-02-PLAN.md (CursorAdapter integration) -- Phase 12 complete
+Resume file: .planning/phases/13-multi-provider-api/ (Phase 13 planning needed)
