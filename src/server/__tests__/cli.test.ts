@@ -10,6 +10,8 @@ function parseCLIArgs(argv: string[]): {
   port: string;
   dir: string | undefined;
   showMessages: boolean | undefined;
+  debug: boolean | undefined;
+  exclude: string | undefined;
 } {
   const program = new Command();
   program
@@ -18,7 +20,9 @@ function parseCLIArgs(argv: string[]): {
     .option('-d, --dir <path>', 'custom data directory')
     .option('-p, --port <number>', 'port number', '3000')
     .option('--no-open', 'do not open browser automatically')
-    .option('--show-messages', 'enable conversation text viewing in Chats tab');
+    .option('--debug', 'enable debug logging')
+    .option('--show-messages', 'enable conversation text viewing in Chats tab')
+    .option('--exclude <providers>', 'exclude providers (comma-separated)');
 
   // Parse with process name and script name prepended (Commander convention)
   program.parse(['node', 'yclaude', ...argv]);
@@ -64,5 +68,36 @@ describe('CLI option parsing', () => {
   it('opts.showMessages is true when --show-messages is passed', () => {
     const opts = parseCLIArgs(['--show-messages']);
     expect(opts.showMessages).toBe(true);
+  });
+
+  it('opts.exclude is undefined when --exclude is not passed', () => {
+    const opts = parseCLIArgs([]);
+    expect(opts.exclude).toBeUndefined();
+  });
+
+  it('opts.exclude captures the given value when --exclude is passed', () => {
+    const opts = parseCLIArgs(['--exclude', 'cursor,opencode']);
+    expect(opts.exclude).toBe('cursor,opencode');
+  });
+
+  it('--exclude value is parsed into array by comma splitting', () => {
+    const opts = parseCLIArgs(['--exclude', 'cursor, opencode']);
+    // Verify the CLI captures the raw string; the split+trim happens in cli.ts
+    expect(opts.exclude).toBe('cursor, opencode');
+    // Simulate the cli.ts parsing logic
+    const exclude = opts.exclude
+      ? opts.exclude.split(',').map((s: string) => s.trim())
+      : [];
+    expect(exclude).toEqual(['cursor', 'opencode']);
+  });
+
+  it('opts.debug is undefined when --debug is not passed', () => {
+    const opts = parseCLIArgs([]);
+    expect(opts.debug).toBeUndefined();
+  });
+
+  it('opts.debug is true when --debug is passed', () => {
+    const opts = parseCLIArgs(['--debug']);
+    expect(opts.debug).toBe(true);
   });
 });
