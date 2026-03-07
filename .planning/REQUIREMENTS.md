@@ -71,28 +71,28 @@ Requirements for multi-provider analytics milestone. Each maps to roadmap phases
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PROV-01 | TBD | Pending |
-| PROV-02 | TBD | Pending |
-| PROV-03 | TBD | Pending |
-| PROV-04 | TBD | Pending |
-| PROV-05 | TBD | Pending |
-| CURS-01 | TBD | Pending |
-| CURS-02 | TBD | Pending |
-| CURS-03 | TBD | Pending |
-| OC-01 | TBD | Pending |
-| OC-02 | TBD | Pending |
-| OC-03 | TBD | Pending |
-| OC-04 | TBD | Pending |
-| OC-05 | TBD | Pending |
-| CROSS-01 | TBD | Pending |
-| CROSS-02 | TBD | Pending |
-| CROSS-03 | TBD | Pending |
+| PROV-01 | Phase 11 | Pending |
+| PROV-02 | Phase 11 | Pending |
+| PROV-03 | Phase 13 | Pending |
+| PROV-04 | Phase 13 | Pending |
+| PROV-05 | Phase 13 | Pending |
+| CURS-01 | Phase 12 | Pending |
+| CURS-02 | Phase 12 | Pending |
+| CURS-03 | Phase 12 | Pending |
+| OC-01 | Phase 14 | Pending |
+| OC-02 | Phase 14 | Pending |
+| OC-03 | Phase 14 | Pending |
+| OC-04 | Phase 14 | Pending |
+| OC-05 | Phase 14 | Pending |
+| CROSS-01 | Phase 13 | Pending |
+| CROSS-02 | Phase 13 | Pending |
+| CROSS-03 | Phase 13 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 16 total
-- Mapped to phases: 0
-- Unmapped: 16 (pending roadmap creation)
+- Mapped to phases: 16/16
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-07*
-*Last updated: 2026-03-07 after initial definition*
+*Last updated: 2026-03-07 after roadmap creation (Phases 11-14)*
