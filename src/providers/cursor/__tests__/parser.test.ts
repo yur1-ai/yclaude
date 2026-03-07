@@ -10,6 +10,7 @@ import {
 } from './fixtures.js';
 import { parseCursorData } from '../parser.js';
 import type { UnifiedEvent } from '../../types.js';
+import type { RawBubble } from '../types.js';
 import { join } from 'node:path';
 
 let testDirs: string[] = [];
@@ -31,7 +32,7 @@ afterEach(async () => {
 async function setupSingleComposer(opts: {
   composerId: string;
   composerData?: object;
-  bubbles?: Array<{ bubbleId: string } & Record<string, unknown>>;
+  bubbles?: RawBubble[];
 }) {
   const globalDir = await makeTestDir();
   const entries: Array<{ key: string; value: object }> = [];
@@ -114,18 +115,20 @@ describe('parseCursorData', () => {
       const head = sampleComposerHead({ composerId });
       const composerData = sampleComposerFullData({ composerId });
 
+      // Build a v2-style bubble manually without createdAt
+      const v2Bubble: RawBubble = {
+        bubbleId: 'b-v2',
+        type: 2,
+        _v: 2,
+        isAgentic: true,
+        tokenCount: { inputTokens: 100, outputTokens: 50 },
+        timingInfo: { clientRpcSendTime: epoch },
+      };
+
       const { globalDbPath } = await setupSingleComposer({
         composerId,
         composerData,
-        bubbles: [
-          sampleBubble({
-            bubbleId: 'b-v2',
-            type: 2,
-            _v: 2,
-            createdAt: undefined as unknown as string,
-            timingInfo: { clientRpcSendTime: epoch },
-          }),
-        ],
+        bubbles: [v2Bubble],
       });
 
       const { wsDbPath } = await setupWorkspace({ composerHeads: [head] });
@@ -687,7 +690,7 @@ describe('parseCursorData', () => {
       const composerData = sampleComposerFullData({ composerId });
 
       const bubble = sampleBubble({ bubbleId: 'b1', type: 2, _v: 3 });
-      delete (bubble as Record<string, unknown>).tokenCount;
+      delete (bubble as unknown as Record<string, unknown>).tokenCount;
 
       const { globalDbPath } = await setupSingleComposer({
         composerId,
@@ -712,8 +715,8 @@ describe('parseCursorData', () => {
       const composerData = sampleComposerFullData({ composerId });
 
       const bubble = sampleBubble({ bubbleId: 'b1', type: 2, _v: 2 });
-      delete (bubble as Record<string, unknown>).createdAt;
-      delete (bubble as Record<string, unknown>).timingInfo;
+      delete (bubble as unknown as Record<string, unknown>).createdAt;
+      delete (bubble as unknown as Record<string, unknown>).timingInfo;
 
       const { globalDbPath } = await setupSingleComposer({
         composerId,
