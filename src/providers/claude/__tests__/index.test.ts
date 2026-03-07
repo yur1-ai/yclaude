@@ -34,7 +34,7 @@ describe('loadProviders() integration', () => {
       ].join('\n'),
     );
 
-    const { events, providers } = await loadProviders({ dir: tmpDir });
+    const { events, providers } = await loadProviders({ dir: tmpDir, exclude: ['cursor', 'opencode'] });
     expect(events.length).toBe(2);
     expect(events[0]?.id).toBe('event-1');
     expect(events[0]?.provider).toBe('claude');
@@ -55,7 +55,7 @@ describe('loadProviders() integration', () => {
       ].join('\n'),
     );
 
-    const { events } = await loadProviders({ dir: tmpDir });
+    const { events } = await loadProviders({ dir: tmpDir, exclude: ['cursor', 'opencode'] });
     expect(events.length).toBe(1);
     expect(events[0]?.id).toBe('event-1');
   });
@@ -69,7 +69,7 @@ describe('loadProviders() integration', () => {
     await writeFile(join(projectsDir, 'file1.jsonl'), line);
     await writeFile(join(subDir, 'file2.jsonl'), line);
 
-    const { events } = await loadProviders({ dir: tmpDir });
+    const { events } = await loadProviders({ dir: tmpDir, exclude: ['cursor', 'opencode'] });
     expect(events.filter((e) => e.id === 'dup-uuid').length).toBe(1);
   });
 
@@ -78,7 +78,7 @@ describe('loadProviders() integration', () => {
     // Remove the projectsDir we created in beforeEach to make it truly empty
     await rm(join(tmpDir, 'projects'), { recursive: true, force: true });
 
-    const { events } = await loadProviders({ dir: tmpDir });
+    const { events } = await loadProviders({ dir: tmpDir, exclude: ['cursor', 'opencode'] });
     expect(events).toEqual([]);
   });
 
@@ -89,7 +89,7 @@ describe('loadProviders() integration', () => {
     );
 
     const { isDebugEnabled } = await import('../../../shared/debug.js');
-    await loadProviders({ dir: tmpDir, debug: true });
+    await loadProviders({ dir: tmpDir, debug: true, exclude: ['cursor', 'opencode'] });
     expect(isDebugEnabled()).toBe(true);
   });
 
@@ -103,7 +103,7 @@ describe('loadProviders() integration', () => {
       ].join('\n'),
     );
 
-    const { events } = await loadProviders({ dir: tmpDir });
+    const { events } = await loadProviders({ dir: tmpDir, exclude: ['cursor', 'opencode'] });
     expect(events.find((e) => e.id === 'event-1')).toBeDefined();
   });
 
@@ -117,20 +117,23 @@ describe('loadProviders() integration', () => {
       ].join('\n'),
     );
 
-    const { events } = await loadProviders({ dir: tmpDir });
+    const { events } = await loadProviders({ dir: tmpDir, exclude: ['cursor', 'opencode'] });
     const found = events.find((e) => e.id === 'sub-uuid-1');
     expect(found).toBeDefined();
     expect(found?.isSidechain).toBe(true);
     expect(found?.agentId).toBe('agent-abc');
   });
 
-  it('returns providers info for all known providers', async () => {
-    const { providers } = await loadProviders({ dir: tmpDir });
-    // Should have entries for all 3 known providers
+  it('returns providers info for all known providers including excluded', async () => {
+    const { providers } = await loadProviders({ dir: tmpDir, exclude: ['cursor', 'opencode'] });
+    // Should have entries for all 3 known providers (excluded ones shown as not-found)
     expect(providers.length).toBe(3);
     const ids = providers.map((p) => p.id);
     expect(ids).toContain('claude');
     expect(ids).toContain('cursor');
     expect(ids).toContain('opencode');
+    // Excluded providers should be not-found
+    expect(providers.find((p) => p.id === 'cursor')?.status).toBe('not-found');
+    expect(providers.find((p) => p.id === 'opencode')?.status).toBe('not-found');
   });
 });
