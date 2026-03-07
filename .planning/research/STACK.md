@@ -1,358 +1,446 @@
-# Technology Stack
+# Stack Research: v1.2 Multi-Provider Analytics (Cursor, OpenCode, Ollama)
 
 **Project:** yclaude
-**Researched:** 2026-02-28 (updated for dashboard/visualization milestone)
-**Confidence:** HIGH (most recommendations verified against official docs and npm registry)
+**Researched:** 2026-03-07
+**Milestone:** v1.2 Multi-Provider Analytics
+**Confidence:** MEDIUM overall (Cursor schema is community reverse-engineered; OpenCode from DeepWiki source analysis; Ollama confirmed no persistent log)
 
 ---
 
-## Base Stack (Already Validated — Do Not Re-Research)
+## Existing Stack (Unchanged from v1.1)
 
-The following technologies are already in place and confirmed. This document only supplements them with new additions needed for the visualization milestone.
+All existing dependencies remain. This milestone adds to the stack; it does not replace anything.
 
-| Technology | Version | Status |
-|------------|---------|--------|
-| React | 19.x | Installed |
-| Tailwind CSS | 4.x | Installed |
-| Vite | 7.x | Installed |
-| Hono | 4.12.x | Installed |
-| TypeScript | 5.7.x | Installed |
-| React Router | v7 SPA | Installed |
-
----
-
-## New Stack Additions for Dashboard/Visualization Milestone
-
-The following libraries are needed exclusively for the new features: cost charts, token breakdown donut, activity heatmap, cache efficiency display, session data table, and dark mode.
-
----
-
-## Charting
-
-### Recommended: Recharts v3 (direct) + shadcn/ui chart wrapper
-
-**CRITICAL FINDING:** As of February 2026, shadcn/ui's official `chart` component still wraps **Recharts v2**, not v3. PR #8486 to upgrade shadcn chart to Recharts v3 was opened by shadcn himself in October 2025 but remains unmerged as of late February 2026. The author confirmed on X (July 2025): "This is recharts v2. Still working on v3."
-
-**Recommendation:** Install Recharts v3 directly AND use the shadcn/ui chart component (which targets v2 API). For the charts in this milestone, use the **shadcn/ui chart patterns** (CSS variable theming, `ChartContainer`, `ChartTooltip`) with Recharts v3 — the v3 breaking changes are minimal (removed unused internal props) and the upgrade from the community gist works as a drop-in.
-
-**Alternative if shadcn chart migration is too painful:** Install Recharts v3 standalone and wire CSS variables manually. The shadcn chart patterns are thin wrappers; they are not magic.
-
-| Library | Version | Purpose | Confidence |
-|---------|---------|---------|-----------|
-| recharts | 3.7.x | All charts: area/line (cost over time), bar (token breakdown), pie/donut (model split) | HIGH — npm registry confirms 3.7.0, last published ~1 month ago |
-| shadcn/ui chart wrapper | via CLI `npx shadcn add chart` | CSS variable theming system, `ChartContainer`, `ChartTooltip`, `ChartLegend` | HIGH — official docs, but note v2/v3 discrepancy above |
-
-**React 19 peer dependency:** Recharts v3 lists React 18 as a peer dependency. With React 19 you need one of:
-- `npm install recharts --legacy-peer-deps` (simplest)
-- Add `overrides: { "react-is": "^19.0.0" }` in package.json (cleaner for package publishing)
-- Use bun/pnpm which handle looser peer dep resolution automatically
-
-**Charts needed for this milestone and how to implement:**
-
-| Chart | Recharts Component | shadcn Pattern |
-|-------|-------------------|---------------|
-| Cost over time (daily/weekly/monthly toggle) | `<AreaChart>` or `<LineChart>` with `<XAxis>`, `<YAxis>`, `<Tooltip>` | `ChartContainer` + `ChartTooltip` + `ChartTooltipContent` |
-| Token breakdown (input/output/cache) | `<BarChart stacked>` with multiple `<Bar>` | Same — use `fill="var(--color-input)"` etc. |
-| Per-model split | `<PieChart>` with `<Pie innerRadius={60}>` (donut) | shadcn has a "Pie Chart - Donut with Text" example verbatim |
-| Activity heatmap | NOT Recharts — see below | Separate library |
-| Cache efficiency | NOT a chart — shadcn `<Progress>` + score number | No charting lib needed |
+| Technology | Version | Purpose | Status |
+|------------|---------|---------|--------|
+| Node.js | >=24.0.0 | Runtime | Existing (`engines` in package.json) |
+| TypeScript | 5.9+ | Language | Existing |
+| Hono v4 | 4.12+ | HTTP server | Existing |
+| React | 19 | Frontend framework | Existing |
+| Vite | 7 | Frontend build | Existing |
+| Tailwind | v4 | CSS utility framework | Existing |
+| tsup | 8.5+ | Server bundle (uses `noExternal: [/.*/]` in prod) | Existing |
+| Commander | 14+ | CLI framework | Existing |
+| Zod | 4.3+ | Schema validation | Existing |
+| TanStack Query | 5.x | API data fetching | Existing |
+| Zustand | 5.x | Global state | Existing |
+| Recharts | 3.x | Charts | Existing |
+| Vitest | 4.x | Testing | Existing |
 
 ---
 
-## Activity Heatmap
+## Provider Data Landscape
 
-### Recommended: react-activity-calendar v3
+### 1. Cursor
 
-Recharts does not have a calendar heatmap. `react-calendar-heatmap` (the classic library) is at v1.10.0, published over a year ago, and is effectively unmaintained. The actively maintained replacement is `react-activity-calendar`.
+**Data format:** SQLite databases (`.vscdb` files) with key-value tables
+**Confidence:** MEDIUM -- schema reverse-engineered by community; Cursor does not document internal storage
 
-| Library | Version | Why |
-|---------|---------|-----|
-| react-activity-calendar | 3.0.x | Active development (v3 released November 2025, v3.0.5 published ~19 days ago); 19,789 weekly downloads; SVG-based GitHub-style heatmap; built-in dark/light mode; tooltip support; localization; works with Vite/React; no SSR dependency |
+#### Storage Paths
 
-**What react-activity-calendar provides:**
-- Calendar grid identical to GitHub contribution graph
-- `data` prop accepts `{ date: string, count: number, level: 0-4 }[]`
-- `colorScheme="dark"` prop for automatic dark mode
-- Custom `renderBlock` and `renderColorLegend` for theming to match Tailwind palette
-- Tooltip via `react-tooltip` companion package (optional, ~4KB)
+| Platform | Global Database Path |
+|----------|------|
+| macOS | `~/Library/Application Support/Cursor/User/globalStorage/state.vscdb` |
+| Linux | `~/.config/Cursor/User/globalStorage/state.vscdb` |
+| Windows | `%APPDATA%\Cursor\User\globalStorage\state.vscdb` |
 
-**What you need to provide:**
-- Data transformation: aggregate `NormalizedEvent[]` by date → `ActivityCalendarData[]`
-- Color mapping: pass `theme` prop with oklch/hex values matching your Tailwind CSS variables
+Workspace-specific data at `<above>/workspaceStorage/<hash>/state.vscdb` per project. The **global** database contains all conversations (can reach 1-25GB).
 
-**NOT recommended alternatives:**
-- `react-calendar-heatmap` — last published 2023, no React 19 support, unmaintained
-- `@uiw/react-heat-map` — active but smaller ecosystem, less polished API
-- `shadcn-calendar-heatmap` — GitHub project, not on npm as a published package, too unstable
-- Building custom SVG heatmap with Recharts `<Cell>` — disproportionate effort for a known problem
+#### Database Tables
+
+**`cursorDiskKV`** (primary -- Composer/Agent data):
+- Schema: `key TEXT, value BLOB` (JSON stored as blob)
+- Key patterns:
+  - `composerData:<composerId>` -- conversation metadata, ordered bubble list, usage data
+  - `bubbleId:<conversationId>:<bubbleId>` -- individual messages (1KB to 500KB+ each)
+  - `checkpointId:<conversationId>:<id>` -- file restore points
+
+**`ItemTable`** (legacy chat + settings):
+- Schema: `key TEXT PRIMARY KEY, value TEXT`
+- Key `workbench.panel.aichat.view.aichat.chatdata` -- older chat conversations (pre-Composer)
+
+#### Available Data Fields
+
+**Conversation level (`composerData:<id>`):**
+
+| Field | Type | Analytics Use |
+|-------|------|---------------|
+| `composerId` | string | Session identifier |
+| `createdAt` | number (ms) | Session start time |
+| `lastUpdatedAt` | number (ms) | Session end time |
+| `status` | "completed" / "aborted" | Session status |
+| `isAgentic` | boolean | Agent mode vs Chat mode |
+| `name` | string | Conversation title |
+| `usageData` | object | **Cost data: `costInCents` and `amount` per model** |
+| `fullConversationHeadersOnly` | array | `{bubbleId, type}` entries -- conversation thread |
+
+**Message level (`bubbleId:<convId>:<bubbleId>`):**
+
+| Field | Type | Analytics Use |
+|-------|------|---------------|
+| `bubbleId` | string | Message identifier |
+| `type` | 1 (user) / 2 (AI) | Message role |
+| `text` / `rawText` | string | Conversation content (opt-in only) |
+| `thinking` | string | Extended reasoning (AI messages) |
+| `tokenCount.inputTokens` | number | **Input token count** |
+| `tokenCount.outputTokens` | number | **Output token count** |
+| `timingInfo` | object | Start/end timing data |
+| `model` | string | **Model identifier** (e.g., "claude-4.5-sonnet", "gpt-4o") |
+| `toolFormerData` | object | Tool call information (file edits, terminal) |
+
+#### Data Completeness
+
+| Metric | Available? | Confidence | Notes |
+|--------|-----------|------------|-------|
+| Conversations | YES | HIGH | Confirmed by multiple independent sources |
+| Token counts | YES | MEDIUM | Confirmed by Opik export extension; `tokenCount` field in bubbleId entries |
+| Model used | YES | MEDIUM | `model` field in bubble data; one report of missing data in older versions |
+| Costs | PARTIAL | MEDIUM | `usageData.costInCents` aggregate per conversation; not per-message |
+| Timestamps | YES | HIGH | Millisecond precision in both composer and bubble data |
+| Cache tiers | NO | HIGH | Cursor does not expose cache creation/read breakdown |
 
 ---
 
-## Data Table (Session List)
+### 2. OpenCode
 
-### Recommended: TanStack Table v8 + shadcn/ui `<Table>` primitive
+**Data format:** SQLite database (Drizzle ORM, WAL mode)
+**Confidence:** MEDIUM -- schema from DeepWiki source analysis + GitHub issues
 
-This is the officially recommended combination in shadcn/ui docs. The pattern: TanStack Table handles all data logic (sorting, filtering, pagination state), shadcn/ui `<Table>` provides the styled HTML structure.
+#### Storage Path
 
-| Library | Version | Why |
-|---------|---------|-----|
-| @tanstack/react-table | 8.21.x | Headless table logic: sorting by any column, column filtering, global search, pagination; TypeScript-first; React 19 compatible; 8.21.3 is the latest stable release |
-| shadcn/ui `<Table>` | via `npx shadcn add table` | Styled table primitives (`<TableHeader>`, `<TableBody>`, `<TableRow>`, `<TableCell>`) using Tailwind CSS variables; zero extra bundle cost (copy-paste) |
+| Scope | Path |
+|-------|------|
+| Global default | `~/.local/share/opencode/opencode.db` |
+| Per-project (if configured) | `.opencode/opencode.db` in project root |
+| Configurable via | `data.directory` in opencode config JSON |
 
-**TanStack Table for session list — specific features needed:**
+WAL mode means companion files `opencode.db-shm` and `opencode.db-wal` exist alongside.
+
+**Version note:** v1.1.53+ uses SQLite. Older versions used JSON files at `~/.local/share/opencode/storage/{message,part,session}/*.json`. Only target SQLite format.
+
+#### Session Table Schema
+
+| Column | Type | Analytics Use |
+|--------|------|---------------|
+| `id` | TEXT (ULID) | Session identifier |
+| `title` | TEXT | Auto-generated from first message |
+| `created_at` | INTEGER (unix) | Session start |
+| `updated_at` | INTEGER (unix) | Session end |
+| `cost` | REAL (float64) | **Accumulated USD cost (cumulative, survives compaction)** |
+| `prompt_tokens` | INTEGER | Input tokens (**resets to 0 on compaction**) |
+| `completion_tokens` | INTEGER | Output tokens (**resets to 0 on compaction**) |
+| `summary_message_id` | TEXT | Summary reference after compaction |
+| `project_id` | TEXT | Project identifier |
+| `workspace_id` | TEXT | Workspace identifier |
+| `parent_id` | TEXT | Child/subagent sessions |
+| `slug` | TEXT | URL-safe identifier |
+| `summary_additions` | INTEGER | File diff line stats |
+| `summary_deletions` | INTEGER | File diff line stats |
+
+#### Message/Part Tables
+
+- Indexed columns: `id`, `session_id`, `message_id`, `time_created`
+- `data` column: **entire message/part as JSON blob** (text, tool calls, compaction markers)
+
+#### Token Accumulation Logic
 
 ```
-Sorting: getSortedRowModel() — click column header to sort by cost, date, tokens, project
-Filtering: getFilteredRowModel() — filter by project name, model, date range
-Pagination: getPaginationRowModel() — 25 sessions per page default
-Column visibility: built-in — let users hide columns they don't care about
+session.prompt_tokens    += input_tokens + cache_creation_tokens
+session.completion_tokens += output_tokens + cache_read_tokens
 ```
 
-**Data shape for session table:**
+**Critical caveat:** Both token fields reset to 0 after compaction (context summarization). Only `cost` is cumulative and reliable for total-session analytics.
+
+#### Data Completeness
+
+| Metric | Available? | Confidence | Notes |
+|--------|-----------|------------|-------|
+| Sessions | YES | HIGH | Confirmed by multiple sources and GitHub issues |
+| Cost | YES | HIGH | `cost` field is cumulative, authoritative |
+| Token counts | PARTIAL | MEDIUM | Session-level only; resets on compaction |
+| Model used | LIKELY | LOW | Expected in message `data` JSON; exact field name unconfirmed |
+| Timestamps | YES | HIGH | Unix timestamps |
+| Project | YES | HIGH | `project_id` field |
+
+---
+
+### 3. Ollama
+
+**Data format:** No persistent usage log -- real-time API responses only
+**Confidence:** HIGH -- confirmed via official docs and multiple GitHub issues
+
+#### The Core Problem
+
+Ollama does **not** store a history of requests, token usage, or costs. Each API response includes token metrics transiently, but nothing is persisted. The server log is HTTP-level metadata only.
+
+#### Server Log Paths (limited utility -- no token data)
+
+| Platform | Path |
+|----------|------|
+| macOS | `~/.ollama/logs/server.log` |
+| Linux | `journalctl -u ollama` (systemd) or `~/.ollama/logs/server.log` |
+| Windows | `%LOCALAPPDATA%\Ollama\logs\server.log` |
+
+Logs contain `[GIN]` HTTP method/status, `[INFO]` model loading, memory allocation. No token counts. Rotates at ~10MB, max 3 files. `OLLAMA_DEBUG=1` logs prompts but not responses.
+
+#### API Response Token Fields (ephemeral)
+
+| Field | Maps To | Notes |
+|-------|---------|-------|
+| `model` | Model identifier | e.g., "llama3.3:70b", "codestral:latest" |
+| `prompt_eval_count` | Input tokens | Known accuracy issues with large prompts |
+| `eval_count` | Output tokens | Reliable |
+| `total_duration` | Total time (ns) | End-to-end |
+| `prompt_eval_duration` | Prompt processing (ns) | |
+| `eval_duration` | Generation time (ns) | |
+
+#### Ollama Strategy: Indirect Through Client Tools
+
+**Recommendation:** For v1.2, surface Ollama model usage through the client tools that call it:
+
+1. If user runs Ollama via **OpenCode**, OpenCode's `opencode.db` already has cost/token data
+2. If user runs Ollama via **Cursor**, Cursor's `state.vscdb` already tracks it
+3. Direct Ollama proxy (yclaude intercepts Ollama API calls) deferred to v1.3+
+
+This avoids building a proxy server while still showing Ollama model names and usage patterns in analytics.
+
+#### Equivalent Cloud Cost Mapping
+
+For the "you saved $X" feature with local models:
+
+| Ollama Model Family | Cloud Equivalent Tier | Approx. $/MTok (in/out) | Rationale |
+|---------------------|----------------------|--------------------------|-----------|
+| llama3.3:70b | Mid-tier | $3 / $15 | Similar to Sonnet capability |
+| codestral:latest | Mid-tier | $3 / $15 | Coding-focused, similar tier |
+| qwen2.5:72b | Mid-tier | $2.50 / $10 | Similar to GPT-4o |
+| deepseek-r1:70b | Premium | $15 / $75 | Reasoning model, Opus-equivalent |
+| llama3.2:7b | Budget | $0.25 / $1.25 | Small model |
+| phi-4:14b | Budget | $0.80 / $4 | Mid-small model |
+
+Store as static lookup in `src/providers/ollama/pricing.ts`, clearly labeled "estimated equivalent."
+
+---
+
+## New Dependencies for v1.2
+
+### Decision: Zero New npm Dependencies
+
+| Technology | Version | Purpose | Why This Choice |
+|------------|---------|---------|-----------------|
+| `node:sqlite` (built-in) | Node 22.5+ | Read Cursor `state.vscdb` and OpenCode `opencode.db` | Zero install friction. No native compilation. No bundle size increase. Synchronous API matches existing parse-at-startup pattern. |
+
+**That is the entire new dependency list.** Nothing else is needed.
+
+### Why `node:sqlite` is the Right Choice
+
+1. **No native addon bundling problem.** The prod tsup config uses `noExternal: [/.*/]` to bundle ALL dependencies for `npx yclaude` cold execution. `better-sqlite3` has native C++ bindings that cannot be bundled this way. `node:sqlite` is a built-in module (like `node:fs`), automatically excluded from bundling.
+
+2. **Zero install friction.** `npx yclaude` must work instantly. Native modules like `better-sqlite3` require prebuild downloads or C compiler, adding latency and failure modes. `node:sqlite` requires nothing.
+
+3. **Synchronous API is fine.** The existing parser blocks the event loop during JSONL reading at startup. SQLite key-value lookups are sub-100ms. No async overhead needed.
+
+4. **Project targets Node >=24.0.0.** `node:sqlite` is available without flags on Node 22.13+. Fully supported.
+
+5. **Read-only mode built in.** `new DatabaseSync(path, { readOnly: true })` -- reads Cursor/OpenCode databases without corruption risk.
+
+**Risk assessment:** `node:sqlite` is Stability 1.1 (Active Development) in Node 22-24, Release Candidate in Node 25. The API surface we use is minimal: `DatabaseSync` constructor, `prepare()`, `get()`/`all()`, `close()`. These are unlikely to break. Isolated behind provider-specific adapters, so migration cost is low if needed.
+
+### What About the `ollama` npm Package?
+
+**Do NOT add it.** The official `ollama` npm package (v0.6.3) is unnecessary:
+
+1. yclaude reads stored data, not makes live API calls
+2. For future Ollama API polling, `fetch('http://127.0.0.1:11434/api/tags')` suffices
+3. Ollama's REST API is trivial JSON over HTTP -- no SDK needed
+
+---
+
+## Architecture Integration Points
+
+### Provider Adapter Structure
+
+```
+src/
+  providers/
+    types.ts           # ProviderAdapter interface, ProviderEvent type
+    registry.ts        # Provider discovery and registration
+    claude/            # Existing JSONL parser (refactored from src/parser/)
+      reader.ts        # discoverJSONLFiles + streamJSONLFile
+      normalizer.ts    # Claude JSONL -> NormalizedEvent
+      pricing.ts       # Existing MODEL_PRICING (moved from src/cost/)
+    cursor/            # NEW
+      reader.ts        # Opens state.vscdb, queries cursorDiskKV
+      normalizer.ts    # Cursor bubble data -> NormalizedEvent
+      paths.ts         # Platform-specific path detection
+    opencode/          # NEW
+      reader.ts        # Opens opencode.db, queries session/message tables
+      normalizer.ts    # OpenCode session data -> NormalizedEvent
+      paths.ts         # XDG/config path detection
+    ollama/            # NEW (minimal)
+      pricing.ts       # Cloud-equivalent cost mapping
+```
+
+### NormalizedEvent Field Mapping
+
+The existing `NormalizedEvent` type (with `.passthrough()`) maps to all providers:
+
+| NormalizedEvent field | Claude Code | Cursor | OpenCode |
+|-----------------------|-------------|--------|----------|
+| `uuid` | JSONL `uuid` | composerId or bubbleId | session id (ULID) |
+| `type` | event type string | "composer" / "bubble" | "session" |
+| `timestamp` | ISO 8601 string | ms epoch (convert to ISO) | unix epoch (convert to ISO) |
+| `sessionId` | JSONL `sessionId` | composerId | session id |
+| `tokens.input` | `usage.input_tokens` | `tokenCount.inputTokens` | `prompt_tokens` |
+| `tokens.output` | `usage.output_tokens` | `tokenCount.outputTokens` | `completion_tokens` |
+| `tokens.cacheCreation` | `cache_creation_input_tokens` | N/A (set to 0) | N/A (set to 0) |
+| `tokens.cacheRead` | `cache_read_input_tokens` | N/A (set to 0) | N/A (set to 0) |
+| `model` | `message.model` | bubble `.model` | message data JSON |
+| `isSidechain` | JSONL `isSidechain` | N/A | `parent_id != null` |
+| `cwd` | JSONL `cwd` | workspace path | `project_id` |
+
+### Cost Engine Extension
+
+Three cost models, one engine:
+
+| Provider | Cost Source | Implementation |
+|----------|------------|----------------|
+| Claude Code | Computed from tier-reference pricing | Existing `computeCosts()` -- unchanged |
+| Cursor | Provider-reported: `usageData.costInCents / 100` | Read directly, wrap in `toEstimatedCost()` |
+| OpenCode | Provider-reported: `session.cost` | Read directly, wrap in `toEstimatedCost()` |
+| Ollama (via client) | Estimated cloud-equivalent | Apply lookup from `ollama/pricing.ts` |
+
+Add a `costSource` discriminator to `CostEvent`:
+
 ```typescript
-type SessionRow = {
-  sessionId: string;
-  project: string;      // decoded from slug
-  model: string;
-  startTime: Date;
-  totalCost: EstimatedCost;
-  inputTokens: number;
-  outputTokens: number;
-  cacheHitRate: number; // cache_read / (input + cache_read)
-}
+type CostSource = 'computed' | 'provider-reported' | 'estimated-equivalent';
 ```
 
-**NOT recommended alternatives:**
-- AG Grid — enterprise bloat, 100KB+ for a simple session list
-- MUI DataGrid — pulls in all of MUI, conflicts with Tailwind
-- react-table v7 — old API, replaced by TanStack Table v8
-- Building a custom HTML table with useState — doesn't scale to 500+ sessions
-
----
-
-## Dark Mode
-
-### Recommended: Custom ThemeProvider (shadcn/ui Vite pattern) — no extra library
-
-**IMPORTANT:** `next-themes` is Next.js-specific. For a Vite SPA, shadcn/ui's official guide recommends a **custom React Context provider**, not next-themes.
-
-The implementation is ~40 lines of code and zero dependencies:
+Add a `provider` field to `CostEvent`:
 
 ```typescript
-// web/src/components/theme-provider.tsx
-type Theme = "dark" | "light" | "system"
-
-type ThemeProviderProps = {
-  children: React.ReactNode
-  defaultTheme?: Theme
-  storageKey?: string
-}
-
-// Uses localStorage for persistence + classList.add("dark") on <html>
-// "system" theme reads window.matchMedia("(prefers-color-scheme: dark)")
+type Provider = 'claude' | 'cursor' | 'opencode';
 ```
 
-**How Tailwind v4 dark mode works with this:**
+### tsup Config Impact
 
-In Tailwind v4, dark mode is configured via `@custom-variant` in CSS (not `darkMode: 'class'` in tailwind.config.js which no longer exists):
+**No changes needed.** `node:sqlite` is a built-in Node module. The `noExternal: [/.*/]` pattern in `tsup.config.prod.ts` only affects npm packages, not built-in modules. Built-in modules are automatically excluded, just like `node:fs`, `node:path`, etc.
 
-```css
-/* In your global CSS */
-@custom-variant dark (&:where(.dark, .dark *));
-```
+### Pricing Table Additions
 
-shadcn/ui handles this automatically when you run `npx shadcn init` with Tailwind v4. All shadcn components use `dark:` prefix variants that respond to the `.dark` class on `<html>`.
+**For OpenCode models** (OpenCode supports multiple providers):
 
-**System preference + manual toggle flow:**
-1. On mount: read `localStorage.getItem("yclaude-theme")`
-2. If "system" (or nothing stored): check `window.matchMedia("(prefers-color-scheme: dark)").matches`
-3. Apply `.dark` class to `document.documentElement`
-4. Listen to `matchMedia` changes for system preference updates
-5. Manual toggle: store "dark" or "light" in localStorage, update classList
+| Provider | Models to Cover | Source for Pricing |
+|----------|----------------|-------------------|
+| OpenAI | gpt-4o, gpt-4-turbo, o1, o3-mini | OpenAI pricing page |
+| Google | gemini-2.0-flash, gemini-1.5-pro | Google AI pricing |
+| Anthropic | Already covered by existing `MODEL_PRICING` | Existing table |
+| DeepSeek | deepseek-chat, deepseek-reasoner | DeepSeek pricing page |
+| Mistral | codestral, mistral-large | Mistral pricing page |
 
-**No additional library needed.** Total implementation: ~40 lines in `theme-provider.tsx` + ~20 lines in `mode-toggle.tsx` (shadcn `<DropdownMenu>` with sun/moon icons from `lucide-react`).
-
-**Recharts dark mode:** Pass `stroke` and `fill` props using `var(--color-*)` CSS variables. `ChartContainer` handles this automatically if you use the shadcn chart wrapper.
-
-**react-activity-calendar dark mode:** Pass `colorScheme={resolvedTheme}` where `resolvedTheme` is "dark" or "light" from the theme context.
+These go in `src/providers/opencode/pricing.ts`, same tier-reference pattern as existing Claude pricing.
 
 ---
 
-## Supporting Components (New, From shadcn/ui)
+## Build Configuration Changes
 
-These shadcn components need to be added for the new features. All are copy-paste via CLI, zero runtime bundle cost:
+### tsup (Server Bundle)
 
-| Component | Command | Used For |
-|-----------|---------|---------|
-| chart | `npx shadcn add chart` | ChartContainer wrapper, CSS variable theming |
-| table | `npx shadcn add table` | Session list data table |
-| progress | `npx shadcn add progress` | Cache efficiency score bar |
-| select | `npx shadcn add select` | Daily/weekly/monthly toggle on cost chart |
-| tabs | `npx shadcn add tabs` | Dashboard section navigation |
-| badge | `npx shadcn add badge` | Model name labels, efficiency tier indicators |
-| dropdown-menu | `npx shadcn add dropdown-menu` | Dark mode toggle |
-| tooltip | `npx shadcn add tooltip` | Chart hover labels (Radix UI tooltip, distinct from Recharts tooltip) |
-| card | `npx shadcn add card` | Stat cards (total cost, top model, etc.) |
-| skeleton | `npx shadcn add skeleton` | Loading states while data fetches |
+No changes needed. `node:sqlite` is handled identically to other `node:*` built-in modules.
+
+### npm Distribution Impact
+
+**Zero impact** on package size or install time. No new dependencies.
+
+### Node.js Version
+
+Current `engines.node` is `>=24.0.0`. `node:sqlite` requires >=22.5.0 (no flag) or >=22.13.0 (no experimental flag). The existing requirement is more than sufficient.
 
 ---
 
-## Utilities (New or Confirmed for This Milestone)
+## Alternatives Considered
 
-| Library | Version | Purpose | Already in Stack? |
-|---------|---------|---------|-------------------|
-| date-fns | 4.1.x | Date bucketing for chart x-axis (day/week/month grouping), date formatting, range filtering | Confirmed in existing STACK.md |
-| lucide-react | latest | Sun/Moon icons for dark mode toggle; chart icons; table sort icons | Comes with shadcn/ui init |
-| clsx + tailwind-merge | latest | Conditional class composition in components | Confirmed in existing STACK.md |
+| Recommended | Alternative | Why Not |
+|-------------|-------------|---------|
+| `node:sqlite` | `better-sqlite3` v12.6 | Native C++ addon; breaks `noExternal: [/.*/]` bundling; requires prebuild download or compiler; kills `npx` zero-friction experience |
+| `node:sqlite` | `sql.js` v1.12 | Loads entire DB into memory (~1-25GB for large Cursor DBs); adds ~1.4MB WASM to bundle; 3-10x slower than native |
+| `node:sqlite` | `sqlite3` (node-sqlite3) | Same native addon issues as better-sqlite3; callback-based async API |
+| `node:sqlite` | Drizzle ORM / Prisma | Unnecessary abstraction for 2-3 read-only SELECT queries on external schemas |
+| Built-in `fetch()` | `ollama` npm v0.6 | Package adds bundle size for trivial HTTP GET calls; not needed in v1.2 |
+| Provider-reported costs | Re-computing Cursor/OpenCode costs | Both tools already compute costs; re-computing requires maintaining their pricing tables |
+| Static imports | Plugin loader framework | Only 3-4 providers; static imports are simpler and type-safe |
 
-**No new utilities needed beyond what is already in the stack.**
+## What NOT to Add
 
----
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| `better-sqlite3` | Native C++ addon breaks `noExternal` bundling in tsup prod; `npx` cold start requires prebuild | `node:sqlite` built-in |
+| `sql.js` | Loads multi-GB databases into memory; 1.4MB WASM bundle overhead | `node:sqlite` built-in |
+| `ollama` npm package | Unnecessary for reading stored data; adds dependencies for zero current value | Built-in `fetch()` if API calls needed later |
+| Any ORM (Drizzle, Prisma, Knex) | We only read databases, never write; ORM overhead unjustified for 3 SELECT statements | Raw SQL via `node:sqlite` |
+| `@anthropic-ai/sdk`, `openai` SDK | Not calling any APIs; only parsing local files/databases | Direct file/DB parsing |
+| `litellm` (Python) | Wrong language ecosystem | Static TypeScript pricing tables |
+| `chokidar` / file watchers | Real-time monitoring out of scope for v1.2 | Startup-time data loading |
 
-## What NOT to Add (Over-Engineering Warnings)
+## Version Compatibility
 
-| Library | Why Not | What to Use Instead |
-|---------|---------|---------------------|
-| D3.js | Recharts already wraps D3; using raw D3 alongside Recharts creates two rendering paradigms fighting each other | Recharts for all standard charts; react-activity-calendar for the heatmap |
-| Victory Charts | Prettier than Recharts but ~80KB, no shadcn/ui integration, switching cost is high | Recharts 3 |
-| Nivo | Excellent library but 200KB+ bundle; overkill for 4 chart types | Recharts 3 |
-| next-themes | Next.js-specific; misleadingly named; adds a dependency for 40 lines of code | Custom ThemeProvider (shadcn/ui Vite pattern) |
-| MUI / Ant Design | Full design systems that conflict with Tailwind; pulling in MUI for one data grid is architectural contamination | TanStack Table + shadcn `<Table>` |
-| react-table v7 | Deprecated API, replaced by TanStack Table v8 | @tanstack/react-table v8 |
-| AG Grid Community | 200KB+; designed for enterprise grids with 10K+ rows; sessions list is <1000 rows | TanStack Table v8 |
-| ECharts / Highcharts | Both are 400KB+; designed for financial/scientific dashboards; Recharts is sufficient | Recharts 3 |
-| react-query / TanStack Query | Data loads once at server start; served as JSON via Hono API; no async refetch needed until Phase 2 cloud | Simple `fetch()` + Zustand |
-| Framer Motion | Chart animations are built into Recharts; page transitions are not needed for v1 | Recharts built-in animation props |
-| react-spring | Same as Framer Motion — premature | Built-in animations |
-| CSS-in-JS (Emotion, styled-components) | Tailwind v4 is the styling standard; CSS-in-JS adds runtime overhead and conflicts | Tailwind CSS v4 |
-
----
-
-## Critical Integration Notes
-
-### Recharts v3 + shadcn chart wrapper discrepancy
-
-The shadcn/ui `chart` component (generated by `npx shadcn add chart`) ships a `chart.tsx` file that targets Recharts v2 API. As of February 2026, the Recharts v3 upgrade PR is unmerged.
-
-**Resolution options (pick one):**
-
-**Option A (Recommended):** Use the community gist `noxify/92bc410cc2d01109f4160002da9a61e5` as your `chart.tsx` instead of the default shadcn-generated one. It is a drop-in v3-compatible replacement. This gets you v3 immediately without waiting for the official merge.
-
-**Option B:** Install Recharts v2 (`recharts@2.15.x`) and use shadcn chart as-is. Recharts v2 works with React 19 (requires `overrides.react-is`). Migrate to v3 when shadcn officially merges. Risk: you start on v2 and need a migration.
-
-**Option C:** Install Recharts v3, accept the minor peer dependency warning, and write chart code without the shadcn wrapper. Manually apply CSS variables (`var(--chart-1)` etc.) as Recharts `fill`/`stroke` props. More boilerplate but no dependency on shadcn's upgrade timeline.
-
-**Recommendation: Option A.** The community replacement `chart.tsx` is battle-tested (87 reactions on the PR, being used in production by early adopters).
-
-### react-activity-calendar theming with Tailwind v4
-
-The heatmap needs custom colors to match your Tailwind palette. Pass a `theme` prop:
-
-```typescript
-<ActivityCalendar
-  data={calendarData}
-  colorScheme={resolvedTheme}  // from ThemeProvider context
-  theme={{
-    light: ["#f0fdf4", "#86efac", "#4ade80", "#16a34a", "#15803d"],
-    dark:  ["#1a2e1a", "#14532d", "#16a34a", "#22c55e", "#4ade80"],
-  }}
-/>
-```
-
-Alternatively, derive colors from CSS variables in a `useEffect` to stay in sync with your Tailwind theme tokens.
-
-### TanStack Table column definition for session list
-
-```typescript
-import { ColumnDef } from "@tanstack/react-table"
-import { ArrowUpDown } from "lucide-react"
-import { Button } from "@/components/ui/button"
-
-const columns: ColumnDef<SessionRow>[] = [
-  {
-    accessorKey: "project",
-    header: ({ column }) => (
-      <Button variant="ghost" onClick={() => column.toggleSorting()}>
-        Project <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-  },
-  // ...
-]
-```
+| Module / Feature | Compatible With | Notes |
+|------------------|-----------------|-------|
+| `node:sqlite` DatabaseSync | Node 22.5+, 23.x, 24.x, 25.x | No flag needed since 22.13.0; project requires >=24.0.0 |
+| `DatabaseSync({ readOnly: true })` | Node 22.5+ | Available since initial `node:sqlite` release |
+| tsup `noExternal: [/.*/]` + `node:sqlite` | All versions | Built-in modules auto-excluded from bundling |
+| Cursor `state.vscdb` | SQLite 3.x | Standard SQLite; `node:sqlite` handles natively |
+| OpenCode `opencode.db` (WAL mode) | SQLite 3.x | `node:sqlite` handles WAL transparently in read-only mode |
 
 ---
 
-## Installation (New Packages Only)
+## Installation Summary
 
 ```bash
-# Charting
-bun add recharts
+# v1.2 requires ZERO new npm dependencies for multi-provider support
+# node:sqlite is built into Node.js 22.5+
 
-# Activity heatmap
-bun add react-activity-calendar
-
-# Data table
-bun add @tanstack/react-table
-
-# shadcn components (run interactively)
-npx shadcn add chart table progress select tabs badge dropdown-menu tooltip card skeleton
-
-# React 19 peer dep fix for recharts
-# In package.json, add:
-# "overrides": { "react-is": "^19.0.0" }
+# Verify availability:
+node -e "const { DatabaseSync } = require('node:sqlite'); console.log('sqlite OK')"
 ```
-
----
-
-## Version Compatibility Matrix (New Additions)
-
-| Package | Version | Compatible With | Notes |
-|---------|---------|----------------|-------|
-| recharts | 3.7.x | React 19.x | Peer dep warning; fix with `overrides.react-is` |
-| react-activity-calendar | 3.0.x | React 19.x | v3 released Nov 2025; Vite-compatible |
-| @tanstack/react-table | 8.21.x | React 19.x | Fully compatible; headless |
-| shadcn chart wrapper | via CLI | Recharts 2.x (official) / 3.x (community gist) | See critical note above |
-| ThemeProvider (custom) | ~40 LOC | Tailwind CSS 4.x | No package install; follows shadcn Vite dark mode guide |
-
----
-
-## Confidence Assessment
-
-| Area | Confidence | Basis |
-|------|------------|-------|
-| Recharts v3 as charting library | HIGH | npm registry (v3.7.0 confirmed), official GitHub releases |
-| shadcn/ui chart v2/v3 discrepancy | HIGH | PR #8486 open, shadcn's own X post confirms "still v2", community gist verified |
-| react-activity-calendar over react-calendar-heatmap | HIGH | npm publish dates verified; react-calendar-heatmap last published 2023; react-activity-calendar v3 Nov 2025 |
-| TanStack Table v8 + shadcn `<Table>` | HIGH | Official shadcn/ui data table docs; official TanStack docs |
-| Custom ThemeProvider (no next-themes) | HIGH | Official shadcn/ui Vite dark mode guide |
-| Tailwind v4 dark mode via @custom-variant | HIGH | Official Tailwind v4 docs |
-| React 19 peer dep fix for recharts | MEDIUM | Community solutions on GitHub; multiple sources agree but not official recharts docs |
 
 ---
 
 ## Sources
 
-- [shadcn/ui chart docs](https://ui.shadcn.com/docs/components/radix/chart) — chart component API, CSS variable theming — HIGH confidence (official)
-- [shadcn/ui charts gallery](https://ui.shadcn.com/charts/area) — available chart patterns — HIGH confidence (official)
-- [shadcn/ui data table docs](https://ui.shadcn.com/docs/components/radix/data-table) — TanStack Table integration pattern — HIGH confidence (official)
-- [shadcn/ui dark mode Vite guide](https://ui.shadcn.com/docs/dark-mode/vite) — custom ThemeProvider pattern for Vite SPA — HIGH confidence (official)
-- [shadcn/ui Tailwind v4 docs](https://ui.shadcn.com/docs/tailwind-v4) — Tailwind v4 integration notes — HIGH confidence (official)
-- [shadcn/ui React 19 guide](https://ui.shadcn.com/docs/react-19) — peer dependency handling — HIGH confidence (official)
-- [Recharts npm registry](https://www.npmjs.com/package/recharts) — v3.7.0 confirmed — HIGH confidence (npm registry)
-- [Recharts 3.0 migration guide](https://github.com/recharts/recharts/wiki/3.0-migration-guide) — breaking changes from v2 — HIGH confidence (official GitHub wiki)
-- [shadcn/ui PR #8486](https://github.com/shadcn-ui/ui/pull/8486) — Recharts v3 upgrade, open as of Feb 2026 — HIGH confidence (GitHub)
-- [shadcn/ui issue #7669](https://github.com/shadcn-ui/ui/issues/7669) — Recharts v3 support request — HIGH confidence (GitHub)
-- [shadcn/ui Recharts v3 community gist](https://gist.github.com/noxify/92bc410cc2d01109f4160002da9a61e5) — drop-in v3-compatible chart.tsx — MEDIUM confidence (community, widely used)
-- [shadcn author on X confirming recharts v2](https://x.com/shadcn/status/1943312755412365530) — "This is recharts v2. Still working on v3." — HIGH confidence (primary source)
-- [react-activity-calendar GitHub](https://github.com/grubersjoe/react-activity-calendar) — v3 release Nov 2025, features, API — HIGH confidence (official repo)
-- [react-activity-calendar npm](https://www.npmjs.com/package/react-activity-calendar) — v3.0.5, 19,789 weekly downloads — HIGH confidence (npm registry)
-- [TanStack Table docs](https://tanstack.com/table/latest) — sorting, filtering, pagination APIs — HIGH confidence (official docs)
-- [Tailwind CSS dark mode docs](https://tailwindcss.com/docs/dark-mode) — @custom-variant approach in v4 — HIGH confidence (official docs)
-- [Tailwind v4 dark mode discussion](https://github.com/tailwindlabs/tailwindcss/discussions/15083) — CSS variables for dark/light mode — HIGH confidence (official GitHub)
+### Cursor Storage
+- [Reverse-engineering Cursor's AI Agent (dev.to)](https://dev.to/vikram_ray/i-reverse-engineered-cursors-ai-agent-heres-everything-it-does-behind-the-scenes-3d0a) -- MEDIUM confidence, community reverse-engineering; detailed cursorDiskKV and ai-tracking schemas
+- [Cursor Chat Architecture (dasarpai.com)](https://dasarpai.com/dsblog/cursor-chat-architecture-data-flow-storage/) -- MEDIUM confidence; platform paths, ItemTable schema
+- [Cursor Extension for Opik Export (jacquesverre.com)](https://jacquesverre.com/blog/cursor-extension) -- HIGH confidence, **working code** that extracts composerData + bubbleId fields including `tokenCount`, `usageData`, `model`
+- [Cursor Data Storage Structure (zread.ai)](https://zread.ai/S2thend/cursor-history/6-cursor-data-storage-structure) -- MEDIUM confidence
+- [Cursor Forum: Chat History](https://forum.cursor.com/t/chat-history-folder/7653) -- MEDIUM confidence
+- [Cursor Forum: state.vscdb](https://forum.cursor.com/t/questions-about-state-vscdb/47299) -- MEDIUM confidence
+- [Cursor Usage & Cost Tracker Extension](https://github.com/Ittipong/cursor-price-tracking) -- MEDIUM confidence; uses Cursor API (not local DB) for real-time tracking
+
+### OpenCode Storage
+- [OpenCode GitHub Repository](https://github.com/opencode-ai/opencode) -- HIGH confidence, official
+- [OpenCode Session Management (DeepWiki opencode-ai)](https://deepwiki.com/opencode-ai/opencode/5.2-session-management) -- MEDIUM confidence; session schema fields, token accumulation logic
+- [OpenCode Session Management (DeepWiki sst)](https://deepwiki.com/sst/opencode/2.1-session-management) -- MEDIUM confidence; Drizzle ORM details, compaction behavior
+- [OpenCode SQLite Migration (GitHub issue)](https://github.com/anomalyco/opencode/issues/13202) -- HIGH confidence; confirms `~/.local/share/opencode/opencode.db`
+- [OpenCode Database Corruption Issue](https://github.com/anomalyco/opencode/issues/14970) -- HIGH confidence; confirms WAL mode, global database path
+- [OpenCode Tokenscope Plugin](https://github.com/ramtinJ95/opencode-tokenscope) -- MEDIUM confidence; working token analysis tool
+
+### Ollama
+- [Ollama Usage API Docs](https://docs.ollama.com/api/usage) -- HIGH confidence, official; response field documentation
+- [Ollama API Reference (GitHub)](https://github.com/ollama/ollama/blob/main/docs/api.md) -- HIGH confidence, official
+- [Ollama Payload Logging Issue #2449](https://github.com/ollama/ollama/issues/2449) -- HIGH confidence; confirms no response logging even with OLLAMA_DEBUG=1
+- [Ollama Token Tracking Request #11118](https://github.com/ollama/ollama/issues/11118) -- HIGH confidence; confirms no persistent usage tracking
+- [Ollama Server Logs Guide](https://support.tools/ollama-server-logs-guide/) -- MEDIUM confidence; log paths and rotation
+
+### node:sqlite
+- [Node.js v25 SQLite Documentation](https://nodejs.org/api/sqlite.html) -- HIGH confidence, official; Release Candidate status
+- [Node.js v22 LTS SQLite Documentation](https://nodejs.org/docs/latest-v22.x/api/sqlite.html) -- HIGH confidence, official; Stability 1.1, no flag since 22.13
+- [Node 24 Release Notes](https://nodejs.org/en/blog/release/v24.0.0) -- HIGH confidence, official
+
+### Alternatives (evaluated, rejected)
+- [better-sqlite3 GitHub](https://github.com/WiseLibs/better-sqlite3) -- HIGH confidence; native addon, readonly API
+- [better-sqlite3 prebuild issues](https://github.com/WiseLibs/better-sqlite3/issues/1384) -- HIGH confidence; Node 24 compatibility
+- [sql.js GitHub](https://github.com/sql-js/sql.js/) -- HIGH confidence; WASM approach, memory requirements
 
 ---
-
-*Stack research for: yclaude dashboard/visualization milestone*
-*Researched: 2026-02-28*
-*Supplements base STACK.md — do not duplicate base stack entries*
+*Stack research for: yclaude v1.2 Multi-Provider Analytics*
+*Researched: 2026-03-07*
