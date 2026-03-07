@@ -17,9 +17,9 @@ Requirements for multi-provider analytics milestone. Each maps to roadmap phases
 
 ### Cursor Analytics
 
-- [ ] **CURS-01**: User can view Cursor session list with tokens, models, timestamps, and duration parsed from state.vscdb (composerData v3 + bubbles, schema version detection, read-only SQLite via node:sqlite)
-- [ ] **CURS-02**: User can view accurate Cursor cost data extracted from usageData.costInCents field (provider-reported cost, more accurate than token re-estimation)
-- [ ] **CURS-03**: User can see Cursor agent mode vs manual mode analytics (isAgentic flag segmentation with token/cost comparison)
+- [x] **CURS-01**: User can view Cursor session list with tokens, models, timestamps, and duration parsed from state.vscdb (composerData v3 + bubbles, schema version detection, read-only SQLite via node:sqlite)
+- [x] **CURS-02**: User can view accurate Cursor cost data extracted from usageData.costInCents field (provider-reported cost, more accurate than token re-estimation)
+- [x] **CURS-03**: User can see Cursor agent mode vs manual mode analytics (isAgentic flag segmentation with token/cost comparison)
 
 ### OpenCode Analytics
 
@@ -76,9 +76,9 @@ Requirements for multi-provider analytics milestone. Each maps to roadmap phases
 | PROV-03 | Phase 13 | Pending |
 | PROV-04 | Phase 13 | Pending |
 | PROV-05 | Phase 13 | Pending |
-| CURS-01 | Phase 12 | Pending |
-| CURS-02 | Phase 12 | Pending |
-| CURS-03 | Phase 12 | Pending |
+| CURS-01 | Phase 12 | Complete |
+| CURS-02 | Phase 12 | Complete |
+| CURS-03 | Phase 12 | Complete |
 | OC-01 | Phase 14 | Pending |
 | OC-02 | Phase 14 | Pending |
 | OC-03 | Phase 14 | Pending |

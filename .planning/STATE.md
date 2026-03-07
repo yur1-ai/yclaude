@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Multi-Provider Analytics
-status: completed
-stopped_at: Phase 12 context gathered
-last_updated: "2026-03-07T16:20:40.168Z"
-last_activity: 2026-03-07 -- Completed Plan 03 (CLI rewrite + test migration)
+status: in-progress
+stopped_at: Completed 12-01-PLAN.md (Cursor extraction pipeline)
+last_updated: "2026-03-07T17:03:10Z"
+last_activity: 2026-03-07 -- Completed Plan 01 (Cursor data extraction pipeline)
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
-  percent: 100
+  total_plans: 5
+  completed_plans: 4
+  percent: 80
 ---
 
 # Project State
@@ -21,29 +21,30 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-07 after v1.2 milestone start)
 
 **Core value:** Give developers full visibility into their AI coding spend -- locally first, with no friction.
-**Current focus:** Phase 11 - Provider Abstraction Layer
+**Current focus:** Phase 12 - Cursor Provider
 
 ## Current Position
 
-Phase: 11 of 14 (Provider Abstraction Layer) -- COMPLETE
-Plan: 3 of 3 complete
-Status: Phase Complete
-Last activity: 2026-03-07 -- Completed Plan 03 (CLI rewrite + test migration)
+Phase: 12 of 14 (Cursor Provider)
+Plan: 1 of 2 complete
+Status: In Progress
+Last activity: 2026-03-07 -- Completed Plan 01 (Cursor data extraction pipeline)
 
-Progress: [██████████] 100%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
+- Total plans completed: 4
 - Average duration: 8min
-- Total execution time: 0.42 hours
+- Total execution time: 0.53 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 11 | 3 | 25min | 8min |
+| 12 | 1 | 7min | 7min |
 
 *Updated after each plan completion*
 
@@ -68,6 +69,11 @@ Progress: [██████████] 100%
 - Class-based vi.mock factories for constructor mocking in registry tests
 - CLAUDE_CONFIG_DIR env var + projects/ subdirectory structure for provider integration test fixtures
 - Startup banner with ANSI-colored status icons per provider (checkmark/dash/warning)
+- node:sqlite DatabaseSync with readOnly:true for direct Cursor DB access, temp-copy fallback only on SQLITE_BUSY
+- Zod schemas with .passthrough() for forward compatibility with future Cursor schema versions
+- Cost distributed evenly across AI bubbles in a composer, raw costInCents preserved on first event
+- Model name from usageData keys (prefer non-default) with modelConfig.modelName fallback
+- isAgentic derived from composer head unifiedMode, not per-bubble isAgentic flag
 
 ### Pending Todos
 
@@ -81,6 +87,6 @@ None -- starting fresh milestone
 
 ## Session Continuity
 
-Last session: 2026-03-07T16:20:40.158Z
-Stopped at: Phase 12 context gathered
-Resume file: .planning/phases/12-cursor-provider/12-CONTEXT.md
+Last session: 2026-03-07T17:03:10Z
+Stopped at: Completed 12-01-PLAN.md (Cursor data extraction pipeline)
+Resume file: .planning/phases/12-cursor-provider/12-02-PLAN.md
