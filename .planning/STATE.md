@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Multi-Provider Analytics
-status: executing
-stopped_at: Completed 11-02-PLAN.md
-last_updated: "2026-03-07T08:59:53Z"
-last_activity: 2026-03-07 -- Completed Plan 02 of Phase 11 (consumer rewiring to UnifiedEvent)
+status: completed
+stopped_at: Completed 11-03-PLAN.md (Phase 11 complete)
+last_updated: "2026-03-07T09:11:36.545Z"
+last_activity: 2026-03-07 -- Completed Plan 03 (CLI rewrite + test migration)
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
-  percent: 67
+  completed_plans: 3
+  percent: 100
 ---
 
 # Project State
@@ -25,25 +25,25 @@ See: .planning/PROJECT.md (updated 2026-03-07 after v1.2 milestone start)
 
 ## Current Position
 
-Phase: 11 of 14 (Provider Abstraction Layer)
-Plan: 2 of 3 complete
-Status: Executing
-Last activity: 2026-03-07 -- Completed Plan 02 (consumer rewiring to UnifiedEvent)
+Phase: 11 of 14 (Provider Abstraction Layer) -- COMPLETE
+Plan: 3 of 3 complete
+Status: Phase Complete
+Last activity: 2026-03-07 -- Completed Plan 03 (CLI rewrite + test migration)
 
-Progress: [======....] 67%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 5min
-- Total execution time: 0.17 hours
+- Total plans completed: 3
+- Average duration: 8min
+- Total execution time: 0.42 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 11 | 2 | 10min | 5min |
+| 11 | 3 | 25min | 8min |
 
 *Updated after each plan completion*
 
@@ -65,6 +65,9 @@ Progress: [======....] 67%
 - Chat endpoints filter state.events by message !== undefined instead of separate rawEvents array
 - Chat responses include provider field in summary for multi-provider readiness
 - Public API exports only loadProviders and types; parseAll/computeCosts are now internal
+- Class-based vi.mock factories for constructor mocking in registry tests
+- CLAUDE_CONFIG_DIR env var + projects/ subdirectory structure for provider integration test fixtures
+- Startup banner with ANSI-colored status icons per provider (checkmark/dash/warning)
 
 ### Pending Todos
 
@@ -78,6 +81,6 @@ None -- starting fresh milestone
 
 ## Session Continuity
 
-Last session: 2026-03-07T08:59:53Z
-Stopped at: Completed 11-02-PLAN.md
-Resume file: .planning/phases/11-provider-abstraction-layer/11-02-SUMMARY.md
+Last session: 2026-03-07T09:11:36.536Z
+Stopped at: Completed 11-03-PLAN.md (Phase 11 complete)
+Resume file: None

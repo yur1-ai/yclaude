@@ -10,7 +10,7 @@ Requirements for multi-provider analytics milestone. Each maps to roadmap phases
 ### Provider Infrastructure
 
 - [x] **PROV-01**: User sees all AI coding tools working through a unified data layer (UnifiedEvent type, ProviderAdapter interface, provider registry; existing Claude Code refactored to src/providers/claude/)
-- [ ] **PROV-02**: User's installed AI tools are auto-detected on startup with no manual configuration (check ~/.claude/, Cursor state.vscdb paths, OpenCode opencode.db)
+- [x] **PROV-02**: User's installed AI tools are auto-detected on startup with no manual configuration (check ~/.claude/, Cursor state.vscdb paths, OpenCode opencode.db)
 - [ ] **PROV-03**: User can switch between provider-specific dashboard views via tab navigation (per-provider tabs + "All" tab for cross-provider totals)
 - [ ] **PROV-04**: User can filter all API endpoints by provider via ?provider= query parameter (backward compatible -- no param returns all data)
 - [ ] **PROV-05**: User sees provider-specific personality copy throughout the dashboard (different humor per tool context)
@@ -72,7 +72,7 @@ Requirements for multi-provider analytics milestone. Each maps to roadmap phases
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | PROV-01 | Phase 11 | Complete |
-| PROV-02 | Phase 11 | Pending |
+| PROV-02 | Phase 11 | Complete |
 | PROV-03 | Phase 13 | Pending |
 | PROV-04 | Phase 13 | Pending |
 | PROV-05 | Phase 13 | Pending |
