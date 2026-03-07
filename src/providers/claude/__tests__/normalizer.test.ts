@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeEvent } from '../normalizer.js';
+import { normalizeEvent } from '../parser/normalizer.js';
 
 describe('normalizeEvent()', () => {
   it('returns null for events without uuid', () => {

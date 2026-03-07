@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MODEL_PRICING, PRICING_LAST_UPDATED, PRICING_SOURCE } from '../pricing.js';
+import { MODEL_PRICING, PRICING_LAST_UPDATED, PRICING_SOURCE } from '../cost/pricing.js';
 
 describe('MODEL_PRICING constants', () => {
   it('has an entry for claude-opus-4-6 with correct pricing', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { RawAssistantUsageSchema, RawEventSchema } from '../schema.js';
-import { NormalizedEventSchema } from '../types.js';
+import { RawAssistantUsageSchema, RawEventSchema } from '../parser/schema.js';
+import { NormalizedEventSchema } from '../parser/types.js';
 
 describe('NormalizedEventSchema', () => {
   it('requires uuid, type, timestamp, and sessionId fields', () => {

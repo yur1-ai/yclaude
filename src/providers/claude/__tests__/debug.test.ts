@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { debugLog, disableDebug, enableDebug, isDebugEnabled } from '../../shared/debug.js';
+import { debugLog, disableDebug, enableDebug, isDebugEnabled } from '../../../shared/debug.js';
 
 // Reset debug state between tests
 beforeEach(() => {

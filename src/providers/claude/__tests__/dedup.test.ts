@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { DedupAccumulator } from '../dedup.js';
-import type { NormalizedEvent } from '../types.js';
+import { DedupAccumulator } from '../parser/dedup.js';
+import type { NormalizedEvent } from '../parser/types.js';
 
 function makeEvent(uuid: string, type = 'assistant'): NormalizedEvent {
   return {
