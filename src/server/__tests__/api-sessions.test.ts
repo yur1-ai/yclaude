@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CostEvent } from '../../cost/types.js';
-import { toEstimatedCost } from '../../cost/types.js';
-import type { NormalizedEvent } from '../../parser/types.js';
+import type { UnifiedEvent } from '../../providers/types.js';
 import { createApp } from '../server.js';
 import type { AppState } from '../server.js';
 
@@ -10,19 +8,17 @@ import type { AppState } from '../server.js';
 // -------------------------
 
 let _eventIdx = 0;
-function makeEvent(overrides: Partial<NormalizedEvent> = {}): NormalizedEvent {
-  return {
-    uuid: `uuid-${_eventIdx++}`,
-    type: 'assistant',
-    timestamp: '2024-01-01T00:00:00Z',
-    sessionId: 'session-1',
-    ...overrides,
-  };
-}
 
-function makeCostEvent(overrides: Partial<NormalizedEvent> & { costUsd?: number } = {}): CostEvent {
+function makeUnifiedEvent(overrides: Partial<UnifiedEvent> & { costUsd?: number } = {}): UnifiedEvent {
   const { costUsd = 0.001, ...rest } = overrides;
-  const base = makeEvent({
+  return {
+    id: `uuid-${_eventIdx++}`,
+    provider: 'claude',
+    sessionId: 'session-1',
+    timestamp: '2024-01-01T00:00:00Z',
+    type: 'assistant',
+    costUsd,
+    costSource: 'estimated',
     tokens: {
       input: 100,
       output: 50,
@@ -32,16 +28,23 @@ function makeCostEvent(overrides: Partial<NormalizedEvent> & { costUsd?: number 
       cacheCreation1h: 0,
     },
     ...rest,
-  });
-  return { ...base, costUsd: toEstimatedCost(costUsd) };
+  };
 }
 
 function makeNonTokenEvent(
-  overrides: Partial<NormalizedEvent> & { costUsd?: number } = {},
-): CostEvent {
+  overrides: Partial<UnifiedEvent> & { costUsd?: number } = {},
+): UnifiedEvent {
   const { costUsd = 0, ...rest } = overrides;
-  const { tokens: _, ...base } = makeEvent(rest);
-  return { ...base, costUsd: toEstimatedCost(costUsd) };
+  return {
+    id: `uuid-${_eventIdx++}`,
+    provider: 'claude',
+    sessionId: 'session-1',
+    timestamp: '2024-01-01T00:00:00Z',
+    type: 'assistant',
+    costUsd,
+    costSource: 'estimated',
+    ...rest,
+  };
 }
 
 // -------------------------
@@ -49,8 +52,8 @@ function makeNonTokenEvent(
 // -------------------------
 
 describe('GET /api/v1/sessions — session list', () => {
-  it('returns { sessions, total, page, pageSize } shape with empty costs', async () => {
-    const state: AppState = { events: [], costs: [] };
+  it('returns { sessions, total, page, pageSize } shape with empty events', async () => {
+    const state: AppState = { events: [], providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions');
     expect(res.status).toBe(200);
@@ -66,12 +69,12 @@ describe('GET /api/v1/sessions — session list', () => {
   });
 
   it('groups events by sessionId and returns one row per session', async () => {
-    const costs: CostEvent[] = [
-      makeCostEvent({ sessionId: 'sess-A', timestamp: '2024-01-01T00:00:00Z' }),
-      makeCostEvent({ sessionId: 'sess-A', timestamp: '2024-01-01T01:00:00Z' }),
-      makeCostEvent({ sessionId: 'sess-B', timestamp: '2024-01-02T00:00:00Z' }),
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({ sessionId: 'sess-A', timestamp: '2024-01-01T00:00:00Z' }),
+      makeUnifiedEvent({ sessionId: 'sess-A', timestamp: '2024-01-01T01:00:00Z' }),
+      makeUnifiedEvent({ sessionId: 'sess-B', timestamp: '2024-01-02T00:00:00Z' }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions');
     const body = (await res.json()) as { sessions: unknown[]; total: number };
@@ -80,12 +83,12 @@ describe('GET /api/v1/sessions — session list', () => {
   });
 
   it('excludes sessions with zero token-bearing events', async () => {
-    const costs: CostEvent[] = [
-      makeCostEvent({ sessionId: 'has-tokens', timestamp: '2024-01-01T00:00:00Z' }),
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({ sessionId: 'has-tokens', timestamp: '2024-01-01T00:00:00Z' }),
       // session with no token events — should be excluded
       makeNonTokenEvent({ sessionId: 'no-tokens', timestamp: '2024-01-01T00:00:00Z' }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions');
     const body = (await res.json()) as { sessions: Array<Record<string, unknown>>; total: number };
@@ -94,12 +97,12 @@ describe('GET /api/v1/sessions — session list', () => {
   });
 
   it('sessions sorted by timestamp descending (newest first)', async () => {
-    const costs: CostEvent[] = [
-      makeCostEvent({ sessionId: 'old', timestamp: '2024-01-01T00:00:00Z' }),
-      makeCostEvent({ sessionId: 'new', timestamp: '2024-03-01T00:00:00Z' }),
-      makeCostEvent({ sessionId: 'mid', timestamp: '2024-02-01T00:00:00Z' }),
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({ sessionId: 'old', timestamp: '2024-01-01T00:00:00Z' }),
+      makeUnifiedEvent({ sessionId: 'new', timestamp: '2024-03-01T00:00:00Z' }),
+      makeUnifiedEvent({ sessionId: 'mid', timestamp: '2024-02-01T00:00:00Z' }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions');
     const body = (await res.json()) as { sessions: Array<Record<string, unknown>> };
@@ -110,13 +113,13 @@ describe('GET /api/v1/sessions — session list', () => {
 
   it('?page=2 returns the second page of results', async () => {
     // Create 55 sessions
-    const costs: CostEvent[] = Array.from({ length: 55 }, (_, i) =>
-      makeCostEvent({
+    const events: UnifiedEvent[] = Array.from({ length: 55 }, (_, i) =>
+      makeUnifiedEvent({
         sessionId: `sess-${String(i).padStart(3, '0')}`,
         timestamp: `2024-01-${String((i % 28) + 1).padStart(2, '0')}T${String(i % 24).padStart(2, '0')}:00:00Z`,
       }),
     );
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res1 = await app.request('/api/v1/sessions?page=1');
     const body1 = (await res1.json()) as { sessions: unknown[]; total: number; page: number };
@@ -132,24 +135,24 @@ describe('GET /api/v1/sessions — session list', () => {
   });
 
   it('?project= filters sessions by cwd', async () => {
-    const costs: CostEvent[] = [
-      makeCostEvent({
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({
         sessionId: 'match-1',
         cwd: '/home/user/project-a',
         timestamp: '2024-01-01T00:00:00Z',
       }),
-      makeCostEvent({
+      makeUnifiedEvent({
         sessionId: 'match-2',
         cwd: '/home/user/project-a',
         timestamp: '2024-01-02T00:00:00Z',
       }),
-      makeCostEvent({
+      makeUnifiedEvent({
         sessionId: 'other',
         cwd: '/home/user/project-b',
         timestamp: '2024-01-03T00:00:00Z',
       }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions?project=/home/user/project-a');
     const body = (await res.json()) as { sessions: Array<Record<string, unknown>>; total: number };
@@ -158,12 +161,12 @@ describe('GET /api/v1/sessions — session list', () => {
   });
 
   it('?from= and ?to= filter sessions by event timestamp', async () => {
-    const costs: CostEvent[] = [
-      makeCostEvent({ sessionId: 'before', timestamp: '2024-01-01T00:00:00Z' }),
-      makeCostEvent({ sessionId: 'in-window', timestamp: '2024-01-15T00:00:00Z' }),
-      makeCostEvent({ sessionId: 'after', timestamp: '2024-02-01T00:00:00Z' }),
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({ sessionId: 'before', timestamp: '2024-01-01T00:00:00Z' }),
+      makeUnifiedEvent({ sessionId: 'in-window', timestamp: '2024-01-15T00:00:00Z' }),
+      makeUnifiedEvent({ sessionId: 'after', timestamp: '2024-02-01T00:00:00Z' }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request(
       '/api/v1/sessions?from=2024-01-10T00:00:00Z&to=2024-01-20T00:00:00Z',
@@ -174,7 +177,7 @@ describe('GET /api/v1/sessions — session list', () => {
   });
 
   it('?from= with invalid date returns 400', async () => {
-    const state: AppState = { events: [], costs: [] };
+    const state: AppState = { events: [], providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions?from=not-a-date');
     expect(res.status).toBe(400);
@@ -183,7 +186,7 @@ describe('GET /api/v1/sessions — session list', () => {
   });
 
   it('?to= with invalid date returns 400', async () => {
-    const state: AppState = { events: [], costs: [] };
+    const state: AppState = { events: [], providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions?to=bad');
     expect(res.status).toBe(400);
@@ -192,8 +195,8 @@ describe('GET /api/v1/sessions — session list', () => {
   });
 
   it('durationMs is sourced from all events, not just token-bearing ones', async () => {
-    const costs: CostEvent[] = [
-      makeCostEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T00:00:00Z', durationMs: 1000 }),
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T00:00:00Z', durationMs: 1000 }),
       // non-token event with larger durationMs
       makeNonTokenEvent({
         sessionId: 'sess-1',
@@ -201,7 +204,7 @@ describe('GET /api/v1/sessions — session list', () => {
         durationMs: 5000,
       }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions');
     const body = (await res.json()) as { sessions: Array<Record<string, unknown>> };
@@ -209,10 +212,10 @@ describe('GET /api/v1/sessions — session list', () => {
   });
 
   it('durationMs is null when no event has durationMs', async () => {
-    const costs: CostEvent[] = [
-      makeCostEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T00:00:00Z' }),
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T00:00:00Z' }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions');
     const body = (await res.json()) as { sessions: Array<Record<string, unknown>> };
@@ -220,19 +223,19 @@ describe('GET /api/v1/sessions — session list', () => {
   });
 
   it('model is "Mixed" when session uses more than one distinct model', async () => {
-    const costs: CostEvent[] = [
-      makeCostEvent({
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({
         sessionId: 'sess-1',
         model: 'claude-3-opus',
         timestamp: '2024-01-01T00:00:00Z',
       }),
-      makeCostEvent({
+      makeUnifiedEvent({
         sessionId: 'sess-1',
         model: 'claude-3-sonnet',
         timestamp: '2024-01-01T01:00:00Z',
       }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions');
     const body = (await res.json()) as { sessions: Array<Record<string, unknown>> };
@@ -243,19 +246,19 @@ describe('GET /api/v1/sessions — session list', () => {
   });
 
   it('model is the single model name when all events use the same model', async () => {
-    const costs: CostEvent[] = [
-      makeCostEvent({
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({
         sessionId: 'sess-1',
         model: 'claude-3-opus',
         timestamp: '2024-01-01T00:00:00Z',
       }),
-      makeCostEvent({
+      makeUnifiedEvent({
         sessionId: 'sess-1',
         model: 'claude-3-opus',
         timestamp: '2024-01-01T01:00:00Z',
       }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions');
     const body = (await res.json()) as { sessions: Array<Record<string, unknown>> };
@@ -263,12 +266,12 @@ describe('GET /api/v1/sessions — session list', () => {
   });
 
   it('timestamp is the ISO string of the earliest event in the session', async () => {
-    const costs: CostEvent[] = [
-      makeCostEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T06:00:00Z' }),
-      makeCostEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T02:00:00Z' }),
-      makeCostEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T08:00:00Z' }),
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T06:00:00Z' }),
+      makeUnifiedEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T02:00:00Z' }),
+      makeUnifiedEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T08:00:00Z' }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions');
     const body = (await res.json()) as { sessions: Array<Record<string, unknown>> };
@@ -276,8 +279,8 @@ describe('GET /api/v1/sessions — session list', () => {
   });
 
   it('no message/content/prose text fields appear in response', async () => {
-    const costs: CostEvent[] = [makeCostEvent({ sessionId: 'sess-1' })];
-    const state: AppState = { events: [], costs };
+    const events: UnifiedEvent[] = [makeUnifiedEvent({ sessionId: 'sess-1' })];
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions');
     const body = (await res.json()) as { sessions: Array<Record<string, unknown>> };
@@ -293,7 +296,7 @@ describe('GET /api/v1/sessions — session list', () => {
 
 describe('GET /api/v1/sessions/:id — session detail', () => {
   it('returns 404 with { error: "Session not found" } for unknown sessionId', async () => {
-    const state: AppState = { events: [], costs: [] };
+    const state: AppState = { events: [], providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions/nonexistent-id');
     expect(res.status).toBe(404);
@@ -302,21 +305,21 @@ describe('GET /api/v1/sessions/:id — session detail', () => {
   });
 
   it('returns { summary, turns } for a valid sessionId', async () => {
-    const costs: CostEvent[] = [
-      makeCostEvent({
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({
         sessionId: 'sess-abc',
         model: 'claude-opus',
         timestamp: '2024-01-01T00:00:00Z',
         costUsd: 0.01,
       }),
-      makeCostEvent({
+      makeUnifiedEvent({
         sessionId: 'sess-abc',
         model: 'claude-opus',
         timestamp: '2024-01-01T01:00:00Z',
         costUsd: 0.02,
       }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions/sess-abc');
     expect(res.status).toBe(200);
@@ -326,12 +329,12 @@ describe('GET /api/v1/sessions/:id — session detail', () => {
   });
 
   it('turns are sorted by timestamp ascending', async () => {
-    const costs: CostEvent[] = [
-      makeCostEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T06:00:00Z', costUsd: 0.003 }),
-      makeCostEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T02:00:00Z', costUsd: 0.001 }),
-      makeCostEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T04:00:00Z', costUsd: 0.002 }),
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T06:00:00Z', costUsd: 0.003 }),
+      makeUnifiedEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T02:00:00Z', costUsd: 0.001 }),
+      makeUnifiedEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T04:00:00Z', costUsd: 0.002 }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions/sess-1');
     const body = (await res.json()) as { turns: Array<Record<string, unknown>> };
@@ -341,12 +344,12 @@ describe('GET /api/v1/sessions/:id — session detail', () => {
   });
 
   it('each turn has correct 1-indexed turn number', async () => {
-    const costs: CostEvent[] = [
-      makeCostEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T01:00:00Z' }),
-      makeCostEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T02:00:00Z' }),
-      makeCostEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T03:00:00Z' }),
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T01:00:00Z' }),
+      makeUnifiedEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T02:00:00Z' }),
+      makeUnifiedEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T03:00:00Z' }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions/sess-1');
     const body = (await res.json()) as { turns: Array<Record<string, unknown>> };
@@ -356,12 +359,12 @@ describe('GET /api/v1/sessions/:id — session detail', () => {
   });
 
   it('cumulativeCost on last turn equals sum of all turn costs', async () => {
-    const costs: CostEvent[] = [
-      makeCostEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T01:00:00Z', costUsd: 0.01 }),
-      makeCostEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T02:00:00Z', costUsd: 0.02 }),
-      makeCostEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T03:00:00Z', costUsd: 0.03 }),
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T01:00:00Z', costUsd: 0.01 }),
+      makeUnifiedEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T02:00:00Z', costUsd: 0.02 }),
+      makeUnifiedEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T03:00:00Z', costUsd: 0.03 }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions/sess-1');
     const body = (await res.json()) as { turns: Array<Record<string, unknown>> };
@@ -371,8 +374,8 @@ describe('GET /api/v1/sessions/:id — session detail', () => {
   });
 
   it('summary contains sessionId, displayName, cwd, model, models, totalCost, totalTokens, timestamp, durationMs, gitBranch', async () => {
-    const costs: CostEvent[] = [
-      makeCostEvent({
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({
         sessionId: 'sess-detail',
         model: 'claude-opus',
         timestamp: '2024-01-01T00:00:00Z',
@@ -382,7 +385,7 @@ describe('GET /api/v1/sessions/:id — session detail', () => {
         costUsd: 0.05,
       }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions/sess-detail');
     const body = (await res.json()) as { summary: Record<string, unknown> };
@@ -400,15 +403,15 @@ describe('GET /api/v1/sessions/:id — session detail', () => {
   });
 
   it('summary.durationMs is sourced from ALL events including non-token events', async () => {
-    const costs: CostEvent[] = [
-      makeCostEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T00:00:00Z', durationMs: 100 }),
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T00:00:00Z', durationMs: 100 }),
       makeNonTokenEvent({
         sessionId: 'sess-1',
         timestamp: '2024-01-01T00:01:00Z',
         durationMs: 9999,
       }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions/sess-1');
     const body = (await res.json()) as { summary: Record<string, unknown> };
@@ -416,10 +419,10 @@ describe('GET /api/v1/sessions/:id — session detail', () => {
   });
 
   it('summary.gitBranch is null when no event has gitBranch', async () => {
-    const costs: CostEvent[] = [
-      makeCostEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T00:00:00Z' }),
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T00:00:00Z' }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions/sess-1');
     const body = (await res.json()) as { summary: Record<string, unknown> };
@@ -427,8 +430,8 @@ describe('GET /api/v1/sessions/:id — session detail', () => {
   });
 
   it('no message/content/prose fields in any response (summary or turns)', async () => {
-    const costs: CostEvent[] = [makeCostEvent({ sessionId: 'sess-1' })];
-    const state: AppState = { events: [], costs };
+    const events: UnifiedEvent[] = [makeUnifiedEvent({ sessionId: 'sess-1' })];
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/sessions/sess-1');
     const body = (await res.json()) as {

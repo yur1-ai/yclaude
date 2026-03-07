@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CostEvent } from '../../cost/types.js';
-import { toEstimatedCost } from '../../cost/types.js';
-import type { NormalizedEvent } from '../../parser/types.js';
+import type { UnifiedEvent } from '../../providers/types.js';
 import { createApp } from '../server.js';
 import type { AppState } from '../server.js';
 
@@ -11,31 +9,28 @@ import type { AppState } from '../server.js';
 
 let _eventIdx = 0;
 
-function makeRawEvent(
-  overrides: Partial<NormalizedEvent> & { message?: Record<string, unknown> } = {},
-): NormalizedEvent {
-  const { message, ...rest } = overrides;
-  const event: NormalizedEvent = {
-    uuid: `raw-uuid-${_eventIdx++}`,
-    type: 'assistant',
-    timestamp: '2024-01-01T00:00:00Z',
+function makeUnifiedEvent(
+  overrides: Partial<UnifiedEvent> & { costUsd?: number } = {},
+): UnifiedEvent {
+  const { costUsd = 0, ...rest } = overrides;
+  return {
+    id: `raw-uuid-${_eventIdx++}`,
+    provider: 'claude',
     sessionId: 'session-1',
+    timestamp: '2024-01-01T00:00:00Z',
+    type: 'assistant',
+    costUsd,
+    costSource: 'estimated',
     ...rest,
   };
-  if (message !== undefined) {
-    (event as Record<string, unknown>).message = message;
-  }
-  return event;
 }
 
-function makeRawCostEvent(
-  overrides: Partial<NormalizedEvent> & {
-    costUsd?: number;
-    message?: Record<string, unknown>;
-  } = {},
-): CostEvent {
+function makeUnifiedEventWithTokens(
+  overrides: Partial<UnifiedEvent> & { costUsd?: number } = {},
+): UnifiedEvent {
   const { costUsd = 0.001, ...rest } = overrides;
-  const base = makeRawEvent({
+  return makeUnifiedEvent({
+    costUsd,
     tokens: {
       input: 100,
       output: 50,
@@ -46,15 +41,16 @@ function makeRawCostEvent(
     },
     ...rest,
   });
-  return { ...base, costUsd: toEstimatedCost(costUsd) };
 }
 
-function makeApp(overrides: Partial<AppState> = {}): ReturnType<typeof createApp> {
+function makeApp(overrides: {
+  events?: UnifiedEvent[];
+  showMessages?: boolean;
+}): ReturnType<typeof createApp> {
   const state: AppState = {
-    events: [],
-    costs: overrides.costs ?? [],
+    events: overrides.events ?? [],
+    providers: [],
     showMessages: overrides.showMessages ?? false,
-    ...(overrides.rawEvents ? { rawEvents: overrides.rawEvents } : {}),
   };
   return createApp(state);
 }
@@ -95,7 +91,7 @@ describe('GET /api/v1/chats — 403 gating', () => {
   });
 
   it('returns 403 when showMessages is undefined (default)', async () => {
-    const state: AppState = { events: [], costs: [] };
+    const state: AppState = { events: [], providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/chats');
     expect(res.status).toBe(403);
@@ -108,44 +104,28 @@ describe('GET /api/v1/chats — 403 gating', () => {
 
 describe('GET /api/v1/chats — chat list', () => {
   it('returns paginated chat list with correct shape when showMessages=true', async () => {
-    const rawEvents: NormalizedEvent[] = [
-      makeRawEvent({
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({
         sessionId: 'sess-1',
         type: 'user',
         timestamp: '2024-01-01T00:00:00Z',
         cwd: '/home/user/project-a',
         message: { role: 'user', content: 'Hello, can you help me with this code?' },
       }),
-      makeRawEvent({
+      makeUnifiedEventWithTokens({
         sessionId: 'sess-1',
         type: 'assistant',
         timestamp: '2024-01-01T00:01:00Z',
         cwd: '/home/user/project-a',
         model: 'claude-opus-4',
-        tokens: {
-          input: 100,
-          output: 200,
-          cacheCreation: 0,
-          cacheRead: 0,
-          cacheCreation5m: 0,
-          cacheCreation1h: 0,
-        },
+        costUsd: 0.01,
         message: {
           model: 'claude-opus-4',
           content: [{ type: 'text', text: 'Sure, I can help!' }],
         },
       }),
     ];
-    const costs: CostEvent[] = [
-      makeRawCostEvent({
-        sessionId: 'sess-1',
-        timestamp: '2024-01-01T00:01:00Z',
-        cwd: '/home/user/project-a',
-        model: 'claude-opus-4',
-        costUsd: 0.01,
-      }),
-    ];
-    const app = makeApp({ showMessages: true, rawEvents, costs });
+    const app = makeApp({ showMessages: true, events });
     const res = await app.request('/api/v1/chats');
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
@@ -177,21 +157,21 @@ describe('GET /api/v1/chats — chat list', () => {
   it('firstMessage is truncated at ~80 chars, firstMessageFull is untruncated', async () => {
     const longMessage =
       'This is a very long message that should be truncated at approximately eighty characters because it exceeds the limit for the preview.';
-    const rawEvents: NormalizedEvent[] = [
-      makeRawEvent({
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({
         sessionId: 'sess-long',
         type: 'user',
         timestamp: '2024-01-01T00:00:00Z',
         message: { role: 'user', content: longMessage },
       }),
-      makeRawEvent({
+      makeUnifiedEvent({
         sessionId: 'sess-long',
         type: 'assistant',
         timestamp: '2024-01-01T00:01:00Z',
         message: { content: [{ type: 'text', text: 'response' }] },
       }),
     ];
-    const app = makeApp({ showMessages: true, rawEvents });
+    const app = makeApp({ showMessages: true, events });
     const res = await app.request('/api/v1/chats');
     const body = (await res.json()) as { chats: Array<Record<string, unknown>> };
     // biome-ignore lint/style/noNonNullAssertion: test assertions
@@ -204,17 +184,17 @@ describe('GET /api/v1/chats — chat list', () => {
   });
 
   it('pagination returns 50 per page', async () => {
-    // Create 55 sessions
-    const rawEvents: NormalizedEvent[] = [];
+    // Create 55 sessions with message events
+    const events: UnifiedEvent[] = [];
     for (let i = 0; i < 55; i++) {
-      rawEvents.push(
-        makeRawEvent({
+      events.push(
+        makeUnifiedEvent({
           sessionId: `sess-${String(i).padStart(3, '0')}`,
           type: 'user',
           timestamp: `2024-01-${String((i % 28) + 1).padStart(2, '0')}T${String(i % 24).padStart(2, '0')}:00:00Z`,
           message: { role: 'user', content: `Message ${i}` },
         }),
-        makeRawEvent({
+        makeUnifiedEvent({
           sessionId: `sess-${String(i).padStart(3, '0')}`,
           type: 'assistant',
           timestamp: `2024-01-${String((i % 28) + 1).padStart(2, '0')}T${String(i % 24).padStart(2, '0')}:01:00Z`,
@@ -222,7 +202,7 @@ describe('GET /api/v1/chats — chat list', () => {
         }),
       );
     }
-    const app = makeApp({ showMessages: true, rawEvents });
+    const app = makeApp({ showMessages: true, events });
     const res1 = await app.request('/api/v1/chats?page=1');
     const body1 = (await res1.json()) as { chats: unknown[]; total: number; page: number };
     expect(body1.chats).toHaveLength(50);
@@ -237,33 +217,33 @@ describe('GET /api/v1/chats — chat list', () => {
   });
 
   it('?search= filter matches text in user/assistant messages (case-insensitive)', async () => {
-    const rawEvents: NormalizedEvent[] = [
-      makeRawEvent({
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({
         sessionId: 'sess-match',
         type: 'user',
         timestamp: '2024-01-01T00:00:00Z',
         message: { role: 'user', content: 'Help me with TypeScript generics' },
       }),
-      makeRawEvent({
+      makeUnifiedEvent({
         sessionId: 'sess-match',
         type: 'assistant',
         timestamp: '2024-01-01T00:01:00Z',
         message: { content: [{ type: 'text', text: 'Sure, generics in TypeScript...' }] },
       }),
-      makeRawEvent({
+      makeUnifiedEvent({
         sessionId: 'sess-nomatch',
         type: 'user',
         timestamp: '2024-01-02T00:00:00Z',
         message: { role: 'user', content: 'Help me with Python decorators' },
       }),
-      makeRawEvent({
+      makeUnifiedEvent({
         sessionId: 'sess-nomatch',
         type: 'assistant',
         timestamp: '2024-01-02T00:01:00Z',
         message: { content: [{ type: 'text', text: 'Sure, decorators in Python...' }] },
       }),
     ];
-    const app = makeApp({ showMessages: true, rawEvents });
+    const app = makeApp({ showMessages: true, events });
     const res = await app.request('/api/v1/chats?search=typescript');
     const body = (await res.json()) as { chats: Array<Record<string, unknown>>; total: number };
     expect(body.total).toBe(1);
@@ -271,21 +251,21 @@ describe('GET /api/v1/chats — chat list', () => {
   });
 
   it('?search= returns empty results for non-matching query', async () => {
-    const rawEvents: NormalizedEvent[] = [
-      makeRawEvent({
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({
         sessionId: 'sess-1',
         type: 'user',
         timestamp: '2024-01-01T00:00:00Z',
         message: { role: 'user', content: 'Hello world' },
       }),
-      makeRawEvent({
+      makeUnifiedEvent({
         sessionId: 'sess-1',
         type: 'assistant',
         timestamp: '2024-01-01T00:01:00Z',
         message: { content: [{ type: 'text', text: 'Hi there!' }] },
       }),
     ];
-    const app = makeApp({ showMessages: true, rawEvents });
+    const app = makeApp({ showMessages: true, events });
     const res = await app.request('/api/v1/chats?search=xyznonexistent');
     const body = (await res.json()) as { chats: unknown[]; total: number };
     expect(body.total).toBe(0);
@@ -311,14 +291,14 @@ describe('GET /api/v1/chats/:id — 403 gating', () => {
 
 describe('GET /api/v1/chats/:id — conversation thread', () => {
   it('returns 404 for unknown session', async () => {
-    const rawEvents: NormalizedEvent[] = [
-      makeRawEvent({
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({
         sessionId: 'sess-exists',
         type: 'user',
         message: { role: 'user', content: 'hi' },
       }),
     ];
-    const app = makeApp({ showMessages: true, rawEvents });
+    const app = makeApp({ showMessages: true, events });
     const res = await app.request('/api/v1/chats/nonexistent-id');
     expect(res.status).toBe(404);
     const body = (await res.json()) as { error: string };
@@ -326,28 +306,21 @@ describe('GET /api/v1/chats/:id — conversation thread', () => {
   });
 
   it('returns conversation thread with content blocks', async () => {
-    const rawEvents: NormalizedEvent[] = [
-      makeRawEvent({
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({
         sessionId: 'sess-thread',
         type: 'user',
         timestamp: '2024-01-01T00:00:00Z',
         cwd: '/home/user/myproject',
         message: { role: 'user', content: 'Write a function' },
       }),
-      makeRawEvent({
+      makeUnifiedEventWithTokens({
         sessionId: 'sess-thread',
         type: 'assistant',
         timestamp: '2024-01-01T00:01:00Z',
         cwd: '/home/user/myproject',
         model: 'claude-opus-4',
-        tokens: {
-          input: 100,
-          output: 200,
-          cacheCreation: 0,
-          cacheRead: 0,
-          cacheCreation5m: 0,
-          cacheCreation1h: 0,
-        },
+        costUsd: 0.01,
         message: {
           model: 'claude-opus-4',
           content: [
@@ -362,7 +335,7 @@ describe('GET /api/v1/chats/:id — conversation thread', () => {
         },
       }),
     ];
-    const app = makeApp({ showMessages: true, rawEvents });
+    const app = makeApp({ showMessages: true, events });
     const res = await app.request('/api/v1/chats/sess-thread');
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
@@ -398,8 +371,8 @@ describe('GET /api/v1/chats/:id — conversation thread', () => {
   });
 
   it('excludes thinking blocks from output', async () => {
-    const rawEvents: NormalizedEvent[] = [
-      makeRawEvent({
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({
         sessionId: 'sess-think',
         type: 'assistant',
         timestamp: '2024-01-01T00:00:00Z',
@@ -411,7 +384,7 @@ describe('GET /api/v1/chats/:id — conversation thread', () => {
         },
       }),
     ];
-    const app = makeApp({ showMessages: true, rawEvents });
+    const app = makeApp({ showMessages: true, events });
     const res = await app.request('/api/v1/chats/sess-think');
     const body = (await res.json()) as {
       messages: Array<{ content: Array<Record<string, unknown>> }>;
@@ -425,8 +398,8 @@ describe('GET /api/v1/chats/:id — conversation thread', () => {
 
   it('truncates tool_result content at 10000 chars', async () => {
     const longResult = 'x'.repeat(15000);
-    const rawEvents: NormalizedEvent[] = [
-      makeRawEvent({
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({
         sessionId: 'sess-trunc',
         type: 'user',
         timestamp: '2024-01-01T00:00:00Z',
@@ -442,7 +415,7 @@ describe('GET /api/v1/chats/:id — conversation thread', () => {
         },
       }),
     ];
-    const app = makeApp({ showMessages: true, rawEvents });
+    const app = makeApp({ showMessages: true, events });
     const res = await app.request('/api/v1/chats/sess-trunc');
     const body = (await res.json()) as {
       messages: Array<{ content: Array<Record<string, unknown>> }>;
@@ -454,41 +427,26 @@ describe('GET /api/v1/chats/:id — conversation thread', () => {
   });
 
   it('existing /api/v1/sessions/:id remains metadata-only even when showMessages=true', async () => {
-    const rawEvents: NormalizedEvent[] = [
-      makeRawEvent({
+    const events: UnifiedEvent[] = [
+      makeUnifiedEvent({
         sessionId: 'sess-privacy',
         type: 'user',
         timestamp: '2024-01-01T00:00:00Z',
         message: { role: 'user', content: 'secret message' },
       }),
-      makeRawEvent({
+      makeUnifiedEventWithTokens({
         sessionId: 'sess-privacy',
         type: 'assistant',
         timestamp: '2024-01-01T00:01:00Z',
         model: 'claude-opus',
-        tokens: {
-          input: 100,
-          output: 50,
-          cacheCreation: 0,
-          cacheRead: 0,
-          cacheCreation5m: 0,
-          cacheCreation1h: 0,
-        },
+        costUsd: 0.01,
         message: {
           model: 'claude-opus',
           content: [{ type: 'text', text: 'secret response' }],
         },
       }),
     ];
-    const costs: CostEvent[] = [
-      makeRawCostEvent({
-        sessionId: 'sess-privacy',
-        timestamp: '2024-01-01T00:01:00Z',
-        model: 'claude-opus',
-        costUsd: 0.01,
-      }),
-    ];
-    const app = makeApp({ showMessages: true, rawEvents, costs });
+    const app = makeApp({ showMessages: true, events });
     const res = await app.request('/api/v1/sessions/sess-privacy');
     expect(res.status).toBe(200);
     const body = (await res.json()) as {

@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CostEvent } from '../../cost/types.js';
-import { toEstimatedCost } from '../../cost/types.js';
-import type { NormalizedEvent } from '../../parser/types.js';
+import type { UnifiedEvent } from '../../providers/types.js';
 import { createApp } from '../server.js';
 import type { AppState } from '../server.js';
 
@@ -16,41 +14,33 @@ type CostOverTimeBody = {
   bucket: string;
 };
 
-function makeEvent(overrides: Partial<NormalizedEvent> = {}): NormalizedEvent {
-  return {
-    uuid: `test-uuid-${Math.random()}`,
-    type: 'assistant',
-    timestamp: '2024-01-01T00:00:00Z',
-    sessionId: 'session-1',
-    ...overrides,
-  };
-}
-
-function makeCostEvent(
+function makeUnifiedEvent(
   costUsd: number,
-  timestamp?: string,
-  tokens?: Partial<NonNullable<NormalizedEvent['tokens']>>,
-): CostEvent {
-  const base = makeEvent({
-    timestamp: timestamp ?? '2024-01-01T00:00:00Z',
-    tokens: {
-      input: tokens?.input ?? 100,
-      output: tokens?.output ?? 50,
-      cacheCreation: tokens?.cacheCreation ?? 0,
-      cacheRead: tokens?.cacheRead ?? 0,
-      cacheCreation5m: tokens?.cacheCreation5m ?? 0,
-      cacheCreation1h: tokens?.cacheCreation1h ?? 0,
-    },
-  });
+  overrides?: Partial<UnifiedEvent>,
+): UnifiedEvent {
   return {
-    ...base,
-    costUsd: toEstimatedCost(costUsd),
+    id: `test-uuid-${Math.random()}`,
+    provider: 'claude',
+    sessionId: 'session-1',
+    timestamp: '2024-01-01T00:00:00Z',
+    type: 'assistant',
+    costUsd,
+    costSource: 'estimated',
+    tokens: {
+      input: overrides?.tokens?.input ?? 100,
+      output: overrides?.tokens?.output ?? 50,
+      cacheCreation: overrides?.tokens?.cacheCreation ?? 0,
+      cacheRead: overrides?.tokens?.cacheRead ?? 0,
+      cacheCreation5m: overrides?.tokens?.cacheCreation5m ?? 0,
+      cacheCreation1h: overrides?.tokens?.cacheCreation1h ?? 0,
+    },
+    ...overrides,
   };
 }
 
 describe('/api/v1/summary', () => {
   it('returns empty aggregate for empty state', async () => {
-    const state: AppState = { events: [], costs: [] };
+    const state: AppState = { events: [], providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/summary');
     const body = await res.json();
@@ -63,30 +53,30 @@ describe('/api/v1/summary', () => {
     });
   });
 
-  it('aggregates totalCost across 2 CostEvents', async () => {
-    const costs = [makeCostEvent(0.001), makeCostEvent(0.002)];
-    const state: AppState = { events: [], costs };
+  it('aggregates totalCost across 2 events', async () => {
+    const events = [makeUnifiedEvent(0.001), makeUnifiedEvent(0.002)];
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/summary');
     const body = (await res.json()) as SummaryBody;
     expect(body.totalCost).toBeCloseTo(0.003, 6);
   });
 
-  it('eventCount equals number of CostEvents in state', async () => {
-    const costs = [makeCostEvent(0.001), makeCostEvent(0.002), makeCostEvent(0.003)];
-    const state: AppState = { events: [], costs };
+  it('eventCount equals number of events in state', async () => {
+    const events = [makeUnifiedEvent(0.001), makeUnifiedEvent(0.002), makeUnifiedEvent(0.003)];
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/summary');
     const body = (await res.json()) as SummaryBody;
     expect(body.eventCount).toBe(3);
   });
 
-  it('totalTokens sums input/output/cacheCreation/cacheRead across all CostEvents', async () => {
-    const costs = [
-      makeCostEvent(0.001, undefined, { input: 100, output: 50, cacheCreation: 10, cacheRead: 5 }),
-      makeCostEvent(0.002, undefined, { input: 200, output: 75, cacheCreation: 20, cacheRead: 15 }),
+  it('totalTokens sums input/output/cacheCreation/cacheRead across all events', async () => {
+    const events = [
+      makeUnifiedEvent(0.001, { tokens: { input: 100, output: 50, cacheCreation: 10, cacheRead: 5, cacheCreation5m: 0, cacheCreation1h: 0 } }),
+      makeUnifiedEvent(0.002, { tokens: { input: 200, output: 75, cacheCreation: 20, cacheRead: 15, cacheCreation5m: 0, cacheCreation1h: 0 } }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/summary');
     const body = (await res.json()) as SummaryBody;
@@ -101,12 +91,12 @@ describe('/api/v1/summary', () => {
 
 describe('/api/v1/summary date filtering', () => {
   it('?from= filters out events before the given timestamp', async () => {
-    const costs = [
-      makeCostEvent(0.001, '2024-01-01T00:00:00Z'),
-      makeCostEvent(0.002, '2024-01-05T00:00:00Z'),
-      makeCostEvent(0.003, '2024-01-10T00:00:00Z'),
+    const events = [
+      makeUnifiedEvent(0.001, { timestamp: '2024-01-01T00:00:00Z' }),
+      makeUnifiedEvent(0.002, { timestamp: '2024-01-05T00:00:00Z' }),
+      makeUnifiedEvent(0.003, { timestamp: '2024-01-10T00:00:00Z' }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/summary?from=2024-01-05T00:00:00Z');
     const body = (await res.json()) as SummaryBody;
@@ -115,12 +105,12 @@ describe('/api/v1/summary date filtering', () => {
   });
 
   it('?to= filters out events after the given timestamp', async () => {
-    const costs = [
-      makeCostEvent(0.001, '2024-01-01T00:00:00Z'),
-      makeCostEvent(0.002, '2024-01-05T00:00:00Z'),
-      makeCostEvent(0.003, '2024-01-10T00:00:00Z'),
+    const events = [
+      makeUnifiedEvent(0.001, { timestamp: '2024-01-01T00:00:00Z' }),
+      makeUnifiedEvent(0.002, { timestamp: '2024-01-05T00:00:00Z' }),
+      makeUnifiedEvent(0.003, { timestamp: '2024-01-10T00:00:00Z' }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/summary?to=2024-01-03T23:59:59Z');
     const body = (await res.json()) as SummaryBody;
@@ -129,12 +119,12 @@ describe('/api/v1/summary date filtering', () => {
   });
 
   it('?from=&to= combined — only in-window events counted', async () => {
-    const costs = [
-      makeCostEvent(0.001, '2024-01-01T00:00:00Z'),
-      makeCostEvent(0.002, '2024-01-05T00:00:00Z'),
-      makeCostEvent(0.003, '2024-01-10T00:00:00Z'),
+    const events = [
+      makeUnifiedEvent(0.001, { timestamp: '2024-01-01T00:00:00Z' }),
+      makeUnifiedEvent(0.002, { timestamp: '2024-01-05T00:00:00Z' }),
+      makeUnifiedEvent(0.003, { timestamp: '2024-01-10T00:00:00Z' }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request(
       '/api/v1/summary?from=2024-01-04T00:00:00Z&to=2024-01-06T00:00:00Z',
@@ -145,7 +135,7 @@ describe('/api/v1/summary date filtering', () => {
   });
 
   it('?from= with invalid date returns HTTP 400', async () => {
-    const state: AppState = { events: [], costs: [] };
+    const state: AppState = { events: [], providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/summary?from=not-a-date');
     expect(res.status).toBe(400);
@@ -154,7 +144,7 @@ describe('/api/v1/summary date filtering', () => {
   });
 
   it('?to= with invalid date returns HTTP 400', async () => {
-    const state: AppState = { events: [], costs: [] };
+    const state: AppState = { events: [], providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/summary?to=not-a-date');
     expect(res.status).toBe(400);
@@ -165,7 +155,7 @@ describe('/api/v1/summary date filtering', () => {
 
 describe('/api/v1/cost-over-time', () => {
   it('returns empty data for empty state', async () => {
-    const state: AppState = { events: [], costs: [] };
+    const state: AppState = { events: [], providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/cost-over-time');
     expect(res.status).toBe(200);
@@ -174,11 +164,11 @@ describe('/api/v1/cost-over-time', () => {
   });
 
   it('2 events on the same day → one bucket with summed cost', async () => {
-    const costs = [
-      makeCostEvent(0.001, '2024-01-05T09:00:00Z'),
-      makeCostEvent(0.002, '2024-01-05T18:00:00Z'),
+    const events = [
+      makeUnifiedEvent(0.001, { timestamp: '2024-01-05T09:00:00Z' }),
+      makeUnifiedEvent(0.002, { timestamp: '2024-01-05T18:00:00Z' }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/cost-over-time');
     const body = (await res.json()) as CostOverTimeBody;
@@ -188,11 +178,11 @@ describe('/api/v1/cost-over-time', () => {
   });
 
   it('events on days 1 and 3 with ?from=day1&to=day3 → 3 entries, day 2 has cost 0', async () => {
-    const costs = [
-      makeCostEvent(0.001, '2024-01-01T00:00:00Z'),
-      makeCostEvent(0.003, '2024-01-03T00:00:00Z'),
+    const events = [
+      makeUnifiedEvent(0.001, { timestamp: '2024-01-01T00:00:00Z' }),
+      makeUnifiedEvent(0.003, { timestamp: '2024-01-03T00:00:00Z' }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request(
       '/api/v1/cost-over-time?from=2024-01-01T00:00:00Z&to=2024-01-03T23:59:59Z',
@@ -208,12 +198,12 @@ describe('/api/v1/cost-over-time', () => {
 
   it('bucket=week groups events by ISO week Monday date', async () => {
     // 2024-01-01 is a Monday; 2024-01-08 is the next Monday
-    const costs = [
-      makeCostEvent(0.001, '2024-01-01T00:00:00Z'), // Monday week 1
-      makeCostEvent(0.002, '2024-01-03T00:00:00Z'), // Wednesday — same week
-      makeCostEvent(0.004, '2024-01-08T00:00:00Z'), // Monday week 2
+    const events = [
+      makeUnifiedEvent(0.001, { timestamp: '2024-01-01T00:00:00Z' }), // Monday week 1
+      makeUnifiedEvent(0.002, { timestamp: '2024-01-03T00:00:00Z' }), // Wednesday — same week
+      makeUnifiedEvent(0.004, { timestamp: '2024-01-08T00:00:00Z' }), // Monday week 2
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/cost-over-time?bucket=week');
     const body = (await res.json()) as CostOverTimeBody;
@@ -228,12 +218,12 @@ describe('/api/v1/cost-over-time', () => {
   });
 
   it('bucket=month groups events by YYYY-MM key', async () => {
-    const costs = [
-      makeCostEvent(0.001, '2024-01-15T00:00:00Z'),
-      makeCostEvent(0.002, '2024-01-20T00:00:00Z'),
-      makeCostEvent(0.005, '2024-02-01T00:00:00Z'),
+    const events = [
+      makeUnifiedEvent(0.001, { timestamp: '2024-01-15T00:00:00Z' }),
+      makeUnifiedEvent(0.002, { timestamp: '2024-01-20T00:00:00Z' }),
+      makeUnifiedEvent(0.005, { timestamp: '2024-02-01T00:00:00Z' }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/cost-over-time?bucket=month');
     const body = (await res.json()) as CostOverTimeBody;
@@ -248,7 +238,7 @@ describe('/api/v1/cost-over-time', () => {
   });
 
   it('?from= with invalid date returns HTTP 400', async () => {
-    const state: AppState = { events: [], costs: [] };
+    const state: AppState = { events: [], providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/cost-over-time?from=bad-date');
     expect(res.status).toBe(400);
@@ -259,7 +249,7 @@ describe('/api/v1/cost-over-time', () => {
 
 describe('/api/v1/pricing-meta', () => {
   it('returns pricing metadata with lastUpdated and source', async () => {
-    const state: AppState = { events: [], costs: [] };
+    const state: AppState = { events: [], providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/pricing-meta');
     expect(res.status).toBe(200);
@@ -285,23 +275,22 @@ type ModelsBody = {
   unknownModels: { models: string[]; sessionCount: number } | null;
 };
 
-function makeCostEventWithModel(
+function makeUnifiedEventWithModel(
   costUsd: number,
   model: string,
-  opts?: { unknownModel?: true; timestamp?: string; sessionId?: string },
-): CostEvent {
-  const base = makeCostEvent(costUsd, opts?.timestamp);
-  return {
-    ...base,
+  opts?: { unknownModel?: boolean; timestamp?: string; sessionId?: string },
+): UnifiedEvent {
+  return makeUnifiedEvent(costUsd, {
     model,
+    ...(opts?.timestamp ? { timestamp: opts.timestamp } : {}),
     ...(opts?.sessionId ? { sessionId: opts.sessionId } : {}),
     ...(opts?.unknownModel ? { unknownModel: true } : {}),
-  };
+  });
 }
 
 describe('/api/v1/models', () => {
   it('empty state returns rows: [], totalCost: 0, unknownModels: null', async () => {
-    const state: AppState = { events: [], costs: [] };
+    const state: AppState = { events: [], providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/models');
     const body = (await res.json()) as ModelsBody;
@@ -309,11 +298,11 @@ describe('/api/v1/models', () => {
   });
 
   it('2 known-model events returns unknownModels: null', async () => {
-    const costs = [
-      makeCostEventWithModel(0.01, 'claude-sonnet-4-20250514'),
-      makeCostEventWithModel(0.02, 'claude-sonnet-4-20250514'),
+    const events = [
+      makeUnifiedEventWithModel(0.01, 'claude-sonnet-4-20250514'),
+      makeUnifiedEventWithModel(0.02, 'claude-sonnet-4-20250514'),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/models');
     const body = (await res.json()) as ModelsBody;
@@ -322,8 +311,8 @@ describe('/api/v1/models', () => {
   });
 
   it('1 unknown-model event returns unknownModels with model and session count', async () => {
-    const costs = [makeCostEventWithModel(0.01, 'fake-model', { unknownModel: true })];
-    const state: AppState = { events: [], costs };
+    const events = [makeUnifiedEventWithModel(0.01, 'fake-model', { unknownModel: true })];
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/models');
     const body = (await res.json()) as ModelsBody;
@@ -334,12 +323,12 @@ describe('/api/v1/models', () => {
   });
 
   it('3 events (2 unknown same model, 1 known) returns correct unknownModels', async () => {
-    const costs = [
-      makeCostEventWithModel(0.01, 'fake-model', { unknownModel: true, sessionId: 'sess-a' }),
-      makeCostEventWithModel(0.02, 'fake-model', { unknownModel: true, sessionId: 'sess-b' }),
-      makeCostEventWithModel(0.03, 'claude-sonnet-4-20250514'),
+    const events = [
+      makeUnifiedEventWithModel(0.01, 'fake-model', { unknownModel: true, sessionId: 'sess-a' }),
+      makeUnifiedEventWithModel(0.02, 'fake-model', { unknownModel: true, sessionId: 'sess-b' }),
+      makeUnifiedEventWithModel(0.03, 'claude-sonnet-4-20250514'),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/models');
     const body = (await res.json()) as ModelsBody;
@@ -350,16 +339,16 @@ describe('/api/v1/models', () => {
   });
 
   it('date filter excludes unknown models outside range (unknownModels: null)', async () => {
-    const costs = [
-      makeCostEventWithModel(0.01, 'claude-sonnet-4-20250514', {
+    const events = [
+      makeUnifiedEventWithModel(0.01, 'claude-sonnet-4-20250514', {
         timestamp: '2024-01-05T00:00:00Z',
       }),
-      makeCostEventWithModel(0.02, 'fake-model', {
+      makeUnifiedEventWithModel(0.02, 'fake-model', {
         unknownModel: true,
         timestamp: '2024-01-01T00:00:00Z',
       }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     // Filter to only include 2024-01-04 onward — excludes the unknown model event
     const res = await app.request('/api/v1/models?from=2024-01-04T00:00:00Z');
@@ -369,12 +358,12 @@ describe('/api/v1/models', () => {
   });
 
   it('unknownModels.models array is sorted alphabetically', async () => {
-    const costs = [
-      makeCostEventWithModel(0.01, 'zebra-model', { unknownModel: true }),
-      makeCostEventWithModel(0.02, 'alpha-model', { unknownModel: true }),
-      makeCostEventWithModel(0.03, 'mid-model', { unknownModel: true }),
+    const events = [
+      makeUnifiedEventWithModel(0.01, 'zebra-model', { unknownModel: true }),
+      makeUnifiedEventWithModel(0.02, 'alpha-model', { unknownModel: true }),
+      makeUnifiedEventWithModel(0.03, 'mid-model', { unknownModel: true }),
     ];
-    const state: AppState = { events: [], costs };
+    const state: AppState = { events, providers: [] };
     const app = createApp(state);
     const res = await app.request('/api/v1/models');
     const body = (await res.json()) as ModelsBody;
