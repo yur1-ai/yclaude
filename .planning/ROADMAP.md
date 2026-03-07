@@ -77,11 +77,11 @@ Plans:
   2. User can see accurate Cursor cost data pulled from the provider-reported costInCents field, labeled as "provider-reported" (distinct from Claude's "API-estimated")
   3. User can see a breakdown of Cursor agent mode vs manual mode usage with token and cost comparison
   4. Cursor sessions are parsed defensively with schema version detection, handling v3 composerData and gracefully degrading for unknown versions
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 12-01: TBD
-- [ ] 12-02: TBD
+- [ ] 12-01-PLAN.md -- Foundation: types, Zod schemas, platform paths, DB access, parser + unit tests
+- [ ] 12-02-PLAN.md -- Adapter integration: wire CursorAdapter, integration tests, end-to-end verification
 
 ### Phase 13: Multi-Provider API & Dashboard
 **Goal**: Users can navigate between providers via tabs, filter all data by provider, and see cross-provider analytics showing their total AI coding activity
@@ -140,6 +140,6 @@ Phases execute in numeric order: 11 -> 12 -> 13 -> 14
 | 9.2. Tech Debt & Date Range Presets | v1.1 | 2/2 | Complete | 2026-03-05 |
 | 10. Conversations Viewer | v1.1 | 3/3 | Complete | 2026-03-05 |
 | 11. Provider Abstraction Layer | v1.2 | Complete    | 2026-03-07 | 2026-03-07 |
-| 12. Cursor Provider | v1.2 | 0/? | Not started | - |
+| 12. Cursor Provider | v1.2 | 0/2 | Not started | - |
 | 13. Multi-Provider API & Dashboard | v1.2 | 0/? | Not started | - |
 | 14. OpenCode Provider | v1.2 | 0/? | Not started | - |
