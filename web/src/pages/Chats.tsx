@@ -2,15 +2,19 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ChatCard } from '../components/ChatCard';
 import { DateRangePicker } from '../components/DateRangePicker';
+import { ProviderBadge } from '../components/ProviderBadge';
 import { useChats } from '../hooks/useChats';
 import { useConfig } from '../hooks/useConfig';
 import { useProjects } from '../hooks/useProjects';
+import type { ProviderId } from '../lib/providers';
 import { QUIPS, pickQuip } from '../lib/quips';
+import { useProviderStore } from '../store/useProviderStore';
 import ChatsDisabled from './ChatsDisabled';
 
 export default function Chats() {
   const navigate = useNavigate();
   const { data: config, isLoading: configLoading } = useConfig();
+  const { provider } = useProviderStore();
 
   const [projectFilter, setProjectFilter] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState('');
@@ -40,6 +44,7 @@ export default function Chats() {
   }
 
   const totalPages = Math.ceil((data?.total ?? 0) / (data?.pageSize ?? 50));
+  const isAllView = provider === 'all';
 
   return (
     <div className="space-y-6">
@@ -96,14 +101,32 @@ export default function Chats() {
             </div>
           ) : (
             <div className="space-y-3">
-              {data.chats.map((chat) => (
-                <ChatCard
-                  key={chat.sessionId}
-                  chat={chat}
-                  searchQuery={debouncedSearch}
-                  onViewConversation={(sessionId) => navigate(`/chats/${sessionId}`)}
-                />
-              ))}
+              {data.chats.map((chat) => {
+                const chatAny = chat as unknown as Record<string, unknown>;
+                const chatProvider = chatAny.provider as ProviderId | undefined;
+                const chatCostSource = chatAny.costSource as string | undefined;
+                return (
+                  <div key={chat.sessionId} className="relative">
+                    {isAllView && chatProvider && (
+                      <div className="absolute top-3 right-14 z-10">
+                        <ProviderBadge provider={chatProvider} />
+                      </div>
+                    )}
+                    <ChatCard
+                      chat={chat}
+                      searchQuery={debouncedSearch}
+                      onViewConversation={(sessionId) => navigate(`/chats/${sessionId}`)}
+                      costSourceLabel={
+                        isAllView && chatCostSource
+                          ? chatCostSource === 'reported'
+                            ? 'rep.'
+                            : 'est.'
+                          : undefined
+                      }
+                    />
+                  </div>
+                );
+              })}
             </div>
           )}
 

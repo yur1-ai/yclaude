@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { CostInfoTooltip } from '../components/CostInfoTooltip';
 import { DateRangePicker } from '../components/DateRangePicker';
+import { ProviderBadge } from '../components/ProviderBadge';
 import { SortableTable } from '../components/SortableTable';
 import type { Column } from '../components/SortableTable';
 import { useModels } from '../hooks/useModels';
 import type { ModelRow } from '../hooks/useModels';
+import type { ProviderId } from '../lib/providers';
 import { QUIPS, pickQuip } from '../lib/quips';
+import { useProviderStore } from '../store/useProviderStore';
 
 const DONUT_COLORS = [
   'var(--color-donut-1)',
@@ -34,15 +37,10 @@ function toDonutData(rows: ModelRow[]): DonutSlice[] {
 
 export default function Models() {
   const { data, isLoading } = useModels();
+  const { provider } = useProviderStore();
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
 
-  if (isLoading) {
-    return (
-      <div className="h-60 flex items-center justify-center text-slate-400 dark:text-[#8b949e] text-sm">
-        Loading...
-      </div>
-    );
-  }
+  const isAllView = provider === 'all';
 
   const rows = data?.rows ?? [];
   const totalCost = data?.totalCost ?? 0;
@@ -55,62 +53,89 @@ export default function Models() {
 
   const totalTokensLabel = totalCost > 0 ? `$${totalCost.toFixed(2)} est.` : '$0.00 est.';
 
-  const columns: Column<ModelRow>[] = [
-    {
-      key: 'model',
-      label: 'Model',
-      render: (row) => (
-        <span className="font-medium text-slate-900 dark:text-[#e6edf3]">{row.model}</span>
-      ),
-    },
-    {
-      key: 'costUsd',
-      label: (
-        <span className="inline-flex items-center gap-1">
-          Cost <CostInfoTooltip />
-        </span>
-      ),
-      render: (row) => <span>${row.costUsd.toFixed(2)} est.</span>,
-    },
-    {
-      key: 'costUsd',
-      label: '% of total',
-      sortable: false,
-      render: (row) =>
-        totalCost > 0 ? `${((row.costUsd / totalCost) * 100).toFixed(1)}%` : '0.0%',
-    },
-    {
-      key: 'eventCount',
-      label: 'Events',
-    },
-    {
-      key: 'tokens',
-      label: 'Total tokens',
-      sortable: false,
-      render: (row) => (
-        <span className="relative group cursor-help underline decoration-dotted">
-          {(
-            row.tokens.input +
-            row.tokens.output +
-            row.tokens.cacheCreation +
-            row.tokens.cacheRead
-          ).toLocaleString()}
-          <span
-            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block
-                         rounded bg-slate-800 text-white text-xs p-2 whitespace-nowrap z-10"
-          >
-            Input: {row.tokens.input.toLocaleString()}
-            <br />
-            Output: {row.tokens.output.toLocaleString()}
-            <br />
-            Cache write: {row.tokens.cacheCreation.toLocaleString()}
-            <br />
-            Cache read: {row.tokens.cacheRead.toLocaleString()}
+  const columns = useMemo(() => {
+    const cols: Column<ModelRow>[] = [];
+
+    // Provider column only in All-view
+    if (isAllView) {
+      cols.push({
+        key: 'provider' as keyof ModelRow,
+        label: 'Provider',
+        sortable: true,
+        render: (row) => {
+          const p = (row as Record<string, unknown>).provider as ProviderId | undefined;
+          return p ? <ProviderBadge provider={p} /> : <span>--</span>;
+        },
+      });
+    }
+
+    cols.push(
+      {
+        key: 'model',
+        label: 'Model',
+        render: (row) => (
+          <span className="font-medium text-slate-900 dark:text-[#e6edf3]">{row.model}</span>
+        ),
+      },
+      {
+        key: 'costUsd',
+        label: (
+          <span className="inline-flex items-center gap-1">
+            Cost <CostInfoTooltip />
           </span>
-        </span>
-      ),
-    },
-  ];
+        ),
+        render: (row) => <span>${row.costUsd.toFixed(2)} est.</span>,
+      },
+      {
+        key: 'costUsd',
+        label: '% of total',
+        sortable: false,
+        render: (row) =>
+          totalCost > 0 ? `${((row.costUsd / totalCost) * 100).toFixed(1)}%` : '0.0%',
+      },
+      {
+        key: 'eventCount',
+        label: 'Events',
+      },
+      {
+        key: 'tokens',
+        label: 'Total tokens',
+        sortable: false,
+        render: (row) => (
+          <span className="relative group cursor-help underline decoration-dotted">
+            {(
+              row.tokens.input +
+              row.tokens.output +
+              row.tokens.cacheCreation +
+              row.tokens.cacheRead
+            ).toLocaleString()}
+            <span
+              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block
+                           rounded bg-slate-800 text-white text-xs p-2 whitespace-nowrap z-10"
+            >
+              Input: {row.tokens.input.toLocaleString()}
+              <br />
+              Output: {row.tokens.output.toLocaleString()}
+              <br />
+              Cache write: {row.tokens.cacheCreation.toLocaleString()}
+              <br />
+              Cache read: {row.tokens.cacheRead.toLocaleString()}
+            </span>
+          </span>
+        ),
+      },
+    );
+
+    return cols;
+  }, [isAllView, totalCost]);
+
+  if (isLoading) {
+    return (
+      <div className="h-60 flex items-center justify-center text-slate-400 dark:text-[#8b949e] text-sm">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

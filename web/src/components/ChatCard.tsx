@@ -5,6 +5,8 @@ interface ChatCardProps {
   chat: ChatItem;
   searchQuery?: string;
   onViewConversation: (sessionId: string) => void;
+  /** Optional inline cost source label (e.g. "est." or "rep.") shown next to cost */
+  costSourceLabel?: string;
 }
 
 /**
@@ -33,12 +35,12 @@ function HighlightedText({ text, query }: { text: string; query: string }) {
   );
 }
 
-export function ChatCard({ chat, searchQuery, onViewConversation }: ChatCardProps) {
+export function ChatCard({ chat, searchQuery, onViewConversation, costSourceLabel }: ChatCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   const projectName = chat.displayName;
   const formattedTime = new Date(chat.timestamp).toLocaleString();
-  const costLabel = `$${chat.costUsd.toFixed(2)} est.`;
+  const costLabel = `$${chat.costUsd.toFixed(2)}${costSourceLabel ? ` ${costSourceLabel}` : ' est.'}`;
 
   return (
     <button

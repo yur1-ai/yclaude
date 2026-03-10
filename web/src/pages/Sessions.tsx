@@ -1,88 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { CostInfoTooltip } from '../components/CostInfoTooltip';
 import { DateRangePicker } from '../components/DateRangePicker';
+import { ProviderBadge } from '../components/ProviderBadge';
 import { type Column, SortableTable } from '../components/SortableTable';
 import { SubagentBadge } from '../components/SubagentBadge';
 import { useBranches } from '../hooks/useBranches';
 import { useProjects } from '../hooks/useProjects';
 import { type SessionRow, useSessions } from '../hooks/useSessions';
+import type { ProviderId } from '../lib/providers';
 import { QUIPS, pickQuip } from '../lib/quips';
-
-const columns: Column<SessionRow>[] = [
-  {
-    key: 'displayName',
-    label: 'Project',
-    sortable: true,
-  },
-  {
-    key: 'model',
-    label: 'Model',
-    sortable: true,
-    render: (row) => {
-      const models = row.models as string[];
-      const label = models.length <= 1 ? (row.model as string) : 'Mixed';
-      const tooltip = models.length > 1 ? models.join(', ') : null;
-      return (
-        <span className="flex items-center gap-1.5">
-          {tooltip ? (
-            <span className="relative group cursor-help underline decoration-dotted">
-              {label}
-              <span className="absolute bottom-full left-0 mb-1 hidden group-hover:block rounded bg-slate-800 text-white text-xs p-2 whitespace-nowrap z-10">
-                {tooltip}
-              </span>
-            </span>
-          ) : (
-            <span>{label}</span>
-          )}
-          {row.hasSubagents && <SubagentBadge />}
-        </span>
-      );
-    },
-  },
-  {
-    key: 'gitBranch',
-    label: 'Branch',
-    sortable: true,
-    render: (row) => (
-      <span className="text-slate-500 text-xs font-mono">
-        {(row.gitBranch as string | null) ?? '—'}
-      </span>
-    ),
-  },
-  {
-    key: 'costUsd',
-    label: (
-      <span className="inline-flex items-center gap-1">
-        Cost <CostInfoTooltip />
-      </span>
-    ),
-    sortable: true,
-    render: (row) => <span>${(row.costUsd as number).toFixed(2)}</span>,
-  },
-  {
-    key: 'timestamp',
-    label: 'Time',
-    sortable: true,
-    render: (row) => <span>{new Date(row.timestamp as string).toLocaleString()}</span>,
-  },
-  {
-    key: 'durationMs',
-    label: 'Duration',
-    sortable: true,
-    render: (row) =>
-      row.durationMs != null ? (
-        <span>{((row.durationMs as number) / 1000).toFixed(1)}s</span>
-      ) : (
-        <span>&mdash;</span>
-      ),
-  },
-];
+import { useProviderStore } from '../store/useProviderStore';
 
 export default function Sessions() {
   const navigate = useNavigate();
+  const { provider } = useProviderStore();
   const [projectFilter, setProjectFilter] = useState<string | null>(null);
   const [branchFilter, setBranchFilter] = useState<string | null>(null);
+  const [sessionType, setSessionType] = useState<'all' | 'composer' | 'edit'>('all');
   const { data, isLoading, isError, page, setPage } = useSessions(projectFilter, branchFilter);
   const { data: projectsData } = useProjects();
   const { data: branchesData } = useBranches();
@@ -93,6 +28,123 @@ export default function Sessions() {
   }, [projectFilter, branchFilter]);
 
   const totalPages = Math.ceil((data?.total ?? 0) / (data?.pageSize ?? 50));
+
+  // Show session type filter for all or cursor views (Claude sessions don't have sessionType)
+  const showSessionTypeFilter = provider === 'all' || provider === 'cursor';
+  const isAllView = provider === 'all';
+
+  // Client-side session type filtering (avoids modifying hooks)
+  const filteredSessions = useMemo(() => {
+    const sessions = data?.sessions ?? [];
+    if (sessionType === 'all') return sessions;
+    return sessions.filter((s) => {
+      const st = (s as Record<string, unknown>).sessionType as string | undefined;
+      // Claude events have no sessionType -- pass them through
+      if (!st) return true;
+      return st === sessionType;
+    });
+  }, [data?.sessions, sessionType]);
+
+  const columns = useMemo(() => {
+    const cols: Column<SessionRow>[] = [];
+
+    // Provider badge column, only in All-view
+    if (isAllView) {
+      cols.push({
+        key: 'provider' as keyof SessionRow,
+        label: 'Provider',
+        sortable: true,
+        render: (row) => {
+          const p = (row as Record<string, unknown>).provider as ProviderId | undefined;
+          return p ? <ProviderBadge provider={p} /> : <span>--</span>;
+        },
+      });
+    }
+
+    cols.push(
+      {
+        key: 'displayName',
+        label: 'Project',
+        sortable: true,
+      },
+      {
+        key: 'model',
+        label: 'Model',
+        sortable: true,
+        render: (row) => {
+          const models = row.models as string[];
+          const label = models.length <= 1 ? (row.model as string) : 'Mixed';
+          const tooltip = models.length > 1 ? models.join(', ') : null;
+          return (
+            <span className="flex items-center gap-1.5">
+              {tooltip ? (
+                <span className="relative group cursor-help underline decoration-dotted">
+                  {label}
+                  <span className="absolute bottom-full left-0 mb-1 hidden group-hover:block rounded bg-slate-800 text-white text-xs p-2 whitespace-nowrap z-10">
+                    {tooltip}
+                  </span>
+                </span>
+              ) : (
+                <span>{label}</span>
+              )}
+              {row.hasSubagents && <SubagentBadge />}
+            </span>
+          );
+        },
+      },
+      {
+        key: 'gitBranch',
+        label: 'Branch',
+        sortable: true,
+        render: (row) => (
+          <span className="text-slate-500 text-xs font-mono">
+            {(row.gitBranch as string | null) ?? '--'}
+          </span>
+        ),
+      },
+      {
+        key: 'costUsd',
+        label: (
+          <span className="inline-flex items-center gap-1">
+            Cost <CostInfoTooltip />
+          </span>
+        ),
+        sortable: true,
+        render: (row) => {
+          const costSource = (row as Record<string, unknown>).costSource as string | undefined;
+          return (
+            <span>
+              ${(row.costUsd as number).toFixed(2)}
+              {isAllView && costSource && (
+                <span className="ml-1 text-[10px] text-slate-400 dark:text-[#6e7681]">
+                  {costSource === 'reported' ? 'rep.' : 'est.'}
+                </span>
+              )}
+            </span>
+          );
+        },
+      },
+      {
+        key: 'timestamp',
+        label: 'Time',
+        sortable: true,
+        render: (row) => <span>{new Date(row.timestamp as string).toLocaleString()}</span>,
+      },
+      {
+        key: 'durationMs',
+        label: 'Duration',
+        sortable: true,
+        render: (row) =>
+          row.durationMs != null ? (
+            <span>{((row.durationMs as number) / 1000).toFixed(1)}s</span>
+          ) : (
+            <span>&mdash;</span>
+          ),
+      },
+    );
+
+    return cols;
+  }, [isAllView]);
 
   return (
     <div className="space-y-6">
@@ -130,20 +182,31 @@ export default function Sessions() {
               </option>
             ))}
           </select>
+          {showSessionTypeFilter && (
+            <select
+              value={sessionType}
+              onChange={(e) => setSessionType(e.target.value as 'all' | 'composer' | 'edit')}
+              className="rounded border border-slate-200 text-sm px-2 py-1.5 text-slate-600 bg-white dark:border-[#30363d] dark:text-[#8b949e] dark:bg-[#21262d]"
+            >
+              <option value="all">All types</option>
+              <option value="composer">Composer</option>
+              <option value="edit">Edit</option>
+            </select>
+          )}
           <DateRangePicker />
         </div>
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-[#30363d] dark:bg-[#161b22]">
         {isLoading && (
-          <p className="text-slate-500 dark:text-[#8b949e] text-sm">Loading sessions…</p>
+          <p className="text-slate-500 dark:text-[#8b949e] text-sm">Loading sessions...</p>
         )}
         {isError && <p className="text-red-500 text-sm">Failed to load sessions.</p>}
         {!isLoading && !isError && (
           <>
             <SortableTable<SessionRow>
               columns={columns}
-              rows={data?.sessions ?? []}
+              rows={filteredSessions}
               defaultSortKey="timestamp"
               defaultSortDir="desc"
               emptyMessage={pickQuip(QUIPS.empty_sessions)}
@@ -152,7 +215,7 @@ export default function Sessions() {
             <div className="flex items-center justify-between mt-4 text-sm text-slate-600 dark:text-[#8b949e]">
               <span>
                 {data
-                  ? `Showing ${(page - 1) * (data.pageSize ?? 50) + 1}–${Math.min(page * (data.pageSize ?? 50), data.total)} of ${data.total}`
+                  ? `Showing ${(page - 1) * (data.pageSize ?? 50) + 1}--${Math.min(page * (data.pageSize ?? 50), data.total)} of ${data.total}`
                   : ''}
               </span>
               <div className="flex gap-2">
