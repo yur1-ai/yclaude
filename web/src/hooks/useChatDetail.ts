@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useProviderStore } from '../store/useProviderStore';
 
 export interface ContentBlock {
   type: 'text' | 'tool_use' | 'tool_result';
@@ -41,8 +42,10 @@ export interface ChatDetailData {
 }
 
 export function useChatDetail(sessionId: string | undefined) {
+  const { provider } = useProviderStore();
+
   return useQuery<ChatDetailData>({
-    queryKey: ['chat-detail', sessionId],
+    queryKey: ['chat-detail', sessionId, provider],
     queryFn: async () => {
       const res = await fetch(`/api/v1/chats/${sessionId}`);
       if (res.status === 404) throw new Error('Conversation not found');

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useDateRangeStore } from '../store/useDateRangeStore';
+import { useProviderStore } from '../store/useProviderStore';
 
 export interface ChatItem {
   sessionId: string;
@@ -23,6 +24,7 @@ export interface ChatsData {
 
 export function useChats(projectFilter: string | null = null, searchQuery = '') {
   const { from, to } = useDateRangeStore();
+  const { provider } = useProviderStore();
   const [page, setPage] = useState(1);
 
   const params = new URLSearchParams();
@@ -30,10 +32,11 @@ export function useChats(projectFilter: string | null = null, searchQuery = '') 
   if (to) params.set('to', to.toISOString());
   if (projectFilter) params.set('project', projectFilter);
   if (searchQuery) params.set('search', searchQuery);
+  if (provider !== 'all') params.set('provider', provider);
   params.set('page', String(page));
 
   const query = useQuery<ChatsData>({
-    queryKey: ['chats', from?.toISOString(), to?.toISOString(), projectFilter, searchQuery, page],
+    queryKey: ['chats', from?.toISOString(), to?.toISOString(), projectFilter, searchQuery, page, provider],
     queryFn: async () => {
       const res = await fetch(`/api/v1/chats?${params}`);
       if (!res.ok) throw new Error('Failed to fetch chats');

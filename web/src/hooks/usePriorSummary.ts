@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useProviderStore } from '../store/useProviderStore';
 import type { SummaryData } from './useSummary';
 
 /**
@@ -7,6 +8,7 @@ import type { SummaryData } from './useSummary';
  * Returns null data (not an error) if from/to are undefined (no range selected).
  */
 export function usePriorSummary(from: Date | undefined, to: Date | undefined) {
+  const { provider } = useProviderStore();
   const enabled = Boolean(from && to);
 
   const priorFrom =
@@ -16,9 +18,10 @@ export function usePriorSummary(from: Date | undefined, to: Date | undefined) {
   const params = new URLSearchParams();
   if (priorFrom) params.set('from', priorFrom.toISOString());
   if (priorTo) params.set('to', priorTo.toISOString());
+  if (provider !== 'all') params.set('provider', provider);
 
   return useQuery<SummaryData>({
-    queryKey: ['summary-prior', priorFrom?.toISOString(), priorTo?.toISOString()],
+    queryKey: ['summary-prior', priorFrom?.toISOString(), priorTo?.toISOString(), provider],
     queryFn: async () => {
       const res = await fetch(`/api/v1/summary?${params}`);
       if (!res.ok) throw new Error('Failed to fetch prior summary');

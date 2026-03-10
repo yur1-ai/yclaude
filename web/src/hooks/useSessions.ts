@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useDateRangeStore } from '../store/useDateRangeStore';
+import { useProviderStore } from '../store/useProviderStore';
 
 export interface SessionRow extends Record<string, unknown> {
   sessionId: string;
@@ -30,6 +31,7 @@ export function useSessions(
   branchFilter: string | null = null,
 ) {
   const { from, to } = useDateRangeStore();
+  const { provider } = useProviderStore();
   const [page, setPage] = useState(1);
 
   const params = new URLSearchParams();
@@ -37,6 +39,7 @@ export function useSessions(
   if (to) params.set('to', to.toISOString());
   if (projectFilter) params.set('project', projectFilter);
   if (branchFilter) params.set('branch', branchFilter);
+  if (provider !== 'all') params.set('provider', provider);
   params.set('page', String(page));
 
   const query = useQuery<SessionsData>({
@@ -47,6 +50,7 @@ export function useSessions(
       projectFilter,
       branchFilter,
       page,
+      provider,
     ],
     queryFn: async () => {
       const res = await fetch(`/api/v1/sessions?${params}`);

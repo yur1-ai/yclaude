@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useProviderStore } from '../store/useProviderStore';
 
 interface PricingMeta {
   lastUpdated: string;
@@ -6,8 +7,10 @@ interface PricingMeta {
 }
 
 export function usePricingMeta() {
+  const { provider } = useProviderStore();
+
   return useQuery<PricingMeta>({
-    queryKey: ['pricing-meta'],
+    queryKey: ['pricing-meta', provider],
     queryFn: async () => {
       const res = await fetch('/api/v1/pricing-meta');
       if (!res.ok) throw new Error('Failed to fetch pricing meta');

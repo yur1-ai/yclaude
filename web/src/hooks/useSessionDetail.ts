@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useProviderStore } from '../store/useProviderStore';
 
 export interface TurnRow extends Record<string, unknown> {
   turn: number;
@@ -31,8 +32,10 @@ export interface SessionDetailData {
 }
 
 export function useSessionDetail(sessionId: string | undefined) {
+  const { provider } = useProviderStore();
+
   return useQuery<SessionDetailData>({
-    queryKey: ['session-detail', sessionId],
+    queryKey: ['session-detail', sessionId, provider],
     queryFn: async () => {
       const res = await fetch(`/api/v1/sessions/${sessionId}`);
       if (res.status === 404) throw new Error('Session not found');
