@@ -93,12 +93,13 @@ Plans:
   3. User sees a cross-provider overview page with total spend across all tools and per-provider cost breakdown cards with appropriate cost-source labels
   4. User can compare model usage across providers (e.g., "Sonnet 60% in Claude Code, GPT-4o 80% in Cursor")
   5. User sees a unified activity heatmap showing all AI coding activity across all providers in one calendar view
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 Plans:
-- [ ] 13-01-PLAN.md -- API provider filtering, /config extension, useProviderStore, provider helpers, all 14 hooks updated
-- [ ] 13-02-PLAN.md -- Sidebar provider tabs, provider-aware navigation, provider badges on Sessions/Chats/Models, session type filter
-- [ ] 13-03-PLAN.md -- Cross-provider overview page, stacked area chart, provider cards, heatmap extension, personality copy, CostInfoTooltip
+- [ ] 13-01-PLAN.md -- Complete API provider overhaul: ?provider= filtering, /config extension, provider/costSource on session/chat/model rows, providerBreakdown on /summary, per-provider cost-over-time and activity data, sessionType filter
+- [ ] 13-02-PLAN.md -- Provider store, color/name helpers, ProviderBadge component, all 14 hooks updated with provider awareness
+- [ ] 13-03-PLAN.md -- Sidebar provider tabs, provider-aware navigation, provider badges + cost source badges on Sessions/Chats/Models, session type filter
+- [ ] 13-04-PLAN.md -- Cross-provider overview page, stacked area chart, provider cards, heatmap extension, personality copy, CostInfoTooltip
 
 ### Phase 14: OpenCode Provider
 **Goal**: Users with OpenCode installed can see full session analytics, cost data, code-change metrics, session hierarchy, and multi-provider routing breakdown
@@ -141,5 +142,5 @@ Phases execute in numeric order: 11 -> 12 -> 13 -> 14
 | 10. Conversations Viewer | v1.1 | 3/3 | Complete | 2026-03-05 |
 | 11. Provider Abstraction Layer | v1.2 | Complete    | 2026-03-07 | 2026-03-07 |
 | 12. Cursor Provider | v1.2 | Complete    | 2026-03-07 | 2026-03-07 |
-| 13. Multi-Provider API & Dashboard | v1.2 | 0/3 | Not started | - |
+| 13. Multi-Provider API & Dashboard | v1.2 | 0/4 | Not started | - |
 | 14. OpenCode Provider | v1.2 | 0/? | Not started | - |
