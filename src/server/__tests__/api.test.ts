@@ -44,7 +44,7 @@ describe('/api/v1/summary', () => {
     const app = createApp(state);
     const res = await app.request('/api/v1/summary');
     const body = await res.json();
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       totalCost: 0,
       totalTokens: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
       eventCount: 0,
@@ -189,8 +189,8 @@ describe('/api/v1/cost-over-time', () => {
     );
     const body = (await res.json()) as CostOverTimeBody;
     expect(body.data).toHaveLength(3);
-    expect(body.data[0]).toEqual({ date: '2024-01-01', cost: 0.001 });
-    expect(body.data[1]).toEqual({ date: '2024-01-02', cost: 0 });
+    expect(body.data[0]).toMatchObject({ date: '2024-01-01', cost: 0.001 });
+    expect(body.data[1]).toMatchObject({ date: '2024-01-02', cost: 0 });
     expect(body.data[2]?.date).toBe('2024-01-03');
     expect(body.data[2]?.cost).toBeCloseTo(0.003, 6);
     expect(body.bucket).toBe('day');

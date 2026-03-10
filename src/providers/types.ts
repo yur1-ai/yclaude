@@ -56,6 +56,7 @@ export interface UnifiedEvent {
   // Cursor-specific optionals (Phase 12)
   isAgentic?: boolean;
   costInCents?: number;
+  sessionType?: 'composer' | 'edit';
 
   // OpenCode-specific optionals (Phase 14)
   additions?: number;

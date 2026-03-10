@@ -65,7 +65,7 @@ describe('GET /api/v1/config', () => {
     const res = await app.request('/api/v1/config');
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({ showMessages: false });
+    expect(body).toMatchObject({ showMessages: false });
   });
 
   it('returns { showMessages: true } when showMessages is true', async () => {
@@ -73,7 +73,7 @@ describe('GET /api/v1/config', () => {
     const res = await app.request('/api/v1/config');
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({ showMessages: true });
+    expect(body).toMatchObject({ showMessages: true });
   });
 });
 

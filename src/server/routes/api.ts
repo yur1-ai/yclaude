@@ -253,6 +253,15 @@ function getLocalHourKey(timestamp: string, tz: string): string {
 }
 
 /**
+ * Filters events by provider when ?provider= query param is present.
+ * Returns all events when no provider is specified (backward compatible).
+ */
+function filterByProvider(events: UnifiedEvent[], providerParam: string | undefined): UnifiedEvent[] {
+  if (!providerParam) return events;
+  return events.filter((e) => e.provider === providerParam);
+}
+
+/**
  * Creates the /api/v1 sub-router with all API endpoints.
  * Route ordering: summary first, then cost-over-time, then stub routes.
  *
@@ -263,16 +272,24 @@ export function apiRoutes(state: AppState): Hono {
   const app = new Hono();
 
   // GET /api/v1/config — returns server configuration for frontend feature gating.
+  // Includes loaded providers list for frontend tab rendering.
   app.get('/config', (c) => {
-    return c.json({ showMessages: state.showMessages ?? false });
+    return c.json({
+      showMessages: state.showMessages ?? false,
+      providers: state.providers
+        .filter((p) => p.status === 'loaded')
+        .map((p) => ({ id: p.id, name: p.name, eventCount: p.eventCount })),
+    });
   });
 
   // GET /api/v1/summary — aggregates cost data into a single summary object.
-  // Supports optional ?from=ISO and ?to=ISO date-range filtering.
+  // Supports optional ?from=ISO, ?to=ISO date-range filtering, and ?provider= provider filtering.
   // No params = all-time totals (backward compatible).
+  // When no ?provider= filter, includes providerBreakdown with per-provider cost/sessions/costSource.
   app.get('/summary', (c) => {
     const fromStr = c.req.query('from');
     const toStr = c.req.query('to');
+    const providerParam = c.req.query('provider');
 
     const from = parseDate(fromStr);
     const to = parseDate(toStr);
@@ -280,8 +297,8 @@ export function apiRoutes(state: AppState): Hono {
     if (from === 'invalid') return c.json({ error: "Invalid 'from' date" }, 400);
     if (to === 'invalid') return c.json({ error: "Invalid 'to' date" }, 400);
 
-    // Filter into a new variable — never mutate state.events
-    let events = state.events;
+    // Filter by provider, then by date range — never mutate state.events
+    let events = filterByProvider(state.events, providerParam);
     if (from) events = events.filter((e) => new Date(e.timestamp) >= from);
     if (to) events = events.filter((e) => new Date(e.timestamp) <= to);
 
@@ -306,17 +323,41 @@ export function apiRoutes(state: AppState): Hono {
       .reduce((s, e) => s + e.costUsd, 0);
     const mainCostUsd = totalCost - subagentCostUsd;
 
-    return c.json({
+    const responseObj: Record<string, unknown> = {
       totalCost,
       totalTokens,
       eventCount: events.length,
       subagentCostUsd,
       mainCostUsd,
-    });
+    };
+
+    // Include providerBreakdown only when viewing all providers (no ?provider= filter)
+    if (!providerParam) {
+      const breakdown: Record<string, { cost: number; sessions: number; costSource: string }> = {};
+      for (const e of events) {
+        if (!breakdown[e.provider]) {
+          breakdown[e.provider] = { cost: 0, sessions: 0, costSource: e.costSource };
+        }
+        // biome-ignore lint/style/noNonNullAssertion: guaranteed by the check above
+        breakdown[e.provider]!.cost += e.costUsd;
+      }
+      const sessionsByProvider = new Map<string, Set<string>>();
+      for (const e of events) {
+        if (!sessionsByProvider.has(e.provider)) sessionsByProvider.set(e.provider, new Set());
+        sessionsByProvider.get(e.provider)!.add(e.sessionId);
+      }
+      for (const [prov, sessions] of sessionsByProvider) {
+        if (breakdown[prov]) breakdown[prov].sessions = sessions.size;
+      }
+      responseObj.providerBreakdown = breakdown;
+    }
+
+    return c.json(responseObj);
   });
 
   // GET /api/v1/cost-over-time — returns cost bucketed by day, week, or month.
-  // Supports ?from=ISO, ?to=ISO, ?bucket=day|week|month.
+  // Supports ?from=ISO, ?to=ISO, ?bucket=day|week|month, ?provider=.
+  // When no ?provider= filter, includes per-provider cost columns alongside total cost.
   // When ?from and ?to are both provided with bucket=day, zero-cost gap-fill is applied
   // so every day in the range is represented (even if $0 cost).
   app.get('/cost-over-time', (c) => {
@@ -324,6 +365,7 @@ export function apiRoutes(state: AppState): Hono {
     const toStr = c.req.query('to');
     const bucket = c.req.query('bucket') ?? 'day';
     const tz = c.req.query('tz') ?? 'UTC';
+    const providerParam = c.req.query('provider');
 
     const from = parseDate(fromStr);
     const to = parseDate(toStr);
@@ -331,13 +373,15 @@ export function apiRoutes(state: AppState): Hono {
     if (from === 'invalid') return c.json({ error: "Invalid 'from' date" }, 400);
     if (to === 'invalid') return c.json({ error: "Invalid 'to' date" }, 400);
 
-    // Filter events by date range — never mutate state.events
-    let events = state.events;
+    // Filter by provider, then by date range — never mutate state.events
+    let events = filterByProvider(state.events, providerParam);
     if (from) events = events.filter((e) => new Date(e.timestamp) >= from);
     if (to) events = events.filter((e) => new Date(e.timestamp) <= to);
 
-    // Build grouped map: key → accumulated cost
+    // Build grouped map: key -> accumulated cost
     const groups = new Map<string, number>();
+    // Per-provider groups (only used when no provider filter)
+    const providerGroups = new Map<string, Map<string, number>>();
 
     for (const e of events) {
       // Clone the date to avoid mutations affecting the original timestamp.
@@ -361,9 +405,16 @@ export function apiRoutes(state: AppState): Hono {
       }
 
       groups.set(key, (groups.get(key) ?? 0) + e.costUsd);
+
+      // Track per-provider cost when showing all providers
+      if (!providerParam) {
+        if (!providerGroups.has(key)) providerGroups.set(key, new Map());
+        const provMap = providerGroups.get(key)!;
+        provMap.set(e.provider, (provMap.get(e.provider) ?? 0) + e.costUsd);
+      }
     }
 
-    let result: Array<{ date: string; cost: number }>;
+    let result: Array<Record<string, unknown>>;
 
     // Zero-cost gap-fill for day and hour buckets when both bounds are explicit
     // Note: 'invalid' was already filtered by early returns above; from/to here are Date | null
@@ -377,7 +428,13 @@ export function apiRoutes(state: AppState): Hono {
 
       while (cursor <= endDate) {
         const key = cursor.toISOString().slice(0, 10);
-        result.push({ date: key, cost: groups.get(key) ?? 0 });
+        const entry: Record<string, unknown> = { date: key, cost: groups.get(key) ?? 0 };
+        if (!providerParam && providerGroups.has(key)) {
+          for (const [prov, cost] of providerGroups.get(key)!) {
+            entry[prov] = cost;
+          }
+        }
+        result.push(entry);
         cursor.setUTCDate(cursor.getUTCDate() + 1);
       }
     } else if (fromStr && toStr && bucket === 'hour' && from && to) {
@@ -388,26 +445,42 @@ export function apiRoutes(state: AppState): Hono {
 
       while (cursor <= endDate) {
         const key = getLocalHourKey(cursor.toISOString(), tz);
-        result.push({ date: key, cost: groups.get(key) ?? 0 });
+        const entry: Record<string, unknown> = { date: key, cost: groups.get(key) ?? 0 };
+        if (!providerParam && providerGroups.has(key)) {
+          for (const [prov, cost] of providerGroups.get(key)!) {
+            entry[prov] = cost;
+          }
+        }
+        result.push(entry);
         cursor.setTime(cursor.getTime() + 3_600_000);
       }
     } else {
       // No gap-fill: sort entries chronologically
       result = Array.from(groups.entries())
         .sort(([a], [b]) => a.localeCompare(b))
-        .map(([date, cost]) => ({ date, cost }));
+        .map(([date, cost]) => {
+          const entry: Record<string, unknown> = { date, cost };
+          if (!providerParam && providerGroups.has(date)) {
+            for (const [prov, provCost] of providerGroups.get(date)!) {
+              entry[prov] = provCost;
+            }
+          }
+          return entry;
+        });
     }
 
     return c.json({ data: result, bucket });
   });
 
   // GET /api/v1/models — aggregates cost data grouped by model.
-  // Supports optional ?from=ISO and ?to=ISO date-range filtering.
+  // Supports optional ?from=ISO, ?to=ISO date-range filtering, and ?provider= provider filtering.
   // Events with undefined model are grouped as 'Unknown'.
+  // Each row includes dominant provider (most events for that model).
   // Rows sorted by costUsd descending.
   app.get('/models', (c) => {
     const fromStr = c.req.query('from');
     const toStr = c.req.query('to');
+    const providerParam = c.req.query('provider');
 
     const from = parseDate(fromStr);
     const to = parseDate(toStr);
@@ -415,7 +488,7 @@ export function apiRoutes(state: AppState): Hono {
     if (from === 'invalid') return c.json({ error: "Invalid 'from' date" }, 400);
     if (to === 'invalid') return c.json({ error: "Invalid 'to' date" }, 400);
 
-    let events = state.events;
+    let events = filterByProvider(state.events, providerParam);
     if (from) events = events.filter((e) => new Date(e.timestamp) >= from);
     if (to) events = events.filter((e) => new Date(e.timestamp) <= to);
 
@@ -425,6 +498,7 @@ export function apiRoutes(state: AppState): Hono {
         costUsd: number;
         eventCount: number;
         tokens: { input: number; output: number; cacheCreation: number; cacheRead: number };
+        providerCounts: Map<string, number>;
       }
     >();
 
@@ -434,9 +508,11 @@ export function apiRoutes(state: AppState): Hono {
         costUsd: 0,
         eventCount: 0,
         tokens: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
+        providerCounts: new Map<string, number>(),
       };
       existing.costUsd += e.costUsd;
       existing.eventCount += 1;
+      existing.providerCounts.set(e.provider, (existing.providerCounts.get(e.provider) ?? 0) + 1);
       if (e.tokens) {
         existing.tokens.input += e.tokens.input;
         existing.tokens.output += e.tokens.output;
@@ -447,7 +523,24 @@ export function apiRoutes(state: AppState): Hono {
     }
 
     const rows = Array.from(groups.entries())
-      .map(([model, data]) => ({ model, ...data }))
+      .map(([model, data]) => {
+        // Determine dominant provider (most events for this model)
+        let dominantProvider = 'claude';
+        let maxCount = 0;
+        for (const [prov, count] of data.providerCounts) {
+          if (count > maxCount) {
+            maxCount = count;
+            dominantProvider = prov;
+          }
+        }
+        return {
+          model,
+          costUsd: data.costUsd,
+          eventCount: data.eventCount,
+          tokens: data.tokens,
+          provider: dominantProvider,
+        };
+      })
       .sort((a, b) => b.costUsd - a.costUsd);
 
     const totalCost = rows.reduce((s, r) => s + r.costUsd, 0);
@@ -481,6 +574,7 @@ export function apiRoutes(state: AppState): Hono {
   app.get('/projects', (c) => {
     const fromStr = c.req.query('from');
     const toStr = c.req.query('to');
+    const providerParam = c.req.query('provider');
 
     const from = parseDate(fromStr);
     const to = parseDate(toStr);
@@ -488,7 +582,7 @@ export function apiRoutes(state: AppState): Hono {
     if (from === 'invalid') return c.json({ error: "Invalid 'from' date" }, 400);
     if (to === 'invalid') return c.json({ error: "Invalid 'to' date" }, 400);
 
-    let events = state.events;
+    let events = filterByProvider(state.events, providerParam);
     if (from) events = events.filter((e) => new Date(e.timestamp) >= from);
     if (to) events = events.filter((e) => new Date(e.timestamp) <= to);
 
@@ -537,10 +631,13 @@ export function apiRoutes(state: AppState): Hono {
   );
 
   // GET /api/v1/branches — returns sorted unique non-null gitBranch values from all events.
+  // Supports optional ?provider= filtering.
   app.get('/branches', (c) => {
+    const providerParam = c.req.query('provider');
+    const events = filterByProvider(state.events, providerParam);
     const branches = [
       ...new Set(
-        state.events
+        events
           .map((e) => e.gitBranch)
           .filter((b): b is string => typeof b === 'string' && b.length > 0),
       ),
@@ -548,24 +645,39 @@ export function apiRoutes(state: AppState): Hono {
     return c.json({ branches });
   });
 
-  // GET /api/v1/activity?year=YYYY&tz=IANA_TZ
-  // Returns { data: Activity[], year } where Activity = { date: string; count: number; level: number }
+  // GET /api/v1/activity?year=YYYY&tz=IANA_TZ&provider=
+  // Returns { data: Activity[], year } where Activity = { date: string; count: number; level: number; providers?: Record<string, number> }
   // data is gap-filled: ALL days in the year are present (count=0, level=0 for days with no sessions).
   // level 0 = no sessions, 1-4 = quartile of session count relative to max day.
   // Counts DISTINCT sessionIds per local date (not event count).
+  // When no ?provider= filter, includes per-provider session counts in each day entry.
   app.get('/activity', (c) => {
     const year = Number.parseInt(c.req.query('year') ?? String(new Date().getFullYear()), 10);
     const tz = c.req.query('tz') ?? 'UTC';
+    const providerParam = c.req.query('provider');
+
+    const events = filterByProvider(state.events, providerParam);
 
     // Group by local date, counting distinct sessionIds
     const daySessions = new Map<string, Set<string>>();
-    for (const e of state.events) {
+    // Per-provider session tracking (date -> provider -> Set<sessionId>)
+    const dayProviderSessions = new Map<string, Map<string, Set<string>>>();
+
+    for (const e of events) {
       const d = new Date(e.timestamp);
       const localDate = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(d);
       if (!localDate.startsWith(String(year))) continue;
       const set = daySessions.get(localDate) ?? new Set<string>();
       set.add(e.sessionId);
       daySessions.set(localDate, set);
+
+      // Track per-provider sessions when showing all providers
+      if (!providerParam) {
+        if (!dayProviderSessions.has(localDate)) dayProviderSessions.set(localDate, new Map());
+        const provMap = dayProviderSessions.get(localDate)!;
+        if (!provMap.has(e.provider)) provMap.set(e.provider, new Set());
+        provMap.get(e.provider)!.add(e.sessionId);
+      }
     }
 
     const counts = new Map<string, number>();
@@ -576,7 +688,7 @@ export function apiRoutes(state: AppState): Hono {
     const max = Math.max(...(counts.size > 0 ? [...counts.values()] : [1]), 1);
 
     // Gap-fill all days of the year (up to 366 to handle leap years)
-    const result: Array<{ date: string; count: number; level: number }> = [];
+    const result: Array<Record<string, unknown>> = [];
     const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
     for (let i = 0; i < 366; i++) {
       const d = new Date(startDate);
@@ -586,7 +698,18 @@ export function apiRoutes(state: AppState): Hono {
       if (!dateStr.startsWith(String(year))) break;
       const count = counts.get(dateStr) ?? 0;
       const level = count === 0 ? 0 : Math.min(4, Math.ceil((count / max) * 4));
-      result.push({ date: dateStr, count, level });
+      const entry: Record<string, unknown> = { date: dateStr, count, level };
+
+      // Add per-provider session counts when viewing all providers
+      if (!providerParam && dayProviderSessions.has(dateStr)) {
+        const providers: Record<string, number> = {};
+        for (const [prov, sessions] of dayProviderSessions.get(dateStr)!) {
+          providers[prov] = sessions.size;
+        }
+        entry.providers = providers;
+      }
+
+      result.push(entry);
     }
 
     return c.json({ data: result, year });
@@ -594,7 +717,8 @@ export function apiRoutes(state: AppState): Hono {
 
   // GET /api/v1/sessions — paginated session list.
   // Groups state.events by sessionId. Sessions with no token-bearing events are excluded.
-  // Supports ?from=ISO, ?to=ISO date filtering, ?project=cwd filter, ?branch=name filter, ?page=N pagination.
+  // Supports ?from=ISO, ?to=ISO date filtering, ?project=cwd filter, ?branch=name filter,
+  // ?provider= provider filter, ?sessionType= session type filter, ?page=N pagination.
   app.get('/sessions', (c) => {
     interface SessionRow extends Record<string, unknown> {
       sessionId: string;
@@ -610,6 +734,8 @@ export function apiRoutes(state: AppState): Hono {
       hasSubagents: boolean;
       mainCostUsd: number;
       subagentCostUsd: number;
+      provider: string;
+      costSource: string;
     }
 
     const PAGE_SIZE = 50;
@@ -618,6 +744,8 @@ export function apiRoutes(state: AppState): Hono {
     const toStr = c.req.query('to');
     const projectFilter = c.req.query('project') ?? null;
     const branchFilter = c.req.query('branch') ?? null;
+    const providerParam = c.req.query('provider');
+    const sessionTypeParam = c.req.query('sessionType');
     const pageParam = Number.parseInt(c.req.query('page') ?? '1', 10);
     const page = Math.max(1, Number.isNaN(pageParam) ? 1 : pageParam);
 
@@ -627,8 +755,15 @@ export function apiRoutes(state: AppState): Hono {
     if (from === 'invalid') return c.json({ error: "Invalid 'from' date" }, 400);
     if (to === 'invalid') return c.json({ error: "Invalid 'to' date" }, 400);
 
-    // Filter by date range — never mutate state.events
-    let events = state.events;
+    // Filter by provider — never mutate state.events
+    let events = filterByProvider(state.events, providerParam);
+
+    // Filter by sessionType: events matching the type OR events without sessionType (e.g. Claude events pass through)
+    if (sessionTypeParam) {
+      events = events.filter((e) => e.sessionType === sessionTypeParam || e.sessionType === undefined);
+    }
+
+    // Filter by date range
     if (from) events = events.filter((e) => new Date(e.timestamp).getTime() >= from.getTime());
     if (to) events = events.filter((e) => new Date(e.timestamp).getTime() <= to.getTime());
 
@@ -669,6 +804,8 @@ export function apiRoutes(state: AppState): Hono {
 
       const timestamp = sorted[0]?.timestamp ?? '';
       const cwd = sorted[0]?.cwd ?? null;
+      const provider = sorted[0]?.provider ?? 'claude';
+      const costSource = sorted[0]?.costSource ?? 'estimated';
 
       // durationMs: max across ALL events (not just token-bearing), null if none have it
       let durationMs: number | null = null;
@@ -717,6 +854,8 @@ export function apiRoutes(state: AppState): Hono {
         hasSubagents,
         mainCostUsd,
         subagentCostUsd,
+        provider,
+        costSource,
       });
     }
 
@@ -765,7 +904,8 @@ export function apiRoutes(state: AppState): Hono {
     }
 
     const sessionId = c.req.param('id');
-    const allEvents = state.events.filter((e) => e.sessionId === sessionId);
+    const providerParam = c.req.query('provider');
+    const allEvents = filterByProvider(state.events, providerParam).filter((e) => e.sessionId === sessionId);
 
     if (allEvents.length === 0) {
       return c.json({ error: 'Session not found' }, 404);
@@ -877,8 +1017,9 @@ export function apiRoutes(state: AppState): Hono {
     if (from === 'invalid') return c.json({ error: "Invalid 'from' date" }, 400);
     if (to === 'invalid') return c.json({ error: "Invalid 'to' date" }, 400);
 
-    // Filter events with message content (replaces rawEvents)
-    let messageEvents = state.events.filter((e) => e.message !== undefined);
+    // Filter by provider, then filter events with message content
+    const providerParam = c.req.query('provider');
+    let messageEvents = filterByProvider(state.events, providerParam).filter((e) => e.message !== undefined);
     if (from) messageEvents = messageEvents.filter((e) => new Date(e.timestamp) >= from);
     if (to) messageEvents = messageEvents.filter((e) => new Date(e.timestamp) <= to);
 
@@ -905,6 +1046,7 @@ export function apiRoutes(state: AppState): Hono {
       cwd: string | null;
       model: string;
       provider: string;
+      costSource: string;
       costUsd: number;
       timestamp: string;
       firstMessage: string;
@@ -930,6 +1072,7 @@ export function apiRoutes(state: AppState): Hono {
       const cwd = sorted[0]?.cwd ?? null;
       const timestamp = sorted[0]?.timestamp ?? '';
       const provider = sorted[0]?.provider ?? 'claude';
+      const costSource = sorted[0]?.costSource ?? 'estimated';
 
       // Model from first assistant event
       const assistantEvent = sorted.find((e) => e.type === 'assistant' && e.model);
@@ -948,6 +1091,7 @@ export function apiRoutes(state: AppState): Hono {
         cwd,
         model,
         provider,
+        costSource,
         costUsd,
         timestamp,
         firstMessage: truncated,
@@ -979,8 +1123,9 @@ export function apiRoutes(state: AppState): Hono {
     }
 
     const sessionId = c.req.param('id');
+    const chatsProviderParam = c.req.query('provider');
     // Filter events with message content for this session
-    const sessionEvents = state.events.filter(
+    const sessionEvents = filterByProvider(state.events, chatsProviderParam).filter(
       (e) => e.sessionId === sessionId && e.message !== undefined,
     );
 
