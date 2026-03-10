@@ -31,9 +31,9 @@ Requirements for multi-provider analytics milestone. Each maps to roadmap phases
 
 ### Cross-Provider
 
-- [ ] **CROSS-01**: User can view a cross-provider overview showing total spend across all tools with per-provider cost breakdown cards
-- [ ] **CROSS-02**: User can compare model usage across providers (e.g., "Sonnet for 60% in Claude Code, GPT-4o for 80% in OpenCode")
-- [ ] **CROSS-03**: User can view a unified activity heatmap showing ALL AI coding activity across all providers in one calendar
+- [x] **CROSS-01**: User can view a cross-provider overview showing total spend across all tools with per-provider cost breakdown cards
+- [x] **CROSS-02**: User can compare model usage across providers (e.g., "Sonnet for 60% in Claude Code, GPT-4o for 80% in OpenCode")
+- [x] **CROSS-03**: User can view a unified activity heatmap showing ALL AI coding activity across all providers in one calendar
 
 ## Future Requirements (v1.3+)
 
@@ -84,9 +84,9 @@ Requirements for multi-provider analytics milestone. Each maps to roadmap phases
 | OC-03 | Phase 14 | Pending |
 | OC-04 | Phase 14 | Pending |
 | OC-05 | Phase 14 | Pending |
-| CROSS-01 | Phase 13 | Pending |
-| CROSS-02 | Phase 13 | Pending |
-| CROSS-03 | Phase 13 | Pending |
+| CROSS-01 | Phase 13 | Complete |
+| CROSS-02 | Phase 13 | Complete |
+| CROSS-03 | Phase 13 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 16 total

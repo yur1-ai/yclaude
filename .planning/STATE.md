@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Multi-Provider Analytics
-status: in-progress
-stopped_at: Completed 13-02-PLAN.md
-last_updated: "2026-03-10T03:34:49Z"
-last_activity: 2026-03-10 -- Completed Plan 02 (Frontend provider plumbing)
+status: completed
+stopped_at: Completed 13-01-PLAN.md
+last_updated: "2026-03-10T03:44:19.888Z"
+last_activity: 2026-03-10 -- Completed Plan 01 (Provider-aware API overhaul)
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 9
-  completed_plans: 6
-  percent: 93
+  completed_plans: 7
+  percent: 96
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-07 after v1.2 milestone start)
 ## Current Position
 
 Phase: 13 of 14 (Multi-Provider API + Dashboard)
-Plan: 2 of 4 complete
-Status: Plan 13-02 complete -- Ready for Plan 13-03
-Last activity: 2026-03-10 -- Completed Plan 02 (Frontend provider plumbing)
+Plan: 2 of 4 complete (01+02 done, 03+04 remaining)
+Status: Plans 13-01 and 13-02 complete -- Ready for Plan 13-03
+Last activity: 2026-03-10 -- Completed Plan 01 (Provider-aware API overhaul)
 
-Progress: [█████████░] 93%
+Progress: [██████████] 96%
 
 ## Performance Metrics
 
@@ -48,6 +48,7 @@ Progress: [█████████░] 93%
 
 *Updated after each plan completion*
 | Phase 13 P02 | 4min | 2 tasks | 17 files |
+| Phase 13 P01 | 12min | 1 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,10 @@ Progress: [█████████░] 93%
 - ProviderId re-declared locally in web/src/lib/providers.ts to avoid cross-package imports
 - Provider hook pattern: import useProviderStore, add provider to queryKey and URL params
 - usePricingMeta/useSessionDetail/useChatDetail: provider in queryKey only, no URL param
+- filterByProvider helper applied at top of every endpoint handler before date filtering
+- providerBreakdown only in /summary when no ?provider= filter active
+- sessionType filter passes through events without sessionType (Claude events)
+- Dominant provider on model rows by highest event count, not cost
 
 ### Pending Todos
 
@@ -96,6 +101,6 @@ None -- starting fresh milestone
 
 ## Session Continuity
 
-Last session: 2026-03-10T03:34:49Z
-Stopped at: Completed 13-02-PLAN.md
-Resume file: .planning/phases/13-multi-provider-api-dashboard/13-02-SUMMARY.md
+Last session: 2026-03-10T03:44:19.878Z
+Stopped at: Completed 13-01-PLAN.md
+Resume file: None
