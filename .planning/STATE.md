@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Multi-Provider Analytics
 status: completed
-stopped_at: Completed 13-03-PLAN.md
-last_updated: "2026-03-10T03:51:10.577Z"
+stopped_at: Completed 13-04-PLAN.md
+last_updated: "2026-03-10T03:51:34.272Z"
 last_activity: 2026-03-10 -- Completed Plan 04 (Cross-Provider Overview)
 progress:
   total_phases: 4
@@ -92,6 +92,11 @@ Progress: [██████████] 100%
 - Dominant provider on model rows by highest event count, not cost
 - ProviderTabs hidden when <2 providers loaded (single-provider identical to v1.1)
 - Provider-aware nav: opacity-40 pointer-events-none for unsupported routes (visible but disabled)
+- Overview casts SummaryData to extended type with providerBreakdown rather than modifying shared interface
+- CostAreaChart extracts provider IDs dynamically from first data row keys (future-proof)
+- ActivityHeatmap casts Activity to ActivityWithProviders for extended providers field
+- CostInfoTooltip pricing date only shown for Claude provider (other providers lack pricing-meta)
+- Cache efficiency and subagent share conditionally shown based on Claude data presence
 - Session type filter uses client-side filtering to avoid modifying hooks
 - Cost source badges only in All-view (single-provider has uniform source)
 - ChatCard costSourceLabel prop for flexible cost source display
@@ -108,6 +113,6 @@ None -- starting fresh milestone
 
 ## Session Continuity
 
-Last session: 2026-03-10T03:49:55Z
-Stopped at: Completed 13-03-PLAN.md
+Last session: 2026-03-10T03:51:34.268Z
+Stopped at: Completed 13-04-PLAN.md
 Resume file: None

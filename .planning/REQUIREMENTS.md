@@ -13,7 +13,7 @@ Requirements for multi-provider analytics milestone. Each maps to roadmap phases
 - [x] **PROV-02**: User's installed AI tools are auto-detected on startup with no manual configuration (check ~/.claude/, Cursor state.vscdb paths, OpenCode opencode.db)
 - [x] **PROV-03**: User can switch between provider-specific dashboard views via tab navigation (per-provider tabs + "All" tab for cross-provider totals)
 - [x] **PROV-04**: User can filter all API endpoints by provider via ?provider= query parameter (backward compatible -- no param returns all data)
-- [ ] **PROV-05**: User sees provider-specific personality copy throughout the dashboard (different humor per tool context)
+- [x] **PROV-05**: User sees provider-specific personality copy throughout the dashboard (different humor per tool context)
 
 ### Cursor Analytics
 
@@ -75,7 +75,7 @@ Requirements for multi-provider analytics milestone. Each maps to roadmap phases
 | PROV-02 | Phase 11 | Complete |
 | PROV-03 | Phase 13 | Complete |
 | PROV-04 | Phase 13 | Complete |
-| PROV-05 | Phase 13 | Pending |
+| PROV-05 | Phase 13 | Complete |
 | CURS-01 | Phase 12 | Complete |
 | CURS-02 | Phase 12 | Complete |
 | CURS-03 | Phase 12 | Complete |
