@@ -2,7 +2,10 @@ import { cloneElement, useRef, useState } from 'react';
 import { ActivityCalendar } from 'react-activity-calendar';
 import type { Activity } from 'react-activity-calendar';
 import { useActivityData } from '../hooks/useActivityData';
+import { PROVIDER_NAMES } from '../lib/providers';
+import type { ProviderId } from '../lib/providers';
 import { QUIPS, pickQuip } from '../lib/quips';
+import { useProviderStore } from '../store/useProviderStore';
 import { useThemeStore } from '../store/useThemeStore';
 
 // Green color scale: level 0 = visible light gray, levels 1-4 = progressively darker green
@@ -37,12 +40,19 @@ function computeP90(data: Activity[]): number {
 
 type TooltipState = { text: string; x: number; y: number };
 
+/** Extended activity data that may include per-provider session counts from the API. */
+interface ActivityWithProviders extends Activity {
+  providers?: Record<string, number>;
+}
+
 export function ActivityHeatmap() {
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const tooltipRef = useRef<TooltipState | null>(null);
   const { data, isLoading } = useActivityData(year);
+  const { provider } = useProviderStore();
+  const isAllView = provider === 'all';
   const { theme } = useThemeStore();
   const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const isDark = theme === 'dark' || (theme === 'system' && systemDark);
@@ -88,10 +98,18 @@ export function ActivityHeatmap() {
                 renderBlock={(block, activity: Activity) => {
                   if (activity.count === 0) return block;
                   const isPeak = activity.count >= p90 && activity.count >= 2;
+                  const ext = activity as ActivityWithProviders;
                   const lines = [
                     `${activity.date} \u2022 ${activity.count} session${activity.count === 1 ? '' : 's'}`,
-                    ...(isPeak ? [pickQuip(QUIPS.heatmap_peak)] : []),
                   ];
+                  // In All-view, show per-provider session breakdown
+                  if (isAllView && ext.providers) {
+                    for (const [pid, count] of Object.entries(ext.providers)) {
+                      const name = PROVIDER_NAMES[pid as ProviderId] ?? pid;
+                      lines.push(`${name}: ${count}`);
+                    }
+                  }
+                  if (isPeak) lines.push(pickQuip(QUIPS.heatmap_peak));
                   const tooltipText = lines.join('\n');
                   return cloneElement(
                     block as React.ReactElement<React.HTMLAttributes<SVGRectElement>>,

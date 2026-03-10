@@ -1,12 +1,19 @@
 import { usePricingMeta } from '../hooks/usePricingMeta';
+import { useProviderStore } from '../store/useProviderStore';
 
 /**
- * Info icon linking to the Anthropic pricing source, with a CSS-only hover
- * tooltip explaining that cost estimates are based on API token pricing.
- * Dynamically shows "Pricing last verified: {date}" from the /pricing-meta API.
+ * Provider-aware cost information tooltip.
+ * - All-view: explains mixed cost sources across providers
+ * - Claude: API token pricing explanation
+ * - Cursor: provider-reported costs explanation
+ * - Other: generic fallback
+ *
+ * Info icon links to the Anthropic pricing source, with a CSS-only hover tooltip.
  */
 export function CostInfoTooltip() {
   const { data } = usePricingMeta();
+  const { provider } = useProviderStore();
+
   const formattedDate = data
     ? new Date(`${data.lastUpdated}T00:00:00`).toLocaleDateString('en-US', {
         month: 'short',
@@ -14,6 +21,21 @@ export function CostInfoTooltip() {
         year: 'numeric',
       })
     : null;
+
+  // Select tooltip text based on current provider context
+  const tooltipText = (() => {
+    if (provider === 'all') {
+      return 'Costs combine multiple estimation methods. Claude Code uses API token pricing (estimated). Cursor uses provider-reported costs. Totals may mix methodologies.';
+    }
+    if (provider === 'cursor') {
+      return 'Costs reported by Cursor from usage data. Note: recent Cursor versions may report $0.00 due to empty usage data.';
+    }
+    if (provider === 'claude') {
+      return "Based on API token pricing. If you're on Claude Pro or Max, your actual spend is your subscription fee -- not these numbers.";
+    }
+    // Generic fallback for opencode or other providers
+    return 'Cost estimates based on available usage data. Accuracy depends on provider reporting.';
+  })();
 
   return (
     <span className="relative group inline-flex items-center ml-1">
@@ -34,9 +56,8 @@ export function CostInfoTooltip() {
         </svg>
       </a>
       <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block rounded bg-slate-800 dark:bg-slate-700 text-white text-xs p-2 w-64 text-left z-10">
-        Based on API token pricing. If you're on Claude Pro or Max, your actual spend is your
-        subscription fee -- not these numbers.
-        {formattedDate && (
+        {tooltipText}
+        {formattedDate && provider === 'claude' && (
           <>
             <br />
             <br />
