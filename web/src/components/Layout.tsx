@@ -1,6 +1,10 @@
+import { useEffect } from 'react';
 import { NavLink, Outlet } from 'react-router';
 import { useConfig } from '../hooks/useConfig';
+import type { ProviderFilter } from '../lib/providers';
+import { useProviderStore } from '../store/useProviderStore';
 import { type Theme, useThemeStore } from '../store/useThemeStore';
+import { ProviderTabs } from './ProviderTabs';
 
 const navItems = [
   { to: '/', label: 'Overview', end: true },
@@ -8,6 +12,19 @@ const navItems = [
   { to: '/projects', label: 'Projects' },
   { to: '/sessions', label: 'Sessions' },
 ];
+
+/** Routes supported per provider. Projects is NOT available for Cursor. */
+const providerPages: Record<string, string[]> = {
+  claude: ['/', '/models', '/projects', '/sessions', '/chats'],
+  cursor: ['/', '/models', '/sessions', '/chats'],
+  opencode: ['/', '/models', '/sessions', '/chats'],
+  all: ['/', '/models', '/projects', '/sessions', '/chats'],
+};
+
+function isRouteSupported(provider: ProviderFilter, route: string): boolean {
+  const pages = providerPages[provider];
+  return pages ? pages.includes(route) : true;
+}
 
 function ThemeToggle() {
   const { theme, setTheme } = useThemeStore();
@@ -39,6 +56,21 @@ function ThemeToggle() {
 
 export default function Layout() {
   const { data: config } = useConfig();
+  const { provider, setProviders } = useProviderStore();
+
+  // Populate provider store from config when loaded
+  // biome-ignore lint/correctness/useExhaustiveDependencies: setProviders is stable (Zustand setter)
+  useEffect(() => {
+    if (config?.providers) {
+      setProviders(
+        config.providers.map((p) => ({
+          id: p.id as 'claude' | 'cursor' | 'opencode',
+          name: p.name,
+          eventCount: p.eventCount,
+        })),
+      );
+    }
+  }, [config?.providers]);
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-[#0d1117]">
@@ -48,38 +80,53 @@ export default function Layout() {
             yclaude
           </span>
         </div>
+        <ProviderTabs />
         <nav className="flex-1 px-3 py-4 space-y-1">
-          {navItems.map(({ to, label, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={({ isActive }) =>
-                `block px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-slate-100 text-slate-900 dark:bg-[#21262d] dark:text-[#e6edf3]'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-[#8b949e] dark:hover:bg-[#21262d] dark:hover:text-[#e6edf3]'
-                }`
-              }
-            >
-              {label}
-            </NavLink>
-          ))}
-          <NavLink
-            to="/chats"
-            className={({ isActive }) =>
-              `block px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive
-                  ? 'bg-slate-100 text-slate-900 dark:bg-[#21262d] dark:text-[#e6edf3]'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-[#8b949e] dark:hover:bg-[#21262d] dark:hover:text-[#e6edf3]'
-              }`
-            }
-          >
-            Chats
-            {config && !config.showMessages && (
-              <span className="text-xs opacity-50 ml-1">locked</span>
-            )}
-          </NavLink>
+          {navItems.map(({ to, label, end }) => {
+            const supported = isRouteSupported(provider, to);
+            return (
+              <NavLink
+                key={to}
+                to={to}
+                end={end}
+                tabIndex={supported ? undefined : -1}
+                className={({ isActive }) =>
+                  `block px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    !supported
+                      ? 'opacity-40 pointer-events-none text-slate-600 dark:text-[#8b949e]'
+                      : isActive
+                        ? 'bg-slate-100 text-slate-900 dark:bg-[#21262d] dark:text-[#e6edf3]'
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-[#8b949e] dark:hover:bg-[#21262d] dark:hover:text-[#e6edf3]'
+                  }`
+                }
+              >
+                {label}
+              </NavLink>
+            );
+          })}
+          {(() => {
+            const chatsSupported = isRouteSupported(provider, '/chats');
+            return (
+              <NavLink
+                to="/chats"
+                tabIndex={chatsSupported ? undefined : -1}
+                className={({ isActive }) =>
+                  `block px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    !chatsSupported
+                      ? 'opacity-40 pointer-events-none text-slate-600 dark:text-[#8b949e]'
+                      : isActive
+                        ? 'bg-slate-100 text-slate-900 dark:bg-[#21262d] dark:text-[#e6edf3]'
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-[#8b949e] dark:hover:bg-[#21262d] dark:hover:text-[#e6edf3]'
+                  }`
+                }
+              >
+                Chats
+                {config && !config.showMessages && (
+                  <span className="text-xs opacity-50 ml-1">locked</span>
+                )}
+              </NavLink>
+            );
+          })()}
         </nav>
         <div className="px-4 py-3 border-t border-slate-200 dark:border-[#30363d] flex items-center justify-between mt-auto">
           <ThemeToggle />
