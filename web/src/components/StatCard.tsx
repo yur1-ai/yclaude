@@ -4,11 +4,15 @@ interface StatCardProps {
   children?: React.ReactNode; // slot for TrendIndicator
   quip?: string;
   labelSuffix?: React.ReactNode;
+  accentColor?: string; // optional provider-colored left border
 }
 
-export function StatCard({ label, value, children, quip, labelSuffix }: StatCardProps) {
+export function StatCard({ label, value, children, quip, labelSuffix, accentColor }: StatCardProps) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-[#30363d] dark:bg-[#161b22]">
+    <div
+      className={`rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-[#30363d] dark:bg-[#161b22]${accentColor ? ' border-l-4' : ''}`}
+      style={accentColor ? { borderLeftColor: accentColor } : undefined}
+    >
       <p className="text-sm font-medium text-slate-500 dark:text-[#8b949e]">
         {label}
         {labelSuffix}

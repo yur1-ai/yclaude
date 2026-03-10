@@ -143,6 +143,60 @@ export const QUIPS = {
 } satisfies Record<string, string[]>;
 
 /**
+ * Provider-keyed personality copy.
+ * Claude jokes reference Claude behaviors; Cursor jokes reference tab completions/ghost text;
+ * All-view jokes reference "AI friends". Same dry/deadpan register. 1-2 sentences. No exclamation marks.
+ */
+export const PROVIDER_QUIPS: Record<string, Record<string, string[]>> = {
+  claude: {
+    spend_any: [
+      'Claude has been productive. Your wallet less so.',
+      'The meter has started. Claude does not feel guilty about this.',
+      'A small amount left your account. Claude is already working on the next one.',
+    ],
+    empty_overview: [
+      'No Claude activity yet. It is patiently waiting.',
+      'Claude has been quiet. Either that or the data is somewhere else.',
+      'Nothing from Claude. The context window sits empty.',
+    ],
+  },
+  cursor: {
+    spend_any: [
+      'Cursor has been busy. Tab completions are never free, apparently.',
+      'Cursor spent some of your money. The ghost text keeps flowing.',
+      'Some Cursor activity recorded. The autocomplete engine hums along.',
+    ],
+    empty_overview: [
+      'No Cursor activity recorded. The ghost text is still free.',
+      'Nothing from Cursor. The tab key rests unbothered.',
+      'Cursor is silent. No completions, no cost.',
+    ],
+  },
+  opencode: {
+    spend_any: [
+      'OpenCode has been running. The terminal keeps a tally.',
+      'Some OpenCode activity. The open-source way still costs tokens.',
+    ],
+    empty_overview: [
+      'No OpenCode activity yet. The terminal awaits.',
+      'Nothing from OpenCode. Quiet in the terminal.',
+    ],
+  },
+  all: {
+    spend_any: [
+      'Your AI friends have been busy. Expensive friends.',
+      'Across all your tools, something was spent. The ledger grows.',
+      'Multiple AI assistants, one bill. They are not coordinating, but the costs are.',
+    ],
+    empty_overview: [
+      'No activity across any tools. Enjoy the silence.',
+      'Nothing from any provider. A rare moment of fiscal peace.',
+      'All quiet on the AI front. No tokens, no costs, no opinions.',
+    ],
+  },
+};
+
+/**
  * Returns a random quip from the given array.
  */
 export function pickQuip(quips: string[]): string {
@@ -150,15 +204,33 @@ export function pickQuip(quips: string[]): string {
 }
 
 /**
+ * Returns a provider-specific quip for the given category.
+ * Falls back to the generic QUIPS if no provider-specific entry exists.
+ * Returns null if no matching quips are found.
+ */
+export function pickProviderQuip(provider: string, category: string): string | null {
+  const providerQuips = PROVIDER_QUIPS[provider]?.[category];
+  if (providerQuips && providerQuips.length > 0) return pickQuip(providerQuips);
+  // Fallback to generic quips
+  const genericQuips = QUIPS[category as keyof typeof QUIPS];
+  if (genericQuips && genericQuips.length > 0) return pickQuip(genericQuips);
+  return null;
+}
+
+/**
  * Returns a quip based on total spend thresholds.
  * Returns null for zero spend (no quip shown).
+ * Optional provider parameter selects provider-specific copy.
  */
-export function pickSpendQuip(totalCostUsd: number): string | null {
+export function pickSpendQuip(totalCostUsd: number, provider?: string): string | null {
   if (totalCostUsd >= 100) return pickQuip(QUIPS.spend_100);
   if (totalCostUsd >= 50) return pickQuip(QUIPS.spend_50);
   if (totalCostUsd >= 10) return pickQuip(QUIPS.spend_10);
   if (totalCostUsd >= 5) return pickQuip(QUIPS.spend_5);
   if (totalCostUsd >= 1) return pickQuip(QUIPS.spend_1);
-  if (totalCostUsd > 0) return pickQuip(QUIPS.spend_any);
+  if (totalCostUsd > 0) {
+    if (provider) return pickProviderQuip(provider, 'spend_any');
+    return pickQuip(QUIPS.spend_any);
+  }
   return null;
 }
