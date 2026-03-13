@@ -84,6 +84,12 @@ export function readKvEntry(
     return null;
   }
 
+  // Guard against null/undefined values stored in the DB
+  if (row.value == null) {
+    debugLog(`Null value for key in ${table}: ${key}`);
+    return null;
+  }
+
   return Buffer.from(row.value).toString('utf-8');
 }
 

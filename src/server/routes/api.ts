@@ -30,7 +30,24 @@ function extractContentBlocks(
   if (typeof content === 'string') {
     return [{ type: 'text', text: content }];
   }
-  if (!Array.isArray(content)) return [];
+  if (!Array.isArray(content)) {
+    // Cursor format: { text, richText, thinking }
+    const blocks: ContentBlock[] = [];
+    if (typeof message.text === 'string' && message.text) {
+      blocks.push({ type: 'text', text: message.text });
+    } else if (typeof message.richText === 'string' && message.richText) {
+      blocks.push({ type: 'text', text: message.richText });
+    }
+    if (typeof message.thinking === 'string' && message.thinking) {
+      blocks.push({ type: 'text', text: message.thinking });
+    } else if (typeof message.thinking === 'object' && message.thinking !== null) {
+      const thinkingText = (message.thinking as Record<string, unknown>).text;
+      if (typeof thinkingText === 'string') {
+        blocks.push({ type: 'text', text: thinkingText });
+      }
+    }
+    return blocks;
+  }
 
   const blocks: ContentBlock[] = [];
   for (const block of content) {
@@ -133,8 +150,10 @@ function extractFirstUserMessage(events: UnifiedEvent[]): { truncated: string; f
     if (!msg || typeof msg !== 'object') continue;
     let text = '';
     if (typeof msg.content === 'string') {
+      // Claude format: { content: "text" }
       text = msg.content;
     } else if (Array.isArray(msg.content)) {
+      // Claude format: { content: [{ type: "text", text: "..." }] }
       for (const block of msg.content) {
         if (
           typeof block === 'object' &&
@@ -145,6 +164,12 @@ function extractFirstUserMessage(events: UnifiedEvent[]): { truncated: string; f
           break;
         }
       }
+    } else if (typeof msg.text === 'string') {
+      // Cursor format: { text: "user message" }
+      text = msg.text;
+    } else if (typeof msg.richText === 'string') {
+      // Cursor format fallback: { richText: "user message" }
+      text = msg.richText;
     }
     if (text) {
       const cleaned = stripXmlTags(text);
@@ -180,6 +205,9 @@ function getTextContent(events: UnifiedEvent[]): string {
         }
       }
     }
+    // Cursor format: { text, richText }
+    if (typeof msg.text === 'string') parts.push(msg.text);
+    else if (typeof msg.richText === 'string') parts.push(msg.richText);
   }
   return parts.join(' ');
 }
@@ -798,13 +826,14 @@ export function apiRoutes(state: AppState): Hono {
       );
 
       const tokenEvents = sorted.filter((e) => e.tokens !== undefined);
+      const provider = sorted[0]?.provider ?? 'claude';
 
-      // Skip sessions with zero token-bearing events
-      if (tokenEvents.length === 0) continue;
+      // Skip Claude sessions with zero token-bearing events (Claude always has tokens).
+      // Keep Cursor/other provider sessions even without tokens — they still have cost/duration data.
+      if (tokenEvents.length === 0 && provider === 'claude') continue;
 
       const timestamp = sorted[0]?.timestamp ?? '';
       const cwd = sorted[0]?.cwd ?? null;
-      const provider = sorted[0]?.provider ?? 'claude';
       const costSource = sorted[0]?.costSource ?? 'estimated';
 
       // durationMs: max across ALL events (not just token-bearing), null if none have it

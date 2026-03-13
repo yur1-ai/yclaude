@@ -182,8 +182,33 @@ function processComposer(
       ? allTimestamps[allTimestamps.length - 1]! - allTimestamps[0]!
       : undefined;
 
-  // Create UnifiedEvent per AI bubble
+  // Create UnifiedEvent per bubble (user + AI)
   const events: UnifiedEvent[] = [];
+
+  // Emit user bubbles first (for chats: extractFirstUserMessage needs type='user')
+  if (preserveContent) {
+    for (const bubble of userBubbles) {
+      const timestamp = getBubbleTimestamp(bubble, head.createdAt);
+      const msgFields: Record<string, unknown> = {};
+      if (typeof bubble.text === 'string' && bubble.text.length > 0) msgFields.text = bubble.text;
+      if (typeof bubble.richText === 'string' && bubble.richText.length > 0) msgFields.richText = bubble.richText;
+      if (bubble.images !== undefined && Array.isArray(bubble.images) && bubble.images.length > 0) msgFields.images = bubble.images;
+      const message = Object.keys(msgFields).length > 0 ? msgFields : undefined;
+
+      events.push({
+        id: randomUUID(),
+        provider: 'cursor',
+        sessionId: composerId,
+        timestamp,
+        type: 'user',
+        costUsd: 0,
+        costSource: 'reported',
+        ...(head.workspacePath ? { cwd: head.workspacePath } : {}),
+        ...(head.createdOnBranch ? { gitBranch: head.createdOnBranch } : {}),
+        ...(message !== undefined ? { message } : {}),
+      });
+    }
+  }
 
   for (let i = 0; i < aiBubbles.length; i++) {
     const bubble = aiBubbles[i]!;
@@ -206,14 +231,20 @@ function processComposer(
         }
       : undefined;
 
-    // Build message if preserveContent
+    // Build message if preserveContent — skip empty strings to avoid blank chat bubbles
     let message: Record<string, unknown> | undefined;
     if (preserveContent) {
       const msgFields: Record<string, unknown> = {};
-      if (bubble.text !== undefined) msgFields.text = bubble.text;
-      if (bubble.richText !== undefined) msgFields.richText = bubble.richText;
-      if (bubble.thinking !== undefined) msgFields.thinking = bubble.thinking;
-      if (bubble.images !== undefined) msgFields.images = bubble.images;
+      if (typeof bubble.text === 'string' && bubble.text.length > 0) msgFields.text = bubble.text;
+      if (typeof bubble.richText === 'string' && bubble.richText.length > 0) msgFields.richText = bubble.richText;
+      if (bubble.thinking !== undefined) {
+        // thinking can be string or { text, signature } object
+        const thinkingText = typeof bubble.thinking === 'string'
+          ? bubble.thinking
+          : (bubble.thinking as Record<string, unknown>)?.text;
+        if (typeof thinkingText === 'string' && thinkingText.length > 0) msgFields.thinking = thinkingText;
+      }
+      if (bubble.images !== undefined && Array.isArray(bubble.images) && bubble.images.length > 0) msgFields.images = bubble.images;
       if (Object.keys(msgFields).length > 0) {
         message = msgFields;
       }
@@ -227,8 +258,11 @@ function processComposer(
       type: 'assistant',
       costUsd: costPerBubble,
       costSource: 'reported',
-      // Optional fields -- conditional spread for exactOptionalPropertyTypes
-      ...(model !== undefined ? { model } : {}),
+      // Per-bubble model from modelInfo overrides composer-level "default"
+      ...((() => {
+        const bubbleModel = getBubbleModel(bubble, model);
+        return bubbleModel !== undefined ? { model: bubbleModel } : {};
+      })()),
       ...(tokens !== undefined ? { tokens } : {}),
       ...(head.workspacePath ? { cwd: head.workspacePath } : {}),
       ...(head.createdOnBranch ? { gitBranch: head.createdOnBranch } : {}),
@@ -315,4 +349,23 @@ function deriveModel(composerData: ComposerFullData | null): string | undefined 
   }
 
   return undefined;
+}
+
+/**
+ * Resolves model name for a single bubble.
+ * Uses bubble-level modelInfo when the composer-level model is "default" or missing.
+ */
+function getBubbleModel(bubble: RawBubble, composerModel: string | undefined): string | undefined {
+  // If composer already has a specific (non-default) model, use it
+  if (composerModel && composerModel !== 'default') return composerModel;
+
+  // Check bubble-level modelInfo for a more specific model name
+  if (bubble.modelInfo) {
+    const modelId = bubble.modelInfo.modelId ?? bubble.modelInfo.model ?? bubble.modelInfo.modelName;
+    if (typeof modelId === 'string' && modelId.length > 0 && modelId !== 'default') {
+      return modelId;
+    }
+  }
+
+  return composerModel;
 }

@@ -60,7 +60,7 @@ export interface RawBubble {
   tokenCount?: { inputTokens: number; outputTokens: number };
   text?: string;
   richText?: string;
-  thinking?: string;
+  thinking?: string | Record<string, unknown>;
   thinkingDurationMs?: number;
   createdAt?: string; // ISO string (v3)
   timingInfo?: {
@@ -72,6 +72,7 @@ export interface RawBubble {
   images?: unknown[];
   context?: Record<string, unknown>;
   toolResults?: unknown[];
+  modelInfo?: Record<string, unknown>;
 }
 
 // --- Parsed Session (intermediate result) ---

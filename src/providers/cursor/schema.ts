@@ -24,7 +24,7 @@ export const BubbleSchema = z
       .optional(),
     text: z.string().optional(),
     richText: z.string().optional(),
-    thinking: z.string().optional(),
+    thinking: z.union([z.string(), z.record(z.string(), z.unknown())]).optional(),
     thinkingDurationMs: z.number().optional(),
     createdAt: z.string().optional(),
     timingInfo: z
@@ -39,6 +39,7 @@ export const BubbleSchema = z
     images: z.array(z.unknown()).optional(),
     context: z.record(z.string(), z.unknown()).optional(),
     toolResults: z.array(z.unknown()).optional(),
+    modelInfo: z.record(z.string(), z.unknown()).optional(),
   })
   .passthrough();
 
