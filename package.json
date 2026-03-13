@@ -1,7 +1,7 @@
 {
   "name": "yclaude",
-  "version": "0.2.0",
-  "description": "Local-first analytics dashboard for Claude Code usage",
+  "version": "0.3.0",
+  "description": "Local-first analytics dashboard for AI coding assistant usage — Claude Code, Cursor, and more",
   "license": "MIT",
   "repository": {
     "type": "git",
