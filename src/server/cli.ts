@@ -21,6 +21,7 @@ program
   .option('--debug', 'enable debug logging')
   .option('--show-messages', 'enable conversation text viewing in Chats tab')
   .option('--exclude <providers>', 'exclude providers (comma-separated)')
+  .option('--github-token <token>', 'GitHub token for Gist sharing (alternative to GITHUB_TOKEN env)')
   .parse();
 
 const opts = program.opts<{
@@ -30,6 +31,7 @@ const opts = program.opts<{
   showMessages: boolean | undefined;
   debug: boolean | undefined;
   exclude: string | undefined;
+  githubToken: string | undefined;
 }>();
 
 const port = Number.parseInt(opts.port, 10);
@@ -48,11 +50,15 @@ const { events, providers } = await loadProviders({
   ...(exclude.length > 0 ? { exclude } : {}),
 });
 
+// Resolve GitHub token: CLI flag > env var
+const githubToken = opts.githubToken ?? process.env.GITHUB_TOKEN;
+
 // Create Hono app with pre-loaded state
 const app = createApp({
   events,
   providers,
   ...(showMessages ? { showMessages } : {}),
+  ...(githubToken ? { githubToken } : {}),
 });
 
 /**

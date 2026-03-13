@@ -1,39 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { MessageBubble } from '../components/MessageBubble';
+import { ShareDropdown } from '../components/ShareDropdown';
 import { useChatDetail } from '../hooks/useChatDetail';
-import type { ChatMessage } from '../hooks/useChatDetail';
 import { useConfig } from '../hooks/useConfig';
-import { hasXmlTags, processContent } from '../lib/contentPreprocessor';
-
-/** Check if a message is purely system/skill metadata with no real content */
-function isSystemOnlyMessage(msg: ChatMessage): boolean {
-  // Only filter user messages — assistant messages always have real content
-  if (msg.role !== 'user') return false;
-
-  for (const block of msg.content) {
-    if (block.type === 'text' && block.text) {
-      if (!hasXmlTags(block.text)) return false;
-      const processed = processContent(block.text);
-      if (!processed.isSystemOnly) return false;
-    }
-  }
-  return true;
-}
-
-/** Detect if a message is a skill invocation separator */
-function getSkillInvocation(msg: ChatMessage): string | null {
-  if (msg.role !== 'user') return null;
-  for (const block of msg.content) {
-    if (block.type === 'text' && block.text && hasXmlTags(block.text)) {
-      const processed = processContent(block.text);
-      if (processed.isSystemOnly && processed.skillName) {
-        return processed.skillName;
-      }
-    }
-  }
-  return null;
-}
+import { getSkillInvocation, isSystemOnlyMessage } from '../lib/messageHelpers';
 
 export default function ChatDetail() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -146,18 +117,22 @@ export default function ChatDetail() {
           </h1>
         </div>
 
-        {/* Raw/Clean toggle */}
-        <button
-          type="button"
-          onClick={() => setShowRaw((v) => !v)}
-          className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${
-            showRaw
-              ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400'
-              : 'border-slate-200 bg-white text-slate-500 dark:border-[#30363d] dark:bg-[#161b22] dark:text-[#8b949e]'
-          }`}
-        >
-          {showRaw ? 'Show clean' : 'Show raw'}
-        </button>
+        <div className="flex items-center gap-2">
+          <ShareDropdown summary={summary} messages={messages} />
+
+          {/* Raw/Clean toggle */}
+          <button
+            type="button"
+            onClick={() => setShowRaw((v) => !v)}
+            className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${
+              showRaw
+                ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400'
+                : 'border-slate-200 bg-white text-slate-500 dark:border-[#30363d] dark:bg-[#161b22] dark:text-[#8b949e]'
+            }`}
+          >
+            {showRaw ? 'Show clean' : 'Show raw'}
+          </button>
+        </div>
       </div>
 
       {/* Summary card */}

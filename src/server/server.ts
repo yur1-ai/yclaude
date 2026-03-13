@@ -20,6 +20,7 @@ export interface AppState {
   events: UnifiedEvent[];
   providers: ProviderInfo[];
   showMessages?: boolean; // --show-messages flag; undefined/false = conversations disabled
+  githubToken?: string; // --github-token or GITHUB_TOKEN env var; used for Gist sharing
 }
 
 /**

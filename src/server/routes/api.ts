@@ -1,3 +1,4 @@
+import { execFile } from 'node:child_process';
 import { Hono } from 'hono';
 import { PRICING_LAST_UPDATED, PRICING_SOURCE } from '../../providers/claude/cost/pricing.js';
 import type { UnifiedEvent } from '../../providers/types.js';
@@ -1255,5 +1256,99 @@ export function apiRoutes(state: AppState): Hono {
     return c.json({ summary, messages });
   });
 
+  // -------------------------
+  // POST /share — Create a secret GitHub Gist from pre-formatted markdown
+  // Tiered: gh CLI → GitHub API (token) → fallback to clipboard
+  // -------------------------
+
+  app.post('/share', async (c) => {
+    const body = await c.req.json<{ markdown?: string; filename?: string }>().catch(() => ({}));
+    const markdown = body.markdown;
+    const filename = (body.filename ?? 'chat.md').replace(/[^a-zA-Z0-9._-]/g, '_');
+
+    if (!markdown || typeof markdown !== 'string') {
+      return c.json({ error: 'Missing markdown field' }, 400);
+    }
+
+    // Tier 1: Try `gh gist create` (uses gh's own auth)
+    try {
+      const url = await createGistViaCli(markdown, filename);
+      return c.json({ url });
+    } catch {
+      // gh not available or not authenticated — fall through
+    }
+
+    // Tier 2: Try GitHub API with token
+    const token = state.githubToken;
+    if (token) {
+      try {
+        const url = await createGistViaApi(markdown, filename, token);
+        return c.json({ url });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'GitHub API error';
+        return c.json({ error: msg, fallback: 'clipboard' });
+      }
+    }
+
+    // Tier 3: No method available — instruct frontend to use clipboard fallback
+    return c.json({
+      error: 'No GitHub auth available. Install gh CLI or set --github-token / GITHUB_TOKEN.',
+      fallback: 'clipboard',
+    });
+  });
+
   return app;
+}
+
+// -------------------------
+// Gist creation helpers
+// -------------------------
+
+/** Create a secret gist via `gh gist create` CLI, returns the gist URL */
+function createGistViaCli(markdown: string, filename: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const child = execFile(
+      'gh',
+      ['gist', 'create', '--filename', filename, '-'],
+      { timeout: 15000 },
+      (err, stdout, stderr) => {
+        if (err) return reject(new Error(stderr || err.message));
+        const url = stdout.trim();
+        if (!url.startsWith('https://')) return reject(new Error('Unexpected gh output'));
+        resolve(url);
+      },
+    );
+    // Write markdown to stdin
+    child.stdin?.write(markdown);
+    child.stdin?.end();
+  });
+}
+
+/** Create a secret gist via the GitHub REST API */
+async function createGistViaApi(
+  markdown: string,
+  filename: string,
+  token: string,
+): Promise<string> {
+  const res = await fetch('https://api.github.com/gists', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      public: false,
+      files: { [filename]: { content: markdown } },
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`GitHub API ${res.status}: ${body.slice(0, 200)}`);
+  }
+
+  const data = (await res.json()) as { html_url?: string };
+  if (!data.html_url) throw new Error('No URL in GitHub response');
+  return data.html_url;
 }
