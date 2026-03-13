@@ -58,6 +58,60 @@ export const QUIPS = {
     'A hundred dollars. You have fully committed to the bit.',
     "One hundred dollars in. There's nothing left to say that hasn't already been tokenized.",
     'A hundred dollars. This is not a criticism. This is an observation.',
+    'Triple digits. You are a patron of the computational arts.',
+    "A hundred dollars. That's a nice dinner, or about forty thousand haikus.",
+  ],
+
+  /** $250+ total — impressed, slightly concerned */
+  spend_250: [
+    'Two hundred and fifty dollars. You are Claude\'s favorite customer. Statistically.',
+    'A quarter grand on AI. Most people stop before this. You are not most people.',
+    '$250. At this point Claude should be sending you a holiday card.',
+    'Two-fifty. The sunk cost fallacy has nothing to do with this, probably.',
+    'A quarter of a thousand dollars. It sounds worse that way, doesn\'t it.',
+  ],
+
+  /** $500+ total — deadpan respect */
+  spend_500: [
+    'Five hundred dollars. You could have bought a chair. You bought tokens instead.',
+    'Half a grand. Claude does not offer loyalty discounts, but morally it should.',
+    '$500. This is either a very productive codebase or a very expensive conversation.',
+    'Five hundred dollars. Somewhere, a product manager is impressed.',
+    'Half a thousand dollars on AI-assisted code. The future is expensive.',
+  ],
+
+  /** $1000+ total — quiet reverence */
+  spend_1000: [
+    'One thousand dollars. You are no longer experimenting. This is a lifestyle.',
+    'A grand. Claude has been a full team member at this point, just without the benefits.',
+    '$1,000. Most subscriptions are cheaper. Most subscriptions do less.',
+    'One thousand dollars. The four-digit club has no perks, only awareness.',
+    'A thousand dollars in. You and Claude have been through a lot together.',
+    'Four digits. The sort of number that makes you close the tab and then open it again.',
+  ],
+
+  /** $2500+ total — almost affectionate awe */
+  spend_2500: [
+    'Two and a half thousand dollars. Claude would blush if it had capillaries.',
+    '$2,500. You have spent a month\'s rent on code generation. No judgment, only respect.',
+    'Twenty-five hundred dollars. At this scale, the tokens are basically colleagues.',
+    '$2,500. This is dedication measured in API calls.',
+  ],
+
+  /** $5000+ total — speechless, single-sentence */
+  spend_5000: [
+    'Five thousand dollars. There is nothing dry enough to say about this.',
+    '$5,000. Claude is not tracking this. You are. And here we are.',
+    'Five grand. You are funding the future, one context window at a time.',
+    '$5,000 on tokens. The ROI is either incredible or unknowable.',
+  ],
+
+  /** $10000+ total — the final tier */
+  spend_10000: [
+    'Five figures. You should probably frame this dashboard.',
+    '$10,000+. At this point, Claude is less a tool and more a financial dependent.',
+    'Ten thousand dollars. The sort of number that deserves a moment of silence.',
+    'Five figures on AI. Somewhere, a GPU cluster nods in quiet appreciation.',
   ],
 
   /** Overview with zero data — patient observation */
@@ -223,6 +277,12 @@ export function pickProviderQuip(provider: string, category: string): string | n
  * Optional provider parameter selects provider-specific copy.
  */
 export function pickSpendQuip(totalCostUsd: number, provider?: string): string | null {
+  if (totalCostUsd >= 10000) return pickQuip(QUIPS.spend_10000);
+  if (totalCostUsd >= 5000) return pickQuip(QUIPS.spend_5000);
+  if (totalCostUsd >= 2500) return pickQuip(QUIPS.spend_2500);
+  if (totalCostUsd >= 1000) return pickQuip(QUIPS.spend_1000);
+  if (totalCostUsd >= 500) return pickQuip(QUIPS.spend_500);
+  if (totalCostUsd >= 250) return pickQuip(QUIPS.spend_250);
   if (totalCostUsd >= 100) return pickQuip(QUIPS.spend_100);
   if (totalCostUsd >= 50) return pickQuip(QUIPS.spend_50);
   if (totalCostUsd >= 10) return pickQuip(QUIPS.spend_10);
