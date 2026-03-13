@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import type { Components } from 'react-markdown';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { wrapPreformattedBlocks } from '../lib/wrapPreformattedBlocks';
 import { CodeBlock } from './CodeBlock';
 
 interface MarkdownRendererProps {
@@ -9,14 +11,17 @@ interface MarkdownRendererProps {
 }
 
 export function MarkdownRenderer({ content, isDark }: MarkdownRendererProps) {
+  const preprocessed = useMemo(() => wrapPreformattedBlocks(content), [content]);
+
   const components: Components = {
     code({ children, className, ...rest }) {
       const match = /language-(\w+)/.exec(className ?? '');
-      // Fenced code block (inside <pre>) -- delegate to CodeBlock
-      if (match) {
+      const text = String(children).replace(/\n$/, '');
+      // Fenced code block: has language class OR is multi-line (from bare ``` fences)
+      if (match || text.includes('\n')) {
         return (
-          <CodeBlock language={match[1]} isDark={isDark}>
-            {String(children).replace(/\n$/, '')}
+          <CodeBlock language={match?.[1] ?? 'text'} isDark={isDark}>
+            {text}
           </CodeBlock>
         );
       }
@@ -91,9 +96,9 @@ export function MarkdownRenderer({ content, isDark }: MarkdownRendererProps) {
   };
 
   return (
-    <div className="text-sm text-slate-800 dark:text-[#e6edf3]">
+    <div className="text-sm text-slate-800 dark:text-[#e6edf3] overflow-x-auto [overflow-wrap:anywhere]">
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
-        {content}
+        {preprocessed}
       </ReactMarkdown>
     </div>
   );
