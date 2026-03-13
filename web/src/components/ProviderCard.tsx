@@ -27,14 +27,19 @@ function costSourceLabel(costSource: string): string {
  * Clickable provider breakdown card with colored left border accent.
  * Shows provider name, total cost, session count, and cost source methodology.
  */
-export function ProviderCard({ providerId, name, cost, sessions, costSource, onClick }: ProviderCardProps) {
+export function ProviderCard({
+  providerId,
+  name,
+  cost,
+  sessions,
+  costSource,
+  onClick,
+}: ProviderCardProps) {
   const { theme } = useThemeStore();
   const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const isDark = theme === 'dark' || (theme === 'system' && systemDark);
 
-  const accentColor = isDark
-    ? PROVIDER_COLORS[providerId].dark
-    : PROVIDER_COLORS[providerId].light;
+  const accentColor = isDark ? PROVIDER_COLORS[providerId].dark : PROVIDER_COLORS[providerId].light;
 
   return (
     <button

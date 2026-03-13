@@ -21,7 +21,10 @@ program
   .option('--debug', 'enable debug logging')
   .option('--show-messages', 'enable conversation text viewing in Chats tab')
   .option('--exclude <providers>', 'exclude providers (comma-separated)')
-  .option('--github-token <token>', 'GitHub token for Gist sharing (alternative to GITHUB_TOKEN env)')
+  .option(
+    '--github-token <token>',
+    'GitHub token for Gist sharing (alternative to GITHUB_TOKEN env)',
+  )
   .parse();
 
 const opts = program.opts<{

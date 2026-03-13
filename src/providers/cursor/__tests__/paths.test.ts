@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { join } from 'node:path';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock os module before importing paths
 vi.mock('node:os', () => ({
@@ -7,8 +7,8 @@ vi.mock('node:os', () => ({
   platform: vi.fn(),
 }));
 
-import { getCursorDataDirs, getGlobalDbPath, getWorkspaceStoragePath } from '../paths.js';
 import { homedir, platform } from 'node:os';
+import { getCursorDataDirs, getGlobalDbPath, getWorkspaceStoragePath } from '../paths.js';
 
 const mockHomedir = vi.mocked(homedir);
 const mockPlatform = vi.mocked(platform);
@@ -73,7 +73,12 @@ describe('paths', () => {
     it('constructs correct path to global state.vscdb', () => {
       const result = getGlobalDbPath('/Users/testuser/Library/Application Support/Cursor');
       expect(result).toBe(
-        join('/Users/testuser/Library/Application Support/Cursor', 'User', 'globalStorage', 'state.vscdb'),
+        join(
+          '/Users/testuser/Library/Application Support/Cursor',
+          'User',
+          'globalStorage',
+          'state.vscdb',
+        ),
       );
     });
   });

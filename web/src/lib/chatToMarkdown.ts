@@ -79,7 +79,10 @@ function buildMetadataTable(summary: ChatSummary): string {
       summary.model === 'Mixed' ? `Mixed (${summary.models.join(', ')})` : summary.model,
     ],
     ['**Git Branch**', summary.gitBranch ?? '\u2014'],
-    ['**Tokens**', `${summary.totalTokens.input.toLocaleString()} in / ${summary.totalTokens.output.toLocaleString()} out`],
+    [
+      '**Tokens**',
+      `${summary.totalTokens.input.toLocaleString()} in / ${summary.totalTokens.output.toLocaleString()} out`,
+    ],
   ];
 
   // Cost row(s)
@@ -113,7 +116,7 @@ function formatToolUse(
   const target = getToolTarget(toolName, block.toolInput);
   const summary = target ? `${toolName} \u2014 ${target}` : toolName;
 
-  const parts: string[] = [`<details>`, `<summary>\uD83D\uDD27 ${summary}</summary>`, ''];
+  const parts: string[] = ['<details>', `<summary>\uD83D\uDD27 ${summary}</summary>`, ''];
 
   if (block.toolInput) {
     parts.push('**Input:**', '````json', JSON.stringify(block.toolInput, null, 2), '````', '');

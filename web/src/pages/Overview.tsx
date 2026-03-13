@@ -119,9 +119,10 @@ export default function Overview() {
     : (pickProviderQuip(provider, 'empty_overview') ?? pickQuip(QUIPS.empty_overview));
 
   // Determine spend quip
-  const spendQuip = !allTimePending && allTimeSummary
-    ? (pickSpendQuip(allTimeSummary.totalCost, provider) ?? undefined)
-    : undefined;
+  const spendQuip =
+    !allTimePending && allTimeSummary
+      ? (pickSpendQuip(allTimeSummary.totalCost, provider) ?? undefined)
+      : undefined;
 
   // Extract provider IDs from cost-over-time data for the area chart
   const costProviders: ProviderId[] = (() => {
@@ -143,18 +144,14 @@ export default function Overview() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-xl font-semibold text-slate-900 dark:text-[#e6edf3]">Overview</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-[#8b949e]">
-            {subtitle}
-          </p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-[#8b949e]">{subtitle}</p>
         </div>
         <DateRangePicker />
       </div>
 
       {/* Empty state */}
       {!allTimePending && !allTimeSummary?.totalCost && (
-        <p className="text-sm text-slate-400 dark:text-[#8b949e] italic">
-          {emptyQuip}
-        </p>
+        <p className="text-sm text-slate-400 dark:text-[#8b949e] italic">{emptyQuip}</p>
       )}
 
       {/* Stat cards */}

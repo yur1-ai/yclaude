@@ -1,17 +1,17 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { join } from 'node:path';
+import { afterEach, describe, expect, it } from 'vitest';
+import type { UnifiedEvent } from '../../types.js';
+import { parseCursorData } from '../parser.js';
+import type { RawBubble } from '../types.js';
 import {
+  cleanupTestDir,
   createTestDir,
   createTestGlobalDb,
   createTestWorkspaceDb,
-  sampleComposerHead,
   sampleBubble,
   sampleComposerFullData,
-  cleanupTestDir,
+  sampleComposerHead,
 } from './fixtures.js';
-import { parseCursorData } from '../parser.js';
-import type { UnifiedEvent } from '../../types.js';
-import type { RawBubble } from '../types.js';
-import { join } from 'node:path';
 
 let testDirs: string[] = [];
 
@@ -61,11 +61,7 @@ async function setupWorkspace(opts: {
   workspacePath?: string;
 }) {
   const wsDir = await makeTestDir();
-  const wsDbPath = createTestWorkspaceDb(
-    wsDir,
-    opts.composerHeads,
-    opts.workspacePath,
-  );
+  const wsDbPath = createTestWorkspaceDb(wsDir, opts.composerHeads, opts.workspacePath);
   return { wsDir, wsDbPath };
 }
 
@@ -101,11 +97,11 @@ describe('parseCursorData', () => {
       });
 
       expect(events).toHaveLength(2);
-      expect(events[0]!.provider).toBe('cursor');
-      expect(events[0]!.sessionId).toBe(composerId);
-      expect(events[0]!.type).toBe('assistant');
-      expect(events[1]!.provider).toBe('cursor');
-      expect(events[1]!.sessionId).toBe(composerId);
+      expect(events[0]?.provider).toBe('cursor');
+      expect(events[0]?.sessionId).toBe(composerId);
+      expect(events[0]?.type).toBe('assistant');
+      expect(events[1]?.provider).toBe('cursor');
+      expect(events[1]?.sessionId).toBe(composerId);
     });
 
     it('parses v2 bubbles using timingInfo.clientRpcSendTime', async () => {
@@ -139,7 +135,7 @@ describe('parseCursorData', () => {
       });
 
       expect(events).toHaveLength(1);
-      const ts = new Date(events[0]!.timestamp).getTime();
+      const ts = new Date(events[0]?.timestamp as string).getTime();
       // Should be close to the epoch we set
       expect(Math.abs(ts - epoch)).toBeLessThan(1000);
     });
@@ -174,10 +170,10 @@ describe('parseCursorData', () => {
       // 2 AI bubbles -> 2 events
       expect(events).toHaveLength(2);
       // Duration on first event only: from t1 to t3 = 600_000ms
-      expect(events[0]!.durationMs).toBeGreaterThanOrEqual(599_000);
-      expect(events[0]!.durationMs).toBeLessThanOrEqual(601_000);
+      expect(events[0]?.durationMs).toBeGreaterThanOrEqual(599_000);
+      expect(events[0]?.durationMs).toBeLessThanOrEqual(601_000);
       // Second event should NOT have durationMs
-      expect(events[1]!.durationMs).toBeUndefined();
+      expect(events[1]?.durationMs).toBeUndefined();
     });
 
     it('maps workspace path to cwd', async () => {
@@ -202,7 +198,7 @@ describe('parseCursorData', () => {
       });
 
       expect(events).toHaveLength(1);
-      expect(events[0]!.cwd).toBe('/Users/dev/myproject');
+      expect(events[0]?.cwd).toBe('/Users/dev/myproject');
     });
 
     it('maps git branch to gitBranch', async () => {
@@ -227,7 +223,7 @@ describe('parseCursorData', () => {
       });
 
       expect(events).toHaveLength(1);
-      expect(events[0]!.gitBranch).toBe('feature/my-branch');
+      expect(events[0]?.gitBranch).toBe('feature/my-branch');
     });
 
     it('excludes empty composers (zero bubbles)', async () => {
@@ -276,7 +272,7 @@ describe('parseCursorData', () => {
       });
 
       expect(events).toHaveLength(1);
-      expect(events[0]!.model).toBe('claude-3.5-sonnet');
+      expect(events[0]?.model).toBe('claude-3.5-sonnet');
     });
 
     it('falls back to modelConfig.modelName for model', async () => {
@@ -302,7 +298,7 @@ describe('parseCursorData', () => {
       });
 
       expect(events).toHaveLength(1);
-      expect(events[0]!.model).toBe('composer-1.5');
+      expect(events[0]?.model).toBe('composer-1.5');
     });
 
     it('handles multiple workspaces', async () => {
@@ -362,8 +358,8 @@ describe('parseCursorData', () => {
       });
 
       expect(events).toHaveLength(1);
-      expect(events[0]!.costUsd).toBeCloseTo(0.2, 4);
-      expect(events[0]!.costSource).toBe('reported');
+      expect(events[0]?.costUsd).toBeCloseTo(0.2, 4);
+      expect(events[0]?.costSource).toBe('reported');
     });
 
     it('sums cost across multiple model entries in usageData', async () => {
@@ -391,7 +387,7 @@ describe('parseCursorData', () => {
       });
 
       expect(events).toHaveLength(1);
-      expect(events[0]!.costUsd).toBeCloseTo(0.24, 4);
+      expect(events[0]?.costUsd).toBeCloseTo(0.24, 4);
     });
 
     it('handles empty usageData gracefully', async () => {
@@ -416,8 +412,8 @@ describe('parseCursorData', () => {
       });
 
       expect(events).toHaveLength(1);
-      expect(events[0]!.costUsd).toBe(0);
-      expect(events[0]!.costSource).toBe('reported');
+      expect(events[0]?.costUsd).toBe(0);
+      expect(events[0]?.costSource).toBe('reported');
     });
 
     it('preserves raw costInCents on event', async () => {
@@ -442,7 +438,7 @@ describe('parseCursorData', () => {
       });
 
       expect(events).toHaveLength(1);
-      expect(events[0]!.costInCents).toBe(24);
+      expect(events[0]?.costInCents).toBe(24);
     });
 
     it('distributes cost evenly across AI bubbles', async () => {
@@ -471,8 +467,8 @@ describe('parseCursorData', () => {
 
       expect(events).toHaveLength(2);
       // 0.24 USD / 2 bubbles = 0.12 each
-      expect(events[0]!.costUsd).toBeCloseTo(0.12, 4);
-      expect(events[1]!.costUsd).toBeCloseTo(0.12, 4);
+      expect(events[0]?.costUsd).toBeCloseTo(0.12, 4);
+      expect(events[1]?.costUsd).toBeCloseTo(0.12, 4);
     });
   });
 
@@ -500,7 +496,7 @@ describe('parseCursorData', () => {
       });
 
       expect(events).toHaveLength(1);
-      expect(events[0]!.isAgentic).toBe(true);
+      expect(events[0]?.isAgentic).toBe(true);
     });
 
     it('sets isAgentic=false for chat mode', async () => {
@@ -525,7 +521,7 @@ describe('parseCursorData', () => {
       });
 
       expect(events).toHaveLength(1);
-      expect(events[0]!.isAgentic).toBe(false);
+      expect(events[0]?.isAgentic).toBe(false);
     });
 
     it('sets isAgentic=false for edit mode (inline edits)', async () => {
@@ -550,7 +546,7 @@ describe('parseCursorData', () => {
       });
 
       expect(events).toHaveLength(1);
-      expect(events[0]!.isAgentic).toBe(false);
+      expect(events[0]?.isAgentic).toBe(false);
     });
 
     it('includes edit-mode composers in results', async () => {
@@ -575,7 +571,7 @@ describe('parseCursorData', () => {
       });
 
       expect(events).toHaveLength(1);
-      expect(events[0]!.sessionId).toBe(composerId);
+      expect(events[0]?.sessionId).toBe(composerId);
     });
   });
 
@@ -620,7 +616,7 @@ describe('parseCursorData', () => {
 
       // Should still have 1 event from valid bubble
       expect(events).toHaveLength(1);
-      expect(events[0]!.sessionId).toBe(composerId);
+      expect(events[0]?.sessionId).toBe(composerId);
     });
 
     it('handles corrupt composer data gracefully', async () => {
@@ -710,7 +706,7 @@ describe('parseCursorData', () => {
       });
 
       expect(events).toHaveLength(1);
-      expect(events[0]!.tokens).toBeUndefined();
+      expect(events[0]?.tokens).toBeUndefined();
     });
 
     it('handles missing tokenCount', async () => {
@@ -719,7 +715,7 @@ describe('parseCursorData', () => {
       const composerData = sampleComposerFullData({ composerId });
 
       const bubble = sampleBubble({ bubbleId: 'b1', type: 2, _v: 3 });
-      delete (bubble as unknown as Record<string, unknown>).tokenCount;
+      (bubble as unknown as Record<string, unknown>).tokenCount = undefined;
 
       const { globalDbPath } = await setupSingleComposer({
         composerId,
@@ -735,7 +731,7 @@ describe('parseCursorData', () => {
       });
 
       expect(events).toHaveLength(1);
-      expect(events[0]!.tokens).toBeUndefined();
+      expect(events[0]?.tokens).toBeUndefined();
     });
 
     it('handles missing timingInfo and createdAt', async () => {
@@ -744,8 +740,8 @@ describe('parseCursorData', () => {
       const composerData = sampleComposerFullData({ composerId });
 
       const bubble = sampleBubble({ bubbleId: 'b1', type: 2, _v: 2 });
-      delete (bubble as unknown as Record<string, unknown>).createdAt;
-      delete (bubble as unknown as Record<string, unknown>).timingInfo;
+      (bubble as unknown as Record<string, unknown>).createdAt = undefined;
+      (bubble as unknown as Record<string, unknown>).timingInfo = undefined;
 
       const { globalDbPath } = await setupSingleComposer({
         composerId,
@@ -762,8 +758,8 @@ describe('parseCursorData', () => {
 
       expect(events).toHaveLength(1);
       // Should have some timestamp (fallback)
-      expect(events[0]!.timestamp).toBeDefined();
-      expect(() => new Date(events[0]!.timestamp)).not.toThrow();
+      expect(events[0]?.timestamp).toBeDefined();
+      expect(() => new Date(events[0]?.timestamp as string)).not.toThrow();
     });
   });
 
@@ -796,8 +792,8 @@ describe('parseCursorData', () => {
       });
 
       expect(events).toHaveLength(1);
-      expect(events[0]!.message).toBeDefined();
-      expect((events[0]!.message as Record<string, unknown>).text).toBe(
+      expect(events[0]?.message).toBeDefined();
+      expect((events[0]?.message as Record<string, unknown>).text).toBe(
         'Hello, I can help you with that.',
       );
     });
@@ -829,7 +825,7 @@ describe('parseCursorData', () => {
       });
 
       expect(events).toHaveLength(1);
-      expect(events[0]!.message).toBeUndefined();
+      expect(events[0]?.message).toBeUndefined();
     });
 
     it('includes thinking content in message when available', async () => {
@@ -860,8 +856,8 @@ describe('parseCursorData', () => {
       });
 
       expect(events).toHaveLength(1);
-      expect(events[0]!.message).toBeDefined();
-      expect((events[0]!.message as Record<string, unknown>).thinking).toBe(
+      expect(events[0]?.message).toBeDefined();
+      expect((events[0]?.message as Record<string, unknown>).thinking).toBe(
         'Let me think about this carefully...',
       );
     });

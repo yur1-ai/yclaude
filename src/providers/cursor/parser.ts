@@ -7,11 +7,18 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import type { UnifiedEvent } from '../types.js';
-import type { ComposerHead, ComposerFullData, RawBubble } from './types.js';
-import { openCursorDb, readKvEntry, readKvEntries, detectSchemaVersion, closeCursorDb } from './db.js';
-import { safeParseBubble, safeParseComposerData, safeParseComposerHead } from './schema.js';
+import type { DatabaseSync } from 'node:sqlite';
 import { debugLog } from '../../shared/debug.js';
+import type { UnifiedEvent } from '../types.js';
+import {
+  closeCursorDb,
+  detectSchemaVersion,
+  openCursorDb,
+  readKvEntries,
+  readKvEntry,
+} from './db.js';
+import { safeParseBubble, safeParseComposerData, safeParseComposerHead } from './schema.js';
+import type { ComposerFullData, ComposerHead, RawBubble } from './types.js';
 
 export interface ParseCursorDataOptions {
   globalDbPath: string;
@@ -43,7 +50,7 @@ export function parseCursorData(options: ParseCursorDataOptions): UnifiedEvent[]
     const composerHeads: ComposerHead[] = [];
 
     for (const workspace of workspaces) {
-      let wsDb;
+      let wsDb: DatabaseSync | undefined;
       try {
         wsDb = openCursorDb(workspace.dbPath);
         const raw = readKvEntry(wsDb, 'ItemTable', 'composer.composerData');
@@ -179,7 +186,7 @@ function processComposer(
 
   const durationMs =
     allTimestamps.length >= 2
-      ? allTimestamps[allTimestamps.length - 1]! - allTimestamps[0]!
+      ? (allTimestamps[allTimestamps.length - 1] as number) - (allTimestamps[0] as number)
       : undefined;
 
   // Create UnifiedEvent per bubble (user + AI)
@@ -191,8 +198,10 @@ function processComposer(
       const timestamp = getBubbleTimestamp(bubble, head.createdAt);
       const msgFields: Record<string, unknown> = {};
       if (typeof bubble.text === 'string' && bubble.text.length > 0) msgFields.text = bubble.text;
-      if (typeof bubble.richText === 'string' && bubble.richText.length > 0) msgFields.richText = bubble.richText;
-      if (bubble.images !== undefined && Array.isArray(bubble.images) && bubble.images.length > 0) msgFields.images = bubble.images;
+      if (typeof bubble.richText === 'string' && bubble.richText.length > 0)
+        msgFields.richText = bubble.richText;
+      if (bubble.images !== undefined && Array.isArray(bubble.images) && bubble.images.length > 0)
+        msgFields.images = bubble.images;
       const message = Object.keys(msgFields).length > 0 ? msgFields : undefined;
 
       events.push({
@@ -211,7 +220,7 @@ function processComposer(
   }
 
   for (let i = 0; i < aiBubbles.length; i++) {
-    const bubble = aiBubbles[i]!;
+    const bubble = aiBubbles[i] as (typeof aiBubbles)[number];
     const isFirst = i === 0;
 
     const timestamp = getBubbleTimestamp(bubble, head.createdAt);
@@ -222,8 +231,8 @@ function processComposer(
       (bubble.tokenCount.inputTokens > 0 || bubble.tokenCount.outputTokens > 0);
     const tokens = hasTokenData
       ? {
-          input: bubble.tokenCount!.inputTokens,
-          output: bubble.tokenCount!.outputTokens,
+          input: bubble.tokenCount?.inputTokens ?? 0,
+          output: bubble.tokenCount?.outputTokens ?? 0,
           cacheCreation: 0,
           cacheRead: 0,
           cacheCreation5m: 0,
@@ -236,15 +245,19 @@ function processComposer(
     if (preserveContent) {
       const msgFields: Record<string, unknown> = {};
       if (typeof bubble.text === 'string' && bubble.text.length > 0) msgFields.text = bubble.text;
-      if (typeof bubble.richText === 'string' && bubble.richText.length > 0) msgFields.richText = bubble.richText;
+      if (typeof bubble.richText === 'string' && bubble.richText.length > 0)
+        msgFields.richText = bubble.richText;
       if (bubble.thinking !== undefined) {
         // thinking can be string or { text, signature } object
-        const thinkingText = typeof bubble.thinking === 'string'
-          ? bubble.thinking
-          : (bubble.thinking as Record<string, unknown>)?.text;
-        if (typeof thinkingText === 'string' && thinkingText.length > 0) msgFields.thinking = thinkingText;
+        const thinkingText =
+          typeof bubble.thinking === 'string'
+            ? bubble.thinking
+            : (bubble.thinking as Record<string, unknown>)?.text;
+        if (typeof thinkingText === 'string' && thinkingText.length > 0)
+          msgFields.thinking = thinkingText;
       }
-      if (bubble.images !== undefined && Array.isArray(bubble.images) && bubble.images.length > 0) msgFields.images = bubble.images;
+      if (bubble.images !== undefined && Array.isArray(bubble.images) && bubble.images.length > 0)
+        msgFields.images = bubble.images;
       if (Object.keys(msgFields).length > 0) {
         message = msgFields;
       }
@@ -259,10 +272,10 @@ function processComposer(
       costUsd: costPerBubble,
       costSource: 'reported',
       // Per-bubble model from modelInfo overrides composer-level "default"
-      ...((() => {
+      ...(() => {
         const bubbleModel = getBubbleModel(bubble, model);
         return bubbleModel !== undefined ? { model: bubbleModel } : {};
-      })()),
+      })(),
       ...(tokens !== undefined ? { tokens } : {}),
       ...(head.workspacePath ? { cwd: head.workspacePath } : {}),
       ...(head.createdOnBranch ? { gitBranch: head.createdOnBranch } : {}),
@@ -361,7 +374,8 @@ function getBubbleModel(bubble: RawBubble, composerModel: string | undefined): s
 
   // Check bubble-level modelInfo for a more specific model name
   if (bubble.modelInfo) {
-    const modelId = bubble.modelInfo.modelId ?? bubble.modelInfo.model ?? bubble.modelInfo.modelName;
+    const modelId =
+      bubble.modelInfo.modelId ?? bubble.modelInfo.model ?? bubble.modelInfo.modelName;
     if (typeof modelId === 'string' && modelId.length > 0 && modelId !== 'default') {
       return modelId;
     }

@@ -36,7 +36,15 @@ export function useChats(projectFilter: string | null = null, searchQuery = '') 
   params.set('page', String(page));
 
   const query = useQuery<ChatsData>({
-    queryKey: ['chats', from?.toISOString(), to?.toISOString(), projectFilter, searchQuery, page, provider],
+    queryKey: [
+      'chats',
+      from?.toISOString(),
+      to?.toISOString(),
+      projectFilter,
+      searchQuery,
+      page,
+      provider,
+    ],
     queryFn: async () => {
       const res = await fetch(`/api/v1/chats?${params}`);
       if (!res.ok) throw new Error('Failed to fetch chats');

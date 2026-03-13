@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { NormalizedEvent } from '../parser/types.js';
 import { applyPrivacyFilter } from '../cost/privacy.js';
+import type { NormalizedEvent } from '../parser/types.js';
 
 // Minimal safe NormalizedEvent — no content fields
 const safeEvent: NormalizedEvent = {

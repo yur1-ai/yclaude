@@ -35,14 +35,53 @@ function makeEvent(costUsd: number, overrides?: Partial<UnifiedEvent>): UnifiedE
 function makeMultiProviderEvents(): UnifiedEvent[] {
   return [
     // Claude events - 2 sessions
-    makeEvent(0.01, { provider: 'claude', sessionId: 'claude-s1', timestamp: '2024-01-15T10:00:00Z', model: 'claude-sonnet-4-20250514', cwd: '/projects/a' }),
-    makeEvent(0.02, { provider: 'claude', sessionId: 'claude-s1', timestamp: '2024-01-15T10:05:00Z', model: 'claude-sonnet-4-20250514', cwd: '/projects/a' }),
-    makeEvent(0.05, { provider: 'claude', sessionId: 'claude-s2', timestamp: '2024-01-15T11:00:00Z', model: 'claude-opus-4-20250514', cwd: '/projects/b' }),
+    makeEvent(0.01, {
+      provider: 'claude',
+      sessionId: 'claude-s1',
+      timestamp: '2024-01-15T10:00:00Z',
+      model: 'claude-sonnet-4-20250514',
+      cwd: '/projects/a',
+    }),
+    makeEvent(0.02, {
+      provider: 'claude',
+      sessionId: 'claude-s1',
+      timestamp: '2024-01-15T10:05:00Z',
+      model: 'claude-sonnet-4-20250514',
+      cwd: '/projects/a',
+    }),
+    makeEvent(0.05, {
+      provider: 'claude',
+      sessionId: 'claude-s2',
+      timestamp: '2024-01-15T11:00:00Z',
+      model: 'claude-opus-4-20250514',
+      cwd: '/projects/b',
+    }),
 
     // Cursor events - 2 sessions, with sessionType
-    makeEvent(0.03, { provider: 'cursor', sessionId: 'cursor-s1', timestamp: '2024-01-15T10:30:00Z', model: 'gpt-4o', cwd: '/projects/a', sessionType: 'composer' }),
-    makeEvent(0.04, { provider: 'cursor', sessionId: 'cursor-s1', timestamp: '2024-01-15T10:35:00Z', model: 'gpt-4o', cwd: '/projects/a', sessionType: 'composer' }),
-    makeEvent(0.02, { provider: 'cursor', sessionId: 'cursor-s2', timestamp: '2024-01-15T12:00:00Z', model: 'gpt-4o-mini', cwd: '/projects/c', sessionType: 'edit' }),
+    makeEvent(0.03, {
+      provider: 'cursor',
+      sessionId: 'cursor-s1',
+      timestamp: '2024-01-15T10:30:00Z',
+      model: 'gpt-4o',
+      cwd: '/projects/a',
+      sessionType: 'composer',
+    }),
+    makeEvent(0.04, {
+      provider: 'cursor',
+      sessionId: 'cursor-s1',
+      timestamp: '2024-01-15T10:35:00Z',
+      model: 'gpt-4o',
+      cwd: '/projects/a',
+      sessionType: 'composer',
+    }),
+    makeEvent(0.02, {
+      provider: 'cursor',
+      sessionId: 'cursor-s2',
+      timestamp: '2024-01-15T12:00:00Z',
+      model: 'gpt-4o-mini',
+      cwd: '/projects/c',
+      sessionType: 'edit',
+    }),
   ];
 }
 

@@ -27,10 +27,7 @@ const fixNodeOnlyBuiltins: Plugin = {
         let text = file.text;
         for (const mod of nodeOnlyModules) {
           // Match: from "sqlite" or require("sqlite")
-          text = text.replace(
-            new RegExp(`(from\\s+["'])${mod}(["'])`, 'g'),
-            `$1node:${mod}$2`,
-          );
+          text = text.replace(new RegExp(`(from\\s+["'])${mod}(["'])`, 'g'), `$1node:${mod}$2`);
           text = text.replace(
             new RegExp(`(require\\(["'])${mod}(["']\\))`, 'g'),
             `$1node:${mod}$2`,

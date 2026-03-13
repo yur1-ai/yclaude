@@ -5,12 +5,12 @@
  * the real Cursor state.vscdb schema. Shared across all test files.
  */
 
-import { DatabaseSync } from 'node:sqlite';
+import { randomUUID } from 'node:crypto';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { randomUUID } from 'node:crypto';
-import type { ComposerHead, ComposerFullData, RawBubble } from '../types.js';
+import { DatabaseSync } from 'node:sqlite';
+import type { ComposerFullData, ComposerHead, RawBubble } from '../types.js';
 
 /**
  * Creates a temporary directory for test databases.

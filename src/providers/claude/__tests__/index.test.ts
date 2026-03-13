@@ -2,8 +2,8 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { loadProviders } from '../../registry.js';
 import { disableDebug } from '../../../shared/debug.js';
+import { loadProviders } from '../../registry.js';
 
 let tmpDir: string;
 /** Projects subdirectory where Claude stores JSONL files */
@@ -34,7 +34,10 @@ describe('loadProviders() integration', () => {
       ].join('\n'),
     );
 
-    const { events, providers } = await loadProviders({ dir: tmpDir, exclude: ['cursor', 'opencode'] });
+    const { events, providers } = await loadProviders({
+      dir: tmpDir,
+      exclude: ['cursor', 'opencode'],
+    });
     expect(events.length).toBe(2);
     expect(events[0]?.id).toBe('event-1');
     expect(events[0]?.provider).toBe('claude');

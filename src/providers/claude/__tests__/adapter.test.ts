@@ -2,8 +2,8 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ClaudeAdapter } from '../adapter.js';
 import { disableDebug } from '../../../shared/debug.js';
+import { ClaudeAdapter } from '../adapter.js';
 
 let tmpDir: string;
 let adapter: ClaudeAdapter;

@@ -5,10 +5,10 @@
  * Uses node:sqlite (DatabaseSync) available on Node.js 24+.
  */
 
-import { DatabaseSync } from 'node:sqlite';
 import { copyFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, basename } from 'node:path';
+import { basename, join } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import { debugLog } from '../../shared/debug.js';
 import type { SchemaVersion } from './types.js';
 
@@ -69,11 +69,7 @@ function openFromTempCopy(dbPath: string): DatabaseSync {
  * Returns the value as a UTF-8 string, or null if the key is not found.
  * The value column is stored as BLOB in state.vscdb.
  */
-export function readKvEntry(
-  db: DatabaseSync,
-  table: string,
-  key: string,
-): string | null {
+export function readKvEntry(db: DatabaseSync, table: string, key: string): string | null {
   validateTable(table);
 
   const stmt = db.prepare(`SELECT value FROM ${table} WHERE key = ?`);
@@ -126,9 +122,7 @@ export function readKvEntries(
 export function detectSchemaVersion(db: DatabaseSync): SchemaVersion {
   let rows: Array<{ value: Uint8Array }>;
   try {
-    const stmt = db.prepare(
-      "SELECT value FROM cursorDiskKV WHERE key LIKE 'bubbleId:%' LIMIT 10",
-    );
+    const stmt = db.prepare("SELECT value FROM cursorDiskKV WHERE key LIKE 'bubbleId:%' LIMIT 10");
     rows = stmt.all() as Array<{ value: Uint8Array }>;
   } catch {
     // Table might not exist

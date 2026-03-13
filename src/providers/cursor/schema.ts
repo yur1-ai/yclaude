@@ -88,9 +88,7 @@ export const ComposerHeadSchema = z
     composerId: z.string(),
     createdAt: z.number().optional(),
     lastUpdatedAt: z.number().optional(),
-    unifiedMode: z
-      .enum(['agent', 'chat', 'edit', 'debug'])
-      .optional(),
+    unifiedMode: z.enum(['agent', 'chat', 'edit', 'debug']).optional(),
     name: z.string().optional(),
     subtitle: z.string().optional(),
     totalLinesAdded: z.number().optional(),

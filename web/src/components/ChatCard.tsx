@@ -35,7 +35,12 @@ function HighlightedText({ text, query }: { text: string; query: string }) {
   );
 }
 
-export function ChatCard({ chat, searchQuery, onViewConversation, costSourceLabel }: ChatCardProps) {
+export function ChatCard({
+  chat,
+  searchQuery,
+  onViewConversation,
+  costSourceLabel,
+}: ChatCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   const projectName = chat.displayName;

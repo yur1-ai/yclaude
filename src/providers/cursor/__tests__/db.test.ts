@@ -1,16 +1,12 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
-  createTestDir,
-  createTestGlobalDb,
-  cleanupTestDir,
-} from './fixtures.js';
-import {
-  openCursorDb,
-  readKvEntry,
-  readKvEntries,
-  detectSchemaVersion,
   closeCursorDb,
+  detectSchemaVersion,
+  openCursorDb,
+  readKvEntries,
+  readKvEntry,
 } from '../db.js';
+import { cleanupTestDir, createTestDir, createTestGlobalDb } from './fixtures.js';
 
 let testDir: string;
 
@@ -24,9 +20,7 @@ describe('db', () => {
   describe('openCursorDb', () => {
     it('opens a valid test database successfully', async () => {
       testDir = await createTestDir();
-      const dbPath = createTestGlobalDb(testDir, [
-        { key: 'test:key', value: { hello: 'world' } },
-      ]);
+      const dbPath = createTestGlobalDb(testDir, [{ key: 'test:key', value: { hello: 'world' } }]);
 
       const db = openCursorDb(dbPath);
       expect(db).toBeDefined();
@@ -66,14 +60,12 @@ describe('db', () => {
     it('correctly decodes Uint8Array BLOB to UTF-8 string', async () => {
       testDir = await createTestDir();
       const unicodeValue = { text: 'Hello \u{1F600} Unicode \u00E9\u00F1' };
-      const dbPath = createTestGlobalDb(testDir, [
-        { key: 'unicode:test', value: unicodeValue },
-      ]);
+      const dbPath = createTestGlobalDb(testDir, [{ key: 'unicode:test', value: unicodeValue }]);
 
       const db = openCursorDb(dbPath);
       const result = readKvEntry(db, 'cursorDiskKV', 'unicode:test');
       expect(result).not.toBeNull();
-      const parsed = JSON.parse(result!);
+      const parsed = JSON.parse(result as string);
       expect(parsed.text).toBe('Hello \u{1F600} Unicode \u00E9\u00F1');
       closeCursorDb(db);
     });
@@ -86,7 +78,7 @@ describe('db', () => {
       const dbPath = createTestGlobalDb(testDir, [
         { key: `bubbleId:${composerId}:b1`, value: { bubbleId: 'b1', type: 2 } },
         { key: `bubbleId:${composerId}:b2`, value: { bubbleId: 'b2', type: 1 } },
-        { key: `bubbleId:other-id:b3`, value: { bubbleId: 'b3', type: 2 } },
+        { key: 'bubbleId:other-id:b3', value: { bubbleId: 'b3', type: 2 } },
       ]);
 
       const db = openCursorDb(dbPath);
@@ -98,16 +90,14 @@ describe('db', () => {
       ]);
 
       // Verify values are valid JSON strings
-      const parsed = JSON.parse(results[0]!.value);
+      const parsed = JSON.parse(results[0]?.value as string);
       expect(parsed.bubbleId).toBe('b1');
       closeCursorDb(db);
     });
 
     it('returns empty array when no matches', async () => {
       testDir = await createTestDir();
-      const dbPath = createTestGlobalDb(testDir, [
-        { key: 'other:key', value: { data: 1 } },
-      ]);
+      const dbPath = createTestGlobalDb(testDir, [{ key: 'other:key', value: { data: 1 } }]);
 
       const db = openCursorDb(dbPath);
       const results = readKvEntries(db, 'cursorDiskKV', 'bubbleId:nonexistent:');
@@ -149,12 +139,8 @@ describe('db', () => {
       const dbPath = createTestGlobalDb(testDir, []);
 
       const db = openCursorDb(dbPath);
-      expect(() => readKvEntry(db, 'malicious; DROP TABLE--', 'key')).toThrow(
-        'Invalid table name',
-      );
-      expect(() => readKvEntries(db, 'badTable', 'prefix')).toThrow(
-        'Invalid table name',
-      );
+      expect(() => readKvEntry(db, 'malicious; DROP TABLE--', 'key')).toThrow('Invalid table name');
+      expect(() => readKvEntries(db, 'badTable', 'prefix')).toThrow('Invalid table name');
       closeCursorDb(db);
     });
   });

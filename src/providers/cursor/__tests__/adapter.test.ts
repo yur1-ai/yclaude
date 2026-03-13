@@ -1,18 +1,18 @@
-import { describe, it, expect, afterEach, vi } from 'vitest';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { mkdir, writeFile, rm } from 'node:fs/promises';
 import { DatabaseSync } from 'node:sqlite';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { CursorAdapter } from '../adapter.js';
+import type { RawBubble } from '../types.js';
 import {
+  cleanupTestDir,
   createTestDir,
   createTestGlobalDb,
   createTestWorkspaceDb,
-  sampleComposerHead,
   sampleBubble,
   sampleComposerFullData,
-  cleanupTestDir,
+  sampleComposerHead,
 } from './fixtures.js';
-import { CursorAdapter } from '../adapter.js';
-import type { RawBubble } from '../types.js';
 
 let testDirs: string[] = [];
 
@@ -58,10 +58,7 @@ async function createCursorStructure(opts: {
 
   // Create workspace.json if workspacePath provided
   if (opts.workspacePath) {
-    await writeFile(
-      join(wsDir, 'workspace.json'),
-      JSON.stringify({ folder: opts.workspacePath }),
-    );
+    await writeFile(join(wsDir, 'workspace.json'), JSON.stringify({ folder: opts.workspacePath }));
   }
 
   return { dataDir, globalDbPath, wsDbPath };
@@ -171,11 +168,11 @@ describe('CursorAdapter', () => {
       const events = await adapter.load({});
 
       expect(events.length).toBeGreaterThan(0);
-      expect(events[0]!.provider).toBe('cursor');
-      expect(events[0]!.sessionId).toBe(composerId);
-      expect(events[0]!.timestamp).toBeDefined();
-      expect(events[0]!.tokens).toBeDefined();
-      expect(events[0]!.costUsd).toBeGreaterThan(0);
+      expect(events[0]?.provider).toBe('cursor');
+      expect(events[0]?.sessionId).toBe(composerId);
+      expect(events[0]?.timestamp).toBeDefined();
+      expect(events[0]?.tokens).toBeDefined();
+      expect(events[0]?.costUsd).toBeGreaterThan(0);
     });
 
     it('passes preserveContent option through to parser', async () => {
@@ -204,15 +201,13 @@ describe('CursorAdapter', () => {
       // With preserveContent=true, message should be present
       const withContent = await adapter.load({ preserveContent: true });
       expect(withContent.length).toBeGreaterThan(0);
-      expect(withContent[0]!.message).toBeDefined();
-      expect((withContent[0]!.message as Record<string, unknown>).text).toBe(
-        'Hello from Cursor',
-      );
+      expect(withContent[0]?.message).toBeDefined();
+      expect((withContent[0]?.message as Record<string, unknown>).text).toBe('Hello from Cursor');
 
       // With preserveContent=false, message should be absent
       const withoutContent = await adapter.load({ preserveContent: false });
       expect(withoutContent.length).toBeGreaterThan(0);
-      expect(withoutContent[0]!.message).toBeUndefined();
+      expect(withoutContent[0]?.message).toBeUndefined();
     });
 
     it('handles missing workspace.json gracefully (cwd absent)', async () => {
@@ -238,7 +233,7 @@ describe('CursorAdapter', () => {
 
       expect(events.length).toBeGreaterThan(0);
       // cwd should be absent since no workspace.json
-      expect(events[0]!.cwd).toBeUndefined();
+      expect(events[0]?.cwd).toBeUndefined();
     });
 
     it('handles inaccessible workspace DB gracefully (skip with warning)', async () => {
@@ -272,7 +267,7 @@ describe('CursorAdapter', () => {
       const events = await adapter.load({});
 
       expect(events.length).toBeGreaterThan(0);
-      expect(events[0]!.sessionId).toBe(comp1);
+      expect(events[0]?.sessionId).toBe(comp1);
     });
 
     it('logs schema version to stderr', async () => {
@@ -297,9 +292,7 @@ describe('CursorAdapter', () => {
       await adapter.load({});
 
       // Check that schema version was logged to stderr
-      const stderrOutput = stderrSpy.mock.calls
-        .map((call) => String(call[0]))
-        .join('');
+      const stderrOutput = stderrSpy.mock.calls.map((call) => String(call[0])).join('');
       expect(stderrOutput).toMatch(/Cursor.*schema.*v\d/i);
 
       stderrSpy.mockRestore();
@@ -310,7 +303,11 @@ describe('CursorAdapter', () => {
       const comp2 = 'rt-chat-comp';
       const comp3 = 'rt-edit-comp';
 
-      const head1 = sampleComposerHead({ composerId: comp1, unifiedMode: 'agent', createdOnBranch: 'main' });
+      const head1 = sampleComposerHead({
+        composerId: comp1,
+        unifiedMode: 'agent',
+        createdOnBranch: 'main',
+      });
       const head2 = sampleComposerHead({ composerId: comp2, unifiedMode: 'chat' });
       const head3 = sampleComposerHead({ composerId: comp3, unifiedMode: 'edit' });
 
@@ -347,10 +344,27 @@ describe('CursorAdapter', () => {
         { key: `composerData:${comp1}`, value: cd1 },
         { key: `composerData:${comp2}`, value: cd2 },
         { key: `composerData:${comp3}`, value: cd3 },
-        { key: `bubbleId:${comp1}:b1`, value: sampleBubble({ bubbleId: 'b1', type: 2, _v: 3, createdAt: t1 }) },
-        { key: `bubbleId:${comp1}:b2`, value: sampleBubble({ bubbleId: 'b2', type: 2, _v: 3, createdAt: t2 }) },
-        { key: `bubbleId:${comp2}:b3`, value: sampleBubble({ bubbleId: 'b3', type: 2, _v: 2, timingInfo: { clientRpcSendTime: now - 10_000 } }) },
-        { key: `bubbleId:${comp3}:b4`, value: sampleBubble({ bubbleId: 'b4', type: 2, _v: 3, createdAt: t3 }) },
+        {
+          key: `bubbleId:${comp1}:b1`,
+          value: sampleBubble({ bubbleId: 'b1', type: 2, _v: 3, createdAt: t1 }),
+        },
+        {
+          key: `bubbleId:${comp1}:b2`,
+          value: sampleBubble({ bubbleId: 'b2', type: 2, _v: 3, createdAt: t2 }),
+        },
+        {
+          key: `bubbleId:${comp2}:b3`,
+          value: sampleBubble({
+            bubbleId: 'b3',
+            type: 2,
+            _v: 2,
+            timingInfo: { clientRpcSendTime: now - 10_000 },
+          }),
+        },
+        {
+          key: `bubbleId:${comp3}:b4`,
+          value: sampleBubble({ bubbleId: 'b4', type: 2, _v: 3, createdAt: t3 }),
+        },
       ]);
 
       // Create workspace 1 (agent + chat composers)
@@ -388,24 +402,24 @@ describe('CursorAdapter', () => {
       // Check agent mode
       const agentEvents = events.filter((e) => e.sessionId === comp1);
       expect(agentEvents).toHaveLength(2);
-      expect(agentEvents[0]!.isAgentic).toBe(true);
-      expect(agentEvents[0]!.model).toBe('claude-3.5-sonnet');
-      expect(agentEvents[0]!.costUsd).toBeCloseTo(0.12, 4); // 24 cents / 2 bubbles = 12 cents each
+      expect(agentEvents[0]?.isAgentic).toBe(true);
+      expect(agentEvents[0]?.model).toBe('claude-3.5-sonnet');
+      expect(agentEvents[0]?.costUsd).toBeCloseTo(0.12, 4); // 24 cents / 2 bubbles = 12 cents each
 
       // Check chat mode
       const chatEvents = events.filter((e) => e.sessionId === comp2);
       expect(chatEvents).toHaveLength(1);
-      expect(chatEvents[0]!.isAgentic).toBe(false);
-      expect(chatEvents[0]!.model).toBe('gpt-4');
+      expect(chatEvents[0]?.isAgentic).toBe(false);
+      expect(chatEvents[0]?.model).toBe('gpt-4');
 
       // Check edit mode
       const editEvents = events.filter((e) => e.sessionId === comp3);
       expect(editEvents).toHaveLength(1);
-      expect(editEvents[0]!.isAgentic).toBe(false);
-      expect(editEvents[0]!.model).toBe('cursor-small');
+      expect(editEvents[0]?.isAgentic).toBe(false);
+      expect(editEvents[0]?.model).toBe('cursor-small');
 
       // Check workspace path decoding (project%20b -> "project b")
-      expect(editEvents[0]!.cwd).toBe('/Users/dev/project b');
+      expect(editEvents[0]?.cwd).toBe('/Users/dev/project b');
 
       // Check timestamps are valid ISO strings
       for (const event of events) {

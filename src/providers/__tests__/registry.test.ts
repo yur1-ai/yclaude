@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ProviderAdapter, UnifiedEvent } from '../types.js';
 
 // State holders for mock adapter instances (set per test before importing registry)
@@ -90,9 +90,7 @@ describe('loadProviders()', () => {
     mockClaudeInstance = createMockAdapter('claude', 'Claude Code', true, [
       makeEvent('e1', 'claude'),
     ]);
-    mockCursorInstance = createMockAdapter('cursor', 'Cursor', true, [
-      makeEvent('e2', 'cursor'),
-    ]);
+    mockCursorInstance = createMockAdapter('cursor', 'Cursor', true, [makeEvent('e2', 'cursor')]);
 
     const { loadProviders } = await import('../registry.js');
     const { events, providers } = await loadProviders({ exclude: ['cursor'] });
@@ -112,11 +110,7 @@ describe('loadProviders()', () => {
   });
 
   it('handles detection failure gracefully', async () => {
-    mockClaudeInstance = createMockAdapter(
-      'claude',
-      'Claude Code',
-      new Error('Permission denied'),
-    );
+    mockClaudeInstance = createMockAdapter('claude', 'Claude Code', new Error('Permission denied'));
 
     // Suppress stderr output from the registry
     const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);

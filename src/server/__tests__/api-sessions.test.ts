@@ -9,7 +9,9 @@ import type { AppState } from '../server.js';
 
 let _eventIdx = 0;
 
-function makeUnifiedEvent(overrides: Partial<UnifiedEvent> & { costUsd?: number } = {}): UnifiedEvent {
+function makeUnifiedEvent(
+  overrides: Partial<UnifiedEvent> & { costUsd?: number } = {},
+): UnifiedEvent {
   const { costUsd = 0.001, ...rest } = overrides;
   return {
     id: `uuid-${_eventIdx++}`,
@@ -196,7 +198,11 @@ describe('GET /api/v1/sessions — session list', () => {
 
   it('durationMs is sourced from all events, not just token-bearing ones', async () => {
     const events: UnifiedEvent[] = [
-      makeUnifiedEvent({ sessionId: 'sess-1', timestamp: '2024-01-01T00:00:00Z', durationMs: 1000 }),
+      makeUnifiedEvent({
+        sessionId: 'sess-1',
+        timestamp: '2024-01-01T00:00:00Z',
+        durationMs: 1000,
+      }),
       // non-token event with larger durationMs
       makeNonTokenEvent({
         sessionId: 'sess-1',

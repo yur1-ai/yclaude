@@ -22,7 +22,14 @@ export function useCostOverTime(bucket: Bucket) {
   if (provider !== 'all') params.set('provider', provider);
 
   return useQuery<CostOverTimeData>({
-    queryKey: ['cost-over-time', from?.toISOString(), to?.toISOString(), bucket, LOCAL_TZ, provider],
+    queryKey: [
+      'cost-over-time',
+      from?.toISOString(),
+      to?.toISOString(),
+      bucket,
+      LOCAL_TZ,
+      provider,
+    ],
     queryFn: async () => {
       const res = await fetch(`/api/v1/cost-over-time?${params}`);
       if (!res.ok) throw new Error('Failed to fetch cost over time');

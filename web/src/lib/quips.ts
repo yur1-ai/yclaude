@@ -64,11 +64,11 @@ export const QUIPS = {
 
   /** $250+ total — impressed, slightly concerned */
   spend_250: [
-    'Two hundred and fifty dollars. You are Claude\'s favorite customer. Statistically.',
+    "Two hundred and fifty dollars. You are Claude's favorite customer. Statistically.",
     'A quarter grand on AI. Most people stop before this. You are not most people.',
     '$250. At this point Claude should be sending you a holiday card.',
     'Two-fifty. The sunk cost fallacy has nothing to do with this, probably.',
-    'A quarter of a thousand dollars. It sounds worse that way, doesn\'t it.',
+    "A quarter of a thousand dollars. It sounds worse that way, doesn't it.",
   ],
 
   /** $500+ total — deadpan respect */
@@ -93,7 +93,7 @@ export const QUIPS = {
   /** $2500+ total — almost affectionate awe */
   spend_2500: [
     'Two and a half thousand dollars. Claude would blush if it had capillaries.',
-    '$2,500. You have spent a month\'s rent on code generation. No judgment, only respect.',
+    "$2,500. You have spent a month's rent on code generation. No judgment, only respect.",
     'Twenty-five hundred dollars. At this scale, the tokens are basically colleagues.',
     '$2,500. This is dedication measured in API calls.',
   ],

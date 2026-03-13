@@ -1,5 +1,5 @@
-import type { NormalizedEvent } from '../parser/types.js';
 import { debugLog } from '../../../shared/debug.js';
+import type { NormalizedEvent } from '../parser/types.js';
 import { MODEL_PRICING } from './pricing.js';
 import type { ModelPricing } from './pricing.js';
 import { toEstimatedCost } from './types.js';

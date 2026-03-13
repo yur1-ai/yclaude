@@ -285,7 +285,10 @@ function getLocalHourKey(timestamp: string, tz: string): string {
  * Filters events by provider when ?provider= query param is present.
  * Returns all events when no provider is specified (backward compatible).
  */
-function filterByProvider(events: UnifiedEvent[], providerParam: string | undefined): UnifiedEvent[] {
+function filterByProvider(
+  events: UnifiedEvent[],
+  providerParam: string | undefined,
+): UnifiedEvent[] {
   if (!providerParam) return events;
   return events.filter((e) => e.provider === providerParam);
 }
@@ -373,7 +376,7 @@ export function apiRoutes(state: AppState): Hono {
       const sessionsByProvider = new Map<string, Set<string>>();
       for (const e of events) {
         if (!sessionsByProvider.has(e.provider)) sessionsByProvider.set(e.provider, new Set());
-        sessionsByProvider.get(e.provider)!.add(e.sessionId);
+        sessionsByProvider.get(e.provider)?.add(e.sessionId);
       }
       for (const [prov, sessions] of sessionsByProvider) {
         if (breakdown[prov]) breakdown[prov].sessions = sessions.size;
@@ -438,7 +441,7 @@ export function apiRoutes(state: AppState): Hono {
       // Track per-provider cost when showing all providers
       if (!providerParam) {
         if (!providerGroups.has(key)) providerGroups.set(key, new Map());
-        const provMap = providerGroups.get(key)!;
+        const provMap = providerGroups.get(key) as Map<string, number>;
         provMap.set(e.provider, (provMap.get(e.provider) ?? 0) + e.costUsd);
       }
     }
@@ -458,8 +461,9 @@ export function apiRoutes(state: AppState): Hono {
       while (cursor <= endDate) {
         const key = cursor.toISOString().slice(0, 10);
         const entry: Record<string, unknown> = { date: key, cost: groups.get(key) ?? 0 };
-        if (!providerParam && providerGroups.has(key)) {
-          for (const [prov, cost] of providerGroups.get(key)!) {
+        const provEntries = !providerParam ? providerGroups.get(key) : undefined;
+        if (provEntries) {
+          for (const [prov, cost] of provEntries) {
             entry[prov] = cost;
           }
         }
@@ -475,8 +479,9 @@ export function apiRoutes(state: AppState): Hono {
       while (cursor <= endDate) {
         const key = getLocalHourKey(cursor.toISOString(), tz);
         const entry: Record<string, unknown> = { date: key, cost: groups.get(key) ?? 0 };
-        if (!providerParam && providerGroups.has(key)) {
-          for (const [prov, cost] of providerGroups.get(key)!) {
+        const provEntries = !providerParam ? providerGroups.get(key) : undefined;
+        if (provEntries) {
+          for (const [prov, cost] of provEntries) {
             entry[prov] = cost;
           }
         }
@@ -489,8 +494,9 @@ export function apiRoutes(state: AppState): Hono {
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([date, cost]) => {
           const entry: Record<string, unknown> = { date, cost };
-          if (!providerParam && providerGroups.has(date)) {
-            for (const [prov, provCost] of providerGroups.get(date)!) {
+          const provDateEntries = !providerParam ? providerGroups.get(date) : undefined;
+          if (provDateEntries) {
+            for (const [prov, provCost] of provDateEntries) {
               entry[prov] = provCost;
             }
           }
@@ -703,9 +709,9 @@ export function apiRoutes(state: AppState): Hono {
       // Track per-provider sessions when showing all providers
       if (!providerParam) {
         if (!dayProviderSessions.has(localDate)) dayProviderSessions.set(localDate, new Map());
-        const provMap = dayProviderSessions.get(localDate)!;
+        const provMap = dayProviderSessions.get(localDate) as Map<string, Set<string>>;
         if (!provMap.has(e.provider)) provMap.set(e.provider, new Set());
-        provMap.get(e.provider)!.add(e.sessionId);
+        provMap.get(e.provider)?.add(e.sessionId);
       }
     }
 
@@ -730,9 +736,10 @@ export function apiRoutes(state: AppState): Hono {
       const entry: Record<string, unknown> = { date: dateStr, count, level };
 
       // Add per-provider session counts when viewing all providers
-      if (!providerParam && dayProviderSessions.has(dateStr)) {
+      const dayProvSessions = !providerParam ? dayProviderSessions.get(dateStr) : undefined;
+      if (dayProvSessions) {
         const providers: Record<string, number> = {};
-        for (const [prov, sessions] of dayProviderSessions.get(dateStr)!) {
+        for (const [prov, sessions] of dayProvSessions) {
           providers[prov] = sessions.size;
         }
         entry.providers = providers;
@@ -789,7 +796,9 @@ export function apiRoutes(state: AppState): Hono {
 
     // Filter by sessionType: events matching the type OR events without sessionType (e.g. Claude events pass through)
     if (sessionTypeParam) {
-      events = events.filter((e) => e.sessionType === sessionTypeParam || e.sessionType === undefined);
+      events = events.filter(
+        (e) => e.sessionType === sessionTypeParam || e.sessionType === undefined,
+      );
     }
 
     // Filter by date range
@@ -935,7 +944,9 @@ export function apiRoutes(state: AppState): Hono {
 
     const sessionId = c.req.param('id');
     const providerParam = c.req.query('provider');
-    const allEvents = filterByProvider(state.events, providerParam).filter((e) => e.sessionId === sessionId);
+    const allEvents = filterByProvider(state.events, providerParam).filter(
+      (e) => e.sessionId === sessionId,
+    );
 
     if (allEvents.length === 0) {
       return c.json({ error: 'Session not found' }, 404);
@@ -1049,7 +1060,9 @@ export function apiRoutes(state: AppState): Hono {
 
     // Filter by provider, then filter events with message content
     const providerParam = c.req.query('provider');
-    let messageEvents = filterByProvider(state.events, providerParam).filter((e) => e.message !== undefined);
+    let messageEvents = filterByProvider(state.events, providerParam).filter(
+      (e) => e.message !== undefined,
+    );
     if (from) messageEvents = messageEvents.filter((e) => new Date(e.timestamp) >= from);
     if (to) messageEvents = messageEvents.filter((e) => new Date(e.timestamp) <= to);
 
@@ -1262,7 +1275,8 @@ export function apiRoutes(state: AppState): Hono {
   // -------------------------
 
   app.post('/share', async (c) => {
-    const body = await c.req.json<{ markdown?: string; filename?: string }>().catch(() => ({}));
+    type ShareBody = { markdown?: string; filename?: string };
+    const body = await c.req.json<ShareBody>().catch(() => ({}) as ShareBody);
     const markdown = body.markdown;
     const filename = (body.filename ?? 'chat.md').replace(/[^a-zA-Z0-9._-]/g, '_');
 

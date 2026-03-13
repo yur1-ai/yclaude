@@ -7,7 +7,14 @@ interface StatCardProps {
   accentColor?: string; // optional provider-colored left border
 }
 
-export function StatCard({ label, value, children, quip, labelSuffix, accentColor }: StatCardProps) {
+export function StatCard({
+  label,
+  value,
+  children,
+  quip,
+  labelSuffix,
+  accentColor,
+}: StatCardProps) {
   return (
     <div
       className={`rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-[#30363d] dark:bg-[#161b22]${accentColor ? ' border-l-4' : ''}`}

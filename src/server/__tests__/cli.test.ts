@@ -85,9 +85,7 @@ describe('CLI option parsing', () => {
     // Verify the CLI captures the raw string; the split+trim happens in cli.ts
     expect(opts.exclude).toBe('cursor, opencode');
     // Simulate the cli.ts parsing logic
-    const exclude = opts.exclude
-      ? opts.exclude.split(',').map((s: string) => s.trim())
-      : [];
+    const exclude = opts.exclude ? opts.exclude.split(',').map((s: string) => s.trim()) : [];
     expect(exclude).toEqual(['cursor', 'opencode']);
   });
 

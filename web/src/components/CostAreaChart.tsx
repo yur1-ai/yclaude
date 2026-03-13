@@ -188,9 +188,7 @@ export function CostAreaChart({
             tick={{ fontSize: 12, fill: 'var(--color-axis-tick)' }}
           />
           <Tooltip
-            content={
-              <AreaTooltipContent providers={providers} isDark={isDark} />
-            }
+            content={<AreaTooltipContent providers={providers} isDark={isDark} />}
             cursor={{ stroke: 'var(--color-grid)' }}
           />
           {providers.map((providerId) => {

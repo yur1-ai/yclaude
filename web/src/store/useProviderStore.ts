@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ProviderId, ProviderFilter } from '../lib/providers';
+import type { ProviderFilter, ProviderId } from '../lib/providers';
 
 interface ProviderEntry {
   id: ProviderId;

@@ -1,10 +1,10 @@
+import { enableDebug } from '../../shared/debug.js';
 import type { LoadOptions, ProviderAdapter, UnifiedEvent } from '../types.js';
 import { computeCosts } from './cost/engine.js';
 import { applyPrivacyFilter } from './cost/privacy.js';
 import { DedupAccumulator } from './parser/dedup.js';
 import { normalizeEvent } from './parser/normalizer.js';
 import { discoverJSONLFiles, streamJSONLFile } from './parser/reader.js';
-import { enableDebug } from '../../shared/debug.js';
 
 /**
  * Claude Code provider adapter.

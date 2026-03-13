@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { NormalizedEvent } from '../parser/types.js';
 import { computeCosts } from '../cost/engine.js';
 import { toEstimatedCost } from '../cost/types.js';
+import type { NormalizedEvent } from '../parser/types.js';
 
 // Baseline event for tests — no tokens, no model
 const baseEvent: NormalizedEvent = {

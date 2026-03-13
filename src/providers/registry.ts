@@ -45,7 +45,7 @@ export async function loadProviders(
         const message = err instanceof Error ? err.message : String(err);
         process.stderr.write(
           `[yclaude] Warning: ${adapter.name} detection failed: ${message}\n` +
-          `  Hint: Check file permissions for ${adapter.name} data directory.\n`,
+            `  Hint: Check file permissions for ${adapter.name} data directory.\n`,
         );
         return { adapter, found: false, error: message };
       }
@@ -62,8 +62,7 @@ export async function loadProviders(
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         process.stderr.write(
-          `[yclaude] Warning: ${adapter.name} loading failed: ${message}\n` +
-          `  Hint: Try re-running with --debug for more details.\n`,
+          `[yclaude] Warning: ${adapter.name} loading failed: ${message}\n  Hint: Try re-running with --debug for more details.\n`,
         );
         return { adapter, events: [] as UnifiedEvent[], error: message };
       }

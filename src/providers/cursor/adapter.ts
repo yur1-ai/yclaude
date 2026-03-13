@@ -7,13 +7,14 @@
  * UnifiedEvent[] through the parser.
  */
 
-import { access, readdir, readFile } from 'node:fs/promises';
+import { access, readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
+import type { DatabaseSync } from 'node:sqlite';
+import { debugLog, enableDebug } from '../../shared/debug.js';
 import type { LoadOptions, ProviderAdapter, UnifiedEvent } from '../types.js';
-import { getCursorDataDirs, getGlobalDbPath, getWorkspaceStoragePath } from './paths.js';
-import { openCursorDb, detectSchemaVersion, closeCursorDb } from './db.js';
+import { closeCursorDb, detectSchemaVersion, openCursorDb } from './db.js';
 import { parseCursorData } from './parser.js';
-import { enableDebug, debugLog } from '../../shared/debug.js';
+import { getCursorDataDirs, getGlobalDbPath, getWorkspaceStoragePath } from './paths.js';
 
 export class CursorAdapter implements ProviderAdapter {
   readonly id = 'cursor' as const;
@@ -82,7 +83,9 @@ export class CursorAdapter implements ProviderAdapter {
         allEvents.push(...events);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        process.stderr.write(`[yclaude] Warning: Failed to load Cursor data from ${dataDir}: ${message}\n`);
+        process.stderr.write(
+          `[yclaude] Warning: Failed to load Cursor data from ${dataDir}: ${message}\n`,
+        );
       }
     }
 
@@ -144,7 +147,7 @@ export class CursorAdapter implements ProviderAdapter {
     debugLog(`Found ${workspaces.length} workspaces in ${dataDir}`);
 
     // Detect and log schema version
-    let db;
+    let db: DatabaseSync | undefined;
     try {
       db = openCursorDb(globalDbPath);
       const schemaVersion = detectSchemaVersion(db);

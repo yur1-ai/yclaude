@@ -1,5 +1,5 @@
-import { defineConfig } from 'tsup';
 import type { Plugin } from 'esbuild';
+import { defineConfig } from 'tsup';
 
 /**
  * esbuild plugin to restore `node:` prefix on node-only builtins.
@@ -20,10 +20,7 @@ const fixNodeOnlyBuiltins: Plugin = {
         if (!file.path.endsWith('.js')) continue;
         let text = file.text;
         for (const mod of nodeOnlyModules) {
-          text = text.replace(
-            new RegExp(`(from\\s+["'])${mod}(["'])`, 'g'),
-            `$1node:${mod}$2`,
-          );
+          text = text.replace(new RegExp(`(from\\s+["'])${mod}(["'])`, 'g'), `$1node:${mod}$2`);
           text = text.replace(
             new RegExp(`(require\\(["'])${mod}(["']\\))`, 'g'),
             `$1node:${mod}$2`,

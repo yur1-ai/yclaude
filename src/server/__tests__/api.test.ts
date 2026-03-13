@@ -14,10 +14,7 @@ type CostOverTimeBody = {
   bucket: string;
 };
 
-function makeUnifiedEvent(
-  costUsd: number,
-  overrides?: Partial<UnifiedEvent>,
-): UnifiedEvent {
+function makeUnifiedEvent(costUsd: number, overrides?: Partial<UnifiedEvent>): UnifiedEvent {
   return {
     id: `test-uuid-${Math.random()}`,
     provider: 'claude',
@@ -73,8 +70,26 @@ describe('/api/v1/summary', () => {
 
   it('totalTokens sums input/output/cacheCreation/cacheRead across all events', async () => {
     const events = [
-      makeUnifiedEvent(0.001, { tokens: { input: 100, output: 50, cacheCreation: 10, cacheRead: 5, cacheCreation5m: 0, cacheCreation1h: 0 } }),
-      makeUnifiedEvent(0.002, { tokens: { input: 200, output: 75, cacheCreation: 20, cacheRead: 15, cacheCreation5m: 0, cacheCreation1h: 0 } }),
+      makeUnifiedEvent(0.001, {
+        tokens: {
+          input: 100,
+          output: 50,
+          cacheCreation: 10,
+          cacheRead: 5,
+          cacheCreation5m: 0,
+          cacheCreation1h: 0,
+        },
+      }),
+      makeUnifiedEvent(0.002, {
+        tokens: {
+          input: 200,
+          output: 75,
+          cacheCreation: 20,
+          cacheRead: 15,
+          cacheCreation5m: 0,
+          cacheCreation1h: 0,
+        },
+      }),
     ];
     const state: AppState = { events, providers: [] };
     const app = createApp(state);
