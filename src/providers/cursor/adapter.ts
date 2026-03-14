@@ -80,7 +80,7 @@ export class CursorAdapter implements ProviderAdapter {
     for (const dataDir of validDataDirs) {
       try {
         const events = await this.loadDataDir(dataDir, opts);
-        allEvents.push(...events);
+        for (const e of events) allEvents.push(e);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         process.stderr.write(

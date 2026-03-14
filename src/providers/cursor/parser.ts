@@ -93,7 +93,7 @@ export function parseCursorData(options: ParseCursorDataOptions): UnifiedEvent[]
     for (const head of composerHeads) {
       try {
         const events = processComposer(globalDb, head, preserveContent);
-        allEvents.push(...events);
+        for (const e of events) allEvents.push(e);
       } catch (err) {
         debugLog(`Error processing composer ${head.composerId}: ${String(err)}`);
       }

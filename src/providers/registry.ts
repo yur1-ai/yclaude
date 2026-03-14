@@ -120,7 +120,7 @@ export async function loadProviders(
         status: 'loaded',
         eventCount: result.events.length,
       });
-      allEvents.push(...result.events);
+      for (const event of result.events) allEvents.push(event);
     }
   }
 
