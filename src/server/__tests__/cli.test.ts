@@ -9,7 +9,7 @@ function parseCLIArgs(argv: string[]): {
   open: boolean;
   port: string;
   dir: string | undefined;
-  showMessages: boolean | undefined;
+  hideMessages: boolean | undefined;
   debug: boolean | undefined;
   exclude: string | undefined;
 } {
@@ -21,7 +21,7 @@ function parseCLIArgs(argv: string[]): {
     .option('-p, --port <number>', 'port number', '3000')
     .option('--no-open', 'do not open browser automatically')
     .option('--debug', 'enable debug logging')
-    .option('--show-messages', 'enable conversation text viewing in Chats tab')
+    .option('--hide-messages', 'disable conversation text viewing in Chats tab')
     .option('--exclude <providers>', 'exclude providers (comma-separated)');
 
   // Parse with process name and script name prepended (Commander convention)
@@ -60,14 +60,14 @@ describe('CLI option parsing', () => {
     expect(opts.dir).toBe('/custom/path');
   });
 
-  it('opts.showMessages is undefined when --show-messages is not passed', () => {
+  it('opts.hideMessages is undefined when --hide-messages is not passed', () => {
     const opts = parseCLIArgs([]);
-    expect(opts.showMessages).toBeUndefined();
+    expect(opts.hideMessages).toBeUndefined();
   });
 
-  it('opts.showMessages is true when --show-messages is passed', () => {
-    const opts = parseCLIArgs(['--show-messages']);
-    expect(opts.showMessages).toBe(true);
+  it('opts.hideMessages is true when --hide-messages is passed', () => {
+    const opts = parseCLIArgs(['--hide-messages']);
+    expect(opts.hideMessages).toBe(true);
   });
 
   it('opts.exclude is undefined when --exclude is not passed', () => {

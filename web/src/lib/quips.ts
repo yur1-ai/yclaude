@@ -186,13 +186,13 @@ export const QUIPS = {
     'No conversations yet. Open Claude Code and say something.',
   ],
 
-  /** Chats feature disabled (--show-messages not passed) */
+  /** Chats feature disabled (--hide-messages was passed) */
   feature_disabled: [
-    'This feature is behind a locked door. The key is --show-messages.',
-    'Conversation content stays private by default. Unlock it when you are ready.',
-    'Claude remembers the conversations. Displaying them is your call.',
-    'Privacy first. Conversation viewing is opt-in, not opt-out.',
-    'The chats are there. You just have not asked to see them yet.',
+    'You told me to hide. Remove --hide-messages when you are ready.',
+    'Conversation content was explicitly hidden. Your call.',
+    'Claude remembers the conversations. You chose to keep them private.',
+    'The chats are there. You just asked me not to show them.',
+    'Privacy mode engaged. Drop the --hide-messages flag to disengage.',
   ],
 } satisfies Record<string, string[]>;
 

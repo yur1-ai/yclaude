@@ -75,9 +75,9 @@ export function MessageBubble({
     return (
       <div className="flex justify-end my-4">
         <div className="max-w-[80%]">
-          <div className="rounded-2xl rounded-br-sm px-4 py-3 bg-blue-600 text-white dark:bg-blue-700">
+          <div className="rounded-2xl rounded-br-sm px-4 py-3 bg-blue-600 text-white dark:bg-[#1c2d4f] dark:text-[#e6edf3]">
             {/* User message markdown with white text override */}
-            <div className="[&_*]:!text-white [&_.text-sm]:!text-white [&_code]:!bg-blue-500/30 [&_code]:!text-white [&_a]:!text-blue-200">
+            <div className="[&_*]:!text-white [&_.text-sm]:!text-white [&_code]:!bg-blue-500/30 [&_code]:!text-white [&_a]:!text-blue-200 dark:[&_*]:!text-[#e6edf3] dark:[&_code]:!bg-[#253654] dark:[&_a]:!text-blue-300">
               {content.map((block, i) => {
                 if (block.type === 'text' && block.text) {
                   return (

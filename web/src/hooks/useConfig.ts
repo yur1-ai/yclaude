@@ -8,6 +8,7 @@ interface ProviderEntry {
 }
 
 interface AppConfig {
+  version: string;
   showMessages: boolean;
   providers?: ProviderEntry[];
 }

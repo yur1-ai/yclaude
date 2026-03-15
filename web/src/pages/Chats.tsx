@@ -56,7 +56,7 @@ export default function Chats() {
 
       {/* Info banner */}
       <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-300">
-        Conversation content is displayed because --show-messages was used. This data stays local.
+        Conversation content is displayed. All data stays on your machine.
       </div>
 
       {/* Filters row */}

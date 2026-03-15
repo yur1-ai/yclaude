@@ -307,6 +307,7 @@ export function apiRoutes(state: AppState): Hono {
   // Includes loaded providers list for frontend tab rendering.
   app.get('/config', (c) => {
     return c.json({
+      version: state.version ?? 'unknown',
       showMessages: state.showMessages ?? false,
       providers: state.providers
         .filter((p) => p.status === 'loaded')
@@ -1037,7 +1038,7 @@ export function apiRoutes(state: AppState): Hono {
   // -------------------------
 
   const CHATS_PAGE_SIZE = 50;
-  const CHATS_403_MSG = 'Conversation viewing is disabled. Start with --show-messages to enable.';
+  const CHATS_403_MSG = 'Conversation viewing is disabled. Remove the --hide-messages flag to enable.';
 
   // GET /api/v1/chats — paginated chat list with text search.
   app.get('/chats', (c) => {

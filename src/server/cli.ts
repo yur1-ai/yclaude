@@ -19,7 +19,7 @@ program
   .option('-p, --port <number>', 'port number', '3000')
   .option('--no-open', 'do not open browser automatically')
   .option('--debug', 'enable debug logging')
-  .option('--show-messages', 'enable conversation text viewing in Chats tab')
+  .option('--hide-messages', 'disable conversation text viewing in Chats tab')
   .option('--exclude <providers>', 'exclude providers (comma-separated)')
   .option(
     '--github-token <token>',
@@ -31,7 +31,7 @@ const opts = program.opts<{
   dir: string | undefined;
   port: string;
   open: boolean;
-  showMessages: boolean | undefined;
+  hideMessages: boolean | undefined;
   debug: boolean | undefined;
   exclude: string | undefined;
   githubToken: string | undefined;
@@ -43,7 +43,7 @@ const url = `http://127.0.0.1:${port}`;
 // Parse --exclude flag
 const exclude = opts.exclude ? opts.exclude.split(',').map((s: string) => s.trim()) : [];
 
-const showMessages = opts.showMessages ?? false;
+const showMessages = !(opts.hideMessages ?? false);
 
 // Load data from all detected providers via the registry
 const { events, providers } = await loadProviders({
@@ -60,7 +60,8 @@ const githubToken = opts.githubToken ?? process.env.GITHUB_TOKEN;
 const app = createApp({
   events,
   providers,
-  ...(showMessages ? { showMessages } : {}),
+  version,
+  showMessages,
   ...(githubToken ? { githubToken } : {}),
 });
 

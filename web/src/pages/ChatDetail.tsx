@@ -49,7 +49,7 @@ export default function ChatDetail() {
           {is404
             ? 'This conversation does not exist or has no recorded messages.'
             : is403
-              ? 'Conversation viewing requires the --show-messages flag.'
+              ? 'Conversation viewing is disabled (--hide-messages was passed).'
               : 'Failed to load conversation details.'}
         </p>
         <button
@@ -99,7 +99,7 @@ export default function ChatDetail() {
     <div className="space-y-6">
       {/* Info banner */}
       <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-300">
-        Conversation content is displayed because --show-messages was used. This data stays local.
+        Conversation content is displayed. All data stays on your machine.
       </div>
 
       {/* Page header */}

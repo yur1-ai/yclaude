@@ -19,7 +19,8 @@ const webDistPath = fileURLToPath(new URL('../../dist/web', import.meta.url));
 export interface AppState {
   events: UnifiedEvent[];
   providers: ProviderInfo[];
-  showMessages?: boolean; // --show-messages flag; undefined/false = conversations disabled
+  version?: string;
+  showMessages?: boolean; // true by default; --hide-messages sets to false
   githubToken?: string; // --github-token or GITHUB_TOKEN env var; used for Gist sharing
 }
 
