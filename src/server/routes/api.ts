@@ -1038,7 +1038,8 @@ export function apiRoutes(state: AppState): Hono {
   // -------------------------
 
   const CHATS_PAGE_SIZE = 50;
-  const CHATS_403_MSG = 'Conversation viewing is disabled. Remove the --hide-messages flag to enable.';
+  const CHATS_403_MSG =
+    'Conversation viewing is disabled. Remove the --hide-messages flag to enable.';
 
   // GET /api/v1/chats — paginated chat list with text search.
   app.get('/chats', (c) => {
