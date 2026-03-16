@@ -93,6 +93,7 @@ export default function Layout() {
   }
 
   // Cmd+B / Ctrl+B keyboard shortcut to toggle sidebar
+  // biome-ignore lint/correctness/useExhaustiveDependencies: toggleSidebar only calls setCollapsed (stable React setter)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
