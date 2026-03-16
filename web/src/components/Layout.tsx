@@ -92,15 +92,30 @@ export default function Layout() {
     });
   }
 
+  // Cmd+B / Ctrl+B keyboard shortcut to toggle sidebar
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+        e.preventDefault();
+        toggleSidebar();
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-[#0d1117]">
       {collapsed ? (
-        <div className="shrink-0 bg-white dark:bg-[#161b22] border-r border-slate-200 dark:border-[#30363d] flex flex-col items-center py-3">
+        <div
+          className="fixed top-0 left-0 z-50 w-12 h-12 group"
+          aria-label="Hover to reveal sidebar toggle"
+        >
           <button
             type="button"
             onClick={toggleSidebar}
-            aria-label="Expand sidebar"
-            className="w-8 h-8 flex items-center justify-center rounded-md text-slate-400 dark:text-[#8b949e] hover:text-slate-600 dark:hover:text-[#e6edf3] hover:bg-slate-100 dark:hover:bg-[#21262d] transition-colors"
+            aria-label="Expand sidebar (Cmd+B)"
+            className="absolute top-2 left-2 w-8 h-8 flex items-center justify-center rounded-md bg-white dark:bg-[#161b22] border border-slate-200 dark:border-[#30363d] text-slate-400 dark:text-[#8b949e] hover:text-slate-600 dark:hover:text-[#e6edf3] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-150"
           >
             ▶
           </button>
